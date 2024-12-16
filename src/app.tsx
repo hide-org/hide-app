@@ -1,6 +1,8 @@
 import { createRoot } from 'react-dom/client';
 import { useState, useRef, useEffect } from 'react';
+import { Button } from './components/ui/button';
 import { Card, CardContent, CardFooter } from './components/ui/card';
+import { Textarea } from './components/ui/textarea';
 import { Send } from 'lucide-react';
 import { ChatMessage } from './components/ChatMessage';
 import { v4 as uuidv4 } from 'uuid';
@@ -107,26 +109,26 @@ const App = () => {
             <CardFooter className="p-4 border-t">
               <form onSubmit={handleSubmit} className="flex gap-2 items-end w-full">
                 <div className="flex-1 min-h-[44px]">
-                  <textarea
+                  <Textarea
                     rows={1}
                     value={input}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
                     placeholder="Type your message..."
-                    className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none min-h-[44px] max-h-[200px]"
-                    style={{ height: '44px' }}
+                    disabled={isLoading}
+                    className="p-3 border rounded-lg focus:outline-none focus:ring-2 resize-none min-h-[44px] max-h-[200px]"
                   />
                 </div>
-                <button
+                <Button
                   type="submit"
                   disabled={isLoading || !input.trim()}
-                  className="h-11 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="gap-2"
                 >
                   <>
                     Send
                     <Send className="h-5 w-5" />
                   </>
-                </button>
+                </Button>
               </form>
             </CardFooter>
           </Card>
