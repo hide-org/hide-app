@@ -1,11 +1,8 @@
 import { createRoot } from 'react-dom/client';
 import { useState, useRef, useEffect } from 'react';
-import { Button } from './components/ui/button';
-import { Card, CardContent, CardFooter } from './components/ui/card';
-import { Textarea } from './components/ui/textarea';
-import { Send } from 'lucide-react';
-import { ChatMessage } from './components/ChatMessage';
 import { ChatArea } from './components/ChatArea';
+import { ChatHistory } from './components/ChatHistory';
+import { Details } from './components/Details';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Message } from './types';
@@ -77,17 +74,8 @@ const App = () => {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Left Sidebar - Chat History */}
-      <div className="w-64 border-r p-4">
-        <Card className="h-full">
-          <CardContent>
-            <h2 className="font-semibold mb-4">Chat History</h2>
-            {/* Add chat history here */}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Chat Area */}
+      <ChatHistory />
+      
       <ChatArea
         messages={messages}
         input={input}
@@ -96,16 +84,8 @@ const App = () => {
         onInputChange={handleInputChange}
         onKeyDown={handleKeyDown}
       />
-
-      {/* Right Sidebar */}
-      <div className="w-64 border-l p-4">
-        <Card className="h-full">
-          <CardContent>
-            <h2 className="font-semibold mb-4">Details</h2>
-            {/* Add details or context here */}
-          </CardContent>
-        </Card>
-      </div>
+      
+      <Details />
     </div>
   );
 };
