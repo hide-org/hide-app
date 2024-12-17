@@ -6,15 +6,35 @@ interface ChatPreviewProps {
   messages: Message[];
   isSelected: boolean;
   onClick: () => void;
+  updatedAt: number;
 }
 
-export const ChatPreview = ({ id, messages, isSelected, onClick }: ChatPreviewProps) => {
+export const ChatPreview = ({ id, messages, isSelected, onClick, updatedAt }: ChatPreviewProps) => {
   // Get the first message as the title or use a default
   const title = messages[0]?.content.slice(0, 30) || 'New Chat';
   
-  // Get the timestamp from the id (assuming id is timestamp-based)
-  const date = new Date(parseInt(id));
-  const formattedDate = date.toLocaleDateString();
+  // Format the timestamp
+  const formatTimestamp = (timestamp: number) => {
+    const date = new Date(timestamp);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const isToday = date.toDateString() === today.toDateString();
+    const isYesterday = date.toDateString() === yesterday.toDateString();
+
+    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    if (isToday) {
+      return `Today at ${time}`;
+    } else if (isYesterday) {
+      return `Yesterday at ${time}`;
+    } else {
+      return `${date.toLocaleDateString()} ${time}`;
+    }
+  };
+
+  const timestamp = formatTimestamp(updatedAt);
 
   return (
     <Card
@@ -24,8 +44,8 @@ export const ChatPreview = ({ id, messages, isSelected, onClick }: ChatPreviewPr
       onClick={onClick}
     >
       <div className="flex flex-col">
-        <div className="font-medium truncate">{title}...</div>
-        <div className="text-sm text-gray-500">{formattedDate}</div>
+        <div className="text-sm font-medium truncate">{title}...</div>
+        <div className="text-xs text-gray-500">{timestamp}</div>
       </div>
     </Card>
   );

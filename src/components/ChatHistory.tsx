@@ -17,7 +17,7 @@ export const ChatHistory = ({
   onNewChat,
 }: ChatHistoryProps) => {
   return (
-    <div className="w-64 border-r p-4">
+    <div className="w-80 border-r p-4">
       <Card className="h-full">
         <CardHeader>
           <CardTitle className="text-xl">Chat History</CardTitle>
@@ -37,6 +37,7 @@ export const ChatHistory = ({
               messages={conversation.messages}
               isSelected={selectedConversation === conversation.id}
               onClick={() => onSelectConversation(conversation.id)}
+              updatedAt={conversation.updatedAt}
             />
           ))}
         </CardContent>
