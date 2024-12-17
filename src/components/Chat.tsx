@@ -78,10 +78,24 @@ export const Chat = () => {
       setMessages(updatedMessages);
       setError(null); // Clear any previous errors
 
+      // Generate title for new conversations
+      let title = 'New Chat';
+      if (!selectedConversation) {
+        try {
+          title = await claudeService.generateTitle(input.trim());
+        } catch (error) {
+          console.error('Error generating title:', error);
+        }
+      } else {
+        const existingConversation = conversations.find(c => c.id === selectedConversation);
+        title = existingConversation?.title || 'New Chat';
+      }
+
       // Save conversation
       const timestamp = Date.now();
       const conversation: Conversation = {
         id: selectedConversation || timestamp.toString(),
+        title,
         messages: updatedMessages,
         createdAt: selectedConversation ? conversations.find(c => c.id === selectedConversation)?.createdAt || timestamp : timestamp,
         updatedAt: timestamp,

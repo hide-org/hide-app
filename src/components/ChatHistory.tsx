@@ -34,7 +34,7 @@ export const ChatHistory = ({
             <ChatPreview
               key={conversation.id}
               id={conversation.id}
-              messages={conversation.messages}
+              title={conversation.title}
               isSelected={selectedConversation === conversation.id}
               onClick={() => onSelectConversation(conversation.id)}
               updatedAt={conversation.updatedAt}

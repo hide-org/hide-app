@@ -1,18 +1,15 @@
-import { Message } from '../types';
+
 import { Card } from './ui/card';
 
 interface ChatPreviewProps {
   id: string;
-  messages: Message[];
+  title: string;
   isSelected: boolean;
   onClick: () => void;
   updatedAt: number;
 }
 
-export const ChatPreview = ({ id, messages, isSelected, onClick, updatedAt }: ChatPreviewProps) => {
-  // Get the first message as the title or use a default
-  const title = messages[0]?.content.slice(0, 30) || 'New Chat';
-  
+export const ChatPreview = ({ id, title, isSelected, onClick, updatedAt }: ChatPreviewProps) => {
   // Format the timestamp
   const formatTimestamp = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -44,7 +41,7 @@ export const ChatPreview = ({ id, messages, isSelected, onClick, updatedAt }: Ch
       onClick={onClick}
     >
       <div className="flex flex-col">
-        <div className="text-sm font-medium truncate">{title}...</div>
+        <div className="text-sm font-medium truncate mb-1">{title}</div>
         <div className="text-xs text-gray-500">{timestamp}</div>
       </div>
     </Card>
