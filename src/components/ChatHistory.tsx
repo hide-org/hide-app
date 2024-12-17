@@ -1,24 +1,44 @@
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Button } from './ui/button';
+import { ChatPreview } from './ChatPreview';
+import { Conversation } from '../types';
 
 interface ChatHistoryProps {
-  conversations?: string[];
+  conversations: Conversation[];
   selectedConversation: string | null;
   onSelectConversation: (id: string | null) => void;
+  onNewChat: () => void;
 }
 
 export const ChatHistory = ({
   conversations = [],
   selectedConversation,
   onSelectConversation,
+  onNewChat,
 }: ChatHistoryProps) => {
   return (
     <div className="w-64 border-r p-4">
       <Card className="h-full">
         <CardHeader>
           <CardTitle className="text-xl">Chat History</CardTitle>
+          <Button
+            onClick={onNewChat}
+            className="w-full"
+            variant="outline"
+          >
+            New Chat
+          </Button>
         </CardHeader>
-        <CardContent>
-          {/* Add chat history here */}
+        <CardContent className="space-y-2">
+          {conversations.map((conversation) => (
+            <ChatPreview
+              key={conversation.id}
+              id={conversation.id}
+              messages={conversation.messages}
+              isSelected={selectedConversation === conversation.id}
+              onClick={() => onSelectConversation(conversation.id)}
+            />
+          ))}
         </CardContent>
       </Card>
     </div>

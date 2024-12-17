@@ -1,17 +1,18 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Message } from '../types';
+import { Message, Conversation } from '../types';
 import { ChatArea } from './ChatArea';
 import { ChatHistory } from './ChatHistory';
 import { Details } from './Details';
 import { initializeClaudeService, getClaudeService } from '../lib/claude';
 import { getAnthropicApiKey, isApiKeyConfigured } from '../lib/config';
+import { loadConversations, saveConversation } from '../lib/storage';
 
 export const Chat = () => {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
-
   const [error, setError] = useState<string | null>(null);
 
   // Initialize Claude service with API key
@@ -22,6 +23,29 @@ export const Chat = () => {
     } else {
       setError('API key not configured. Please set up your Anthropic API key.');
     }
+  }, []);
+
+  // Load conversations from local storage
+  useEffect(() => {
+    const loadedConversations = loadConversations();
+    setConversations(loadedConversations);
+  }, []);
+
+  // Load selected conversation messages
+  useEffect(() => {
+    if (selectedConversation === null) {
+      setMessages([]);
+    } else {
+      const conversation = conversations.find((c) => c.id === selectedConversation);
+      if (conversation) {
+        setMessages(conversation.messages);
+      }
+    }
+  }, [selectedConversation, conversations]);
+
+  const handleNewChat = useCallback(() => {
+    setSelectedConversation(null);
+    setMessages([]);
   }, []);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
@@ -50,8 +74,28 @@ export const Chat = () => {
         content: response,
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      const updatedMessages = [...messagesForClaude, assistantMessage];
+      setMessages(updatedMessages);
       setError(null); // Clear any previous errors
+
+      // Save conversation
+      const timestamp = Date.now();
+      const conversation: Conversation = {
+        id: selectedConversation || timestamp.toString(),
+        messages: updatedMessages,
+        createdAt: selectedConversation ? conversations.find(c => c.id === selectedConversation)?.createdAt || timestamp : timestamp,
+        updatedAt: timestamp,
+      };
+      
+      if (!selectedConversation) {
+        setSelectedConversation(conversation.id);
+        setConversations(prev => [conversation, ...prev]);
+      } else {
+        setConversations(prev => prev.map(conv => 
+          conv.id === selectedConversation ? conversation : conv
+        ));
+      }
+      saveConversation(conversation);
     } catch (err) {
       console.error('Error sending message:', err);
       setError(err instanceof Error ? err.message : 'Failed to send message');
@@ -74,9 +118,10 @@ export const Chat = () => {
   return (
     <div className="flex h-screen">
       <ChatHistory
-        conversations={[]} // You can implement conversation history later
+        conversations={conversations}
         selectedConversation={selectedConversation}
         onSelectConversation={setSelectedConversation}
+        onNewChat={handleNewChat}
       />
       <div className="flex-1 flex flex-col">
         {error && (
