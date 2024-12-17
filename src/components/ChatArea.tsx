@@ -55,7 +55,7 @@ export const ChatArea = ({
             <form onSubmit={onSubmit} className="w-full">
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <div className="relative flex flex-col justify-end h-full">
+                  <div className="relative flex flex-col h-full">
                     <Textarea
                       ref={textareaRef}
                       rows={1}
