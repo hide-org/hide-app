@@ -50,8 +50,8 @@ export const ChatArea = ({
             ))}
             <div ref={messagesEndRef} />
           </CardContent>
-          <CardFooter className="p-4 border-t">
-            <form onSubmit={onSubmit} className="flex gap-2 items-end w-full">
+          <CardFooter className="p-1 border-t">
+            <form onSubmit={onSubmit} className="flex gap-2 items-center w-full">
               <div className="flex-1 min-h-[44px]">
                 <Textarea
                   rows={1}
