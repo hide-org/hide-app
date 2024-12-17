@@ -78,28 +78,41 @@ export const Chat = () => {
       setMessages(updatedMessages);
       setError(null); // Clear any previous errors
 
-      // Generate title for new conversations
-      let title = 'New Chat';
-      if (!selectedConversation) {
-        try {
-          title = await claudeService.generateTitle(input.trim());
-        } catch (error) {
-          console.error('Error generating title:', error);
-        }
-      } else {
-        const existingConversation = conversations.find(c => c.id === selectedConversation);
-        title = existingConversation?.title || 'New Chat';
-      }
-
-      // Save conversation
+      // Save conversation immediately with a temporary title
       const timestamp = Date.now();
+      const conversationId = selectedConversation || timestamp.toString();
+      const existingConversation = selectedConversation ? conversations.find(c => c.id === selectedConversation) : null;
+      
       const conversation: Conversation = {
-        id: selectedConversation || timestamp.toString(),
-        title,
+        id: conversationId,
+        title: existingConversation?.title || 'New Chat',
         messages: updatedMessages,
-        createdAt: selectedConversation ? conversations.find(c => c.id === selectedConversation)?.createdAt || timestamp : timestamp,
+        createdAt: existingConversation?.createdAt || timestamp,
         updatedAt: timestamp,
       };
+
+      // If it's a new conversation, generate title asynchronously
+      if (!selectedConversation) {
+        // Generate title in the background
+        claudeService.generateTitle(input.trim())
+          .then(generatedTitle => {
+            const updatedConversation = {
+              ...conversation,
+              title: generatedTitle,
+            };
+            
+            // Update conversations state with the new title
+            setConversations(prev => 
+              prev.map(conv => conv.id === conversationId ? updatedConversation : conv)
+            );
+            
+            // Update in localStorage
+            saveConversation(updatedConversation);
+          })
+          .catch(error => {
+            console.error('Error generating title:', error);
+          });
+      }
       
       if (!selectedConversation) {
         setSelectedConversation(conversation.id);
