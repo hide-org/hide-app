@@ -68,7 +68,7 @@ export const ChatArea = ({
                     />
                   </div>
                 </div>
-                <div className="flex items-end py-1.5">
+                <div className="flex items-end py-1.5 pr-1.5">
                   <Button
                     type="submit"
                     disabled={isLoading || !input.trim()}
