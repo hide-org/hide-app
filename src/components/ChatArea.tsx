@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardFooter } from './ui/card';
 import { Textarea } from './ui/textarea';
@@ -25,6 +25,7 @@ export const ChatArea = ({
   onKeyDown,
 }: ChatAreaProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Scroll to the bottom of the chat when new messages are added
   useEffect(() => {
@@ -51,28 +52,35 @@ export const ChatArea = ({
             <div ref={messagesEndRef} />
           </CardContent>
           <CardFooter className="p-1 border-t">
-            <form onSubmit={onSubmit} className="flex gap-2 items-center w-full">
-              <div className="flex-1 min-h-[44px]">
-                <Textarea
-                  rows={1}
-                  value={input}
-                  onChange={onInputChange}
-                  onKeyDown={onKeyDown}
-                  placeholder="Type your message..."
-                  disabled={isLoading}
-                  className="p-3 border rounded-lg focus:outline-none focus:ring-2 resize-none min-h-[44px] max-h-[200px]"
-                />
+            <form onSubmit={onSubmit} className="w-full">
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <div className="relative flex flex-col justify-end h-full">
+                    <Textarea
+                      ref={textareaRef}
+                      rows={1}
+                      value={input}
+                      onChange={onInputChange}
+                      onKeyDown={onKeyDown}
+                      placeholder="Type your message..."
+                      disabled={isLoading}
+                      className="p-3 resize-none min-h-[44px] max-h-[300px] overflow-y-auto"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-end py-1.5">
+                  <Button
+                    type="submit"
+                    disabled={isLoading || !input.trim()}
+                    className="gap-2"
+                  >
+                    <>
+                      Send
+                      <Send className="h-5 w-5" />
+                    </>
+                  </Button>
+                </div>
               </div>
-              <Button
-                type="submit"
-                disabled={isLoading || !input.trim()}
-                className="gap-2"
-              >
-                <>
-                  Send
-                  <Send className="h-5 w-5" />
-                </>
-              </Button>
             </form>
           </CardFooter>
         </Card>
