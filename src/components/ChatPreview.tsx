@@ -35,12 +35,12 @@ export const ChatPreview = ({ id, title, isSelected, onClick, updatedAt }: ChatP
 
   return (
     <Card
-      className={`p-3 mb-2 cursor-pointer hover:bg-gray-100 ${
+      className={`p-3 cursor-pointer hover:bg-gray-100 w-full max-w-[250px] ${
         isSelected ? 'bg-gray-100' : ''
       }`}
       onClick={onClick}
     >
-      <div className="flex flex-col">
+      <div className="flex flex-col w-full">
         <div className="text-sm font-medium truncate mb-1">{title}</div>
         <div className="text-xs text-gray-500">{timestamp}</div>
       </div>
