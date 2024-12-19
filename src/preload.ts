@@ -1,2 +1,7 @@
-// See the Electron documentation for details on how to use preload scripts:
-// https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
+import { contextBridge, ipcRenderer } from 'electron';
+
+contextBridge.exposeInMainWorld('mcp', {
+    listTools: () => ipcRenderer.invoke('mcp:list-tools'),
+    callTool: (name: string, parameters: any) => 
+        ipcRenderer.invoke('mcp:call-tool', { name, parameters }),
+});

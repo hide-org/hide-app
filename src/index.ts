@@ -65,5 +65,14 @@ app.on('activate', () => {
   }
 });
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.
+// Initialize MCP service
+import { initializeMCP } from './main/mcp';
+
+// TODO: Make this configurable
+const CMD = 'uv';
+const ARGS = ['--directory', '/Users/artemm/Code/hide-mcp', 'run', 'hide-mcp', 'server'];
+app.whenReady().then(() => {
+  initializeMCP(CMD, ARGS).catch(err => {
+    console.error('Failed to initialize MCP:', err);
+  });
+});
