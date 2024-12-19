@@ -5,6 +5,7 @@ import { Card, CardContent, CardFooter } from './ui/card';
 import { Textarea } from './ui/textarea';
 import { Send } from 'lucide-react';
 import { ChatMessage } from './ChatMessage';
+import { ScrollArea } from './ui/scroll-area';
 
 interface ChatAreaProps {
   messages: Message[];
@@ -37,20 +38,24 @@ export const ChatArea = ({
   return (
     <div className="flex-1 flex flex-col">
       {/* Messages Area */}
-      <div className="flex-1 p-4 overflow-y-auto">
+      <div className="flex-1 p-4">
         <Card className="h-full flex flex-col">
-          <CardContent className="flex-1 overflow-y-auto pt-6">
-            {messages.map((message) => (
-              <ChatMessage
-                key={message.id}
-                role={message.role}
-                content={message.content}
-                isLoading={isLoading && message === messages[messages.length - 1]}
-              />
-            ))}
-            <div ref={messagesEndRef} />
+          <CardContent className="flex-1 p-0">
+            <ScrollArea className="h-[calc(100vh-140px)]" type="hover">
+              <div className="px-4 py-4">
+                {messages.map((message) => (
+                  <ChatMessage
+                    key={message.id}
+                    role={message.role}
+                    content={message.content}
+                    isLoading={isLoading && message === messages[messages.length - 1]}
+                  />
+                ))}
+                <div ref={messagesEndRef} className="h-0" />
+              </div>
+            </ScrollArea>
           </CardContent>
-          <CardFooter className="p-1 border-t">
+          <CardFooter className="px-1 py-2 border-t">
             <form onSubmit={onSubmit} className="w-full">
               <div className="flex gap-2">
                 <div className="flex-1">
