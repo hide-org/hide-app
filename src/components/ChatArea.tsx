@@ -1,11 +1,10 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect } from 'react';
+import { Message } from '../types';
 import { Button } from './ui/button';
 import { Card, CardContent, CardFooter } from './ui/card';
 import { Textarea } from './ui/textarea';
 import { Send } from 'lucide-react';
 import { ChatMessage } from './ChatMessage';
-
-import { Message } from '../types';
 
 interface ChatAreaProps {
   messages: Message[];

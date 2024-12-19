@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { Message } from '../types';
+import { MessageParam } from '@anthropic-ai/sdk/resources/messages';
+import { Message } from '@anthropic-ai/sdk/src/resources/messages';
 
 export class ClaudeService {
     private client: Anthropic;
@@ -13,21 +14,15 @@ export class ClaudeService {
         });
     }
 
-    async sendMessage(messages: Message[]) {
+    async sendMessage(messages: MessageParam[]): Promise<Message> {
         try {
             const response = await this.client.messages.create({
                 model: this.chatModel,
                 max_tokens: 4096,
-                messages: messages.map(msg => ({
-                    role: msg.role,
-                    content: msg.content,
-                })),
+                messages: messages,
             });
 
-            if (response.content[0].type === 'text') {
-                return response.content[0].text;
-            }
-            throw new Error('Unexpected response type from Claude');
+            return response;
         } catch (error) {
             console.error('Error sending message to Claude:', error);
             throw error;

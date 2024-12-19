@@ -1,18 +1,23 @@
+import { MessageParam } from '@anthropic-ai/sdk/src/resources/messages';
+import { v4 as uuidv4 } from 'uuid';
 import { useState, useCallback, useEffect } from 'react';
-import { Message, Conversation } from '../types';
+import { Conversation, Message } from '../types';
 import { ChatArea } from './ChatArea';
 import { ChatHistory } from './ChatHistory';
 import { Details } from './Details';
 import { initializeClaudeService, getClaudeService } from '../lib/claude';
 import { getAnthropicApiKey, isApiKeyConfigured } from '../lib/config';
-import { loadConversations, saveConversation } from '../lib/storage';
+import { loadConversations, saveConversations } from '../lib/storage';
+import { simpleHash } from '../lib/utils';
+import { TextBlockParam, ToolUseBlockParam } from '@anthropic-ai/sdk/resources';
+
+const DEFAULT_CONVERSATION_TITLE = 'Untitled Chat';
 
 export const Chat = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Initialize Claude service with API key
@@ -31,105 +36,100 @@ export const Chat = () => {
     setConversations(loadedConversations);
   }, []);
 
-  // Load selected conversation messages
+  // Save conversation whenever they change
   useEffect(() => {
-    if (selectedConversation === null) {
-      setMessages([]);
-    } else {
-      const conversation = conversations.find((c) => c.id === selectedConversation);
-      if (conversation) {
-        setMessages(conversation.messages);
-      }
-    }
-  }, [selectedConversation, conversations]);
-
-  const handleNewChat = useCallback(() => {
-    setSelectedConversation(null);
-    setMessages([]);
-  }, []);
+    saveConversations(conversations);
+  }, [conversations])
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!input.trim() || isLoading) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
+    const userMessage: MessageParam = {
       role: 'user',
       content: input.trim(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    const updatedMessages = [...currentConversation.messages, userMessage];
+    updateConversation({
+      ...currentConversation,
+      messages: updatedMessages,
+      updatedAt: Date.now(),
+    });
     setInput('');
     setIsLoading(true);
 
     try {
       const claudeService = getClaudeService();
-      const messagesForClaude = [...messages, userMessage];
-      const response = await claudeService.sendMessage(messagesForClaude);
+      if (updatedMessages.length === 1) {
+        const [response, title] = await Promise.all([
+          claudeService.sendMessage(updatedMessages),
+          claudeService.generateTitle(input.trim()),
+        ]);
 
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: response,
-      };
+        const assistantMessage: MessageParam = {
+          role: 'assistant',
+          content: response.content.map(block => {
+            if (block.type === 'text') {
+              return block as TextBlockParam
+            }
 
-      const updatedMessages = [...messagesForClaude, assistantMessage];
-      setMessages(updatedMessages);
-      setError(null); // Clear any previous errors
+            if (block.type === 'tool_use') {
+              return block as ToolUseBlockParam;
+            }
 
-      // Save conversation immediately with a temporary title
-      const timestamp = Date.now();
-      const conversationId = selectedConversation || timestamp.toString();
-      const existingConversation = selectedConversation ? conversations.find(c => c.id === selectedConversation) : null;
-      
-      const conversation: Conversation = {
-        id: conversationId,
-        title: existingConversation?.title || 'New Chat',
-        messages: updatedMessages,
-        createdAt: existingConversation?.createdAt || timestamp,
-        updatedAt: timestamp,
-      };
+            throw new Error('Unexpected response type from Claude');
+          }),
+        };
 
-      // If it's a new conversation, generate title asynchronously
-      if (!selectedConversation) {
-        // Generate title in the background
-        claudeService.generateTitle(input.trim())
-          .then(generatedTitle => {
-            const updatedConversation = {
-              ...conversation,
-              title: generatedTitle,
-            };
-            
-            // Update conversations state with the new title
-            setConversations(prev => 
-              prev.map(conv => conv.id === conversationId ? updatedConversation : conv)
-            );
-            
-            // Update in localStorage
-            saveConversation(updatedConversation);
-          })
-          .catch(error => {
-            console.error('Error generating title:', error);
-          });
-      }
-      
-      if (!selectedConversation) {
-        setSelectedConversation(conversation.id);
-        setConversations(prev => [conversation, ...prev]);
+        updateConversation({
+          ...currentConversation,
+          title: title,
+          messages: [...updatedMessages, assistantMessage],
+          updatedAt: Date.now(),
+        });
       } else {
-        setConversations(prev => prev.map(conv => 
-          conv.id === selectedConversation ? conversation : conv
-        ));
+        const response = await claudeService.sendMessage(updatedMessages);
+        const assistantMessage: MessageParam = {
+          role: 'assistant',
+          content: response.content.map(block => {
+            if (block.type === 'text') {
+              return block as TextBlockParam
+            }
+
+            if (block.type === 'tool_use') {
+              return block as ToolUseBlockParam;
+            }
+
+            throw new Error('Unexpected response type from Claude');
+          }),
+        };
+
+        updateConversation({
+          ...currentConversation,
+          messages: [...updatedMessages, assistantMessage],
+          updatedAt: Date.now(),
+        });
       }
-      saveConversation(conversation);
+
+      setError(null); // Clear any previous errors
     } catch (err) {
       console.error('Error sending message:', err);
       setError(err instanceof Error ? err.message : 'Failed to send message');
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading, messages]);
+  }, [input, isLoading]);
+
+  const updateConversation = (c: Conversation) => {
+    setCurrentConversation(c)
+    setConversations(prev =>
+      prev.map(conv =>
+        conv.id === currentConversation.id ? c : conv
+      )
+    );
+  }
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
@@ -142,13 +142,63 @@ export const Chat = () => {
     }
   }, [handleSubmit]);
 
+  const newConversation = () => {
+    const timestamp = Date.now();
+    const c: Conversation = {
+      id: uuidv4(),
+      title: DEFAULT_CONVERSATION_TITLE,
+      messages: [],
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    setConversations(prev => [c, ...prev]);
+    setCurrentConversation(c);
+  }
+
+  const toMessages = (messages: MessageParam[]): Message[] => {
+    return messages.flatMap(message => {
+      if (typeof message.content === 'string') {
+        return [{
+          id: simpleHash(message.content).toString(),
+          role: message.role,
+          content: message.content,
+        }];
+      }
+
+      if (Array.isArray(message.content)) {
+        return message.content.map(block => {
+          if (block.type === 'text') {
+            return {
+              id: simpleHash(block.text).toString(),
+              role: message.role,
+              content: block.text,
+            };
+          }
+
+          if (block.type === 'tool_use') {
+            const content = `Tool: ${block.name}\n\nInput: ${block.input}`;
+            return {
+              id: simpleHash(content).toString(),
+              role: 'tool',
+              content: content,
+            };
+          }
+
+          throw new Error('Unexpected response type from Claude');
+        });
+      }
+
+      throw new Error('Unexpected response type from Claude');
+    });
+  }
+
   return (
     <div className="flex h-screen">
       <ChatHistory
         conversations={conversations}
-        selectedConversation={selectedConversation}
-        onSelectConversation={setSelectedConversation}
-        onNewChat={handleNewChat}
+        selectedConversation={currentConversation}
+        onSelectConversation={setCurrentConversation}
+        onNewChat={newConversation}
       />
       <div className="flex-1 flex flex-col">
         {error && (
@@ -156,14 +206,20 @@ export const Chat = () => {
             <span className="block sm:inline">{error}</span>
           </div>
         )}
-        <ChatArea
-          messages={messages}
-          input={input}
-          isLoading={isLoading}
-          onSubmit={handleSubmit}
-          onInputChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-        />
+        {currentConversation ? (
+          <ChatArea
+            messages={toMessages(currentConversation.messages)}
+            input={input}
+            isLoading={isLoading}
+            onSubmit={handleSubmit}
+            onInputChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <div className="text-xl">Select a conversation or start a new one</div>
+          </div>
+        )}
       </div>
       <Details />
     </div>

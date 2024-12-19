@@ -5,8 +5,8 @@ import { Conversation } from '../types';
 
 interface ChatHistoryProps {
   conversations: Conversation[];
-  selectedConversation: string | null;
-  onSelectConversation: (id: string | null) => void;
+  selectedConversation: Conversation | null;
+  onSelectConversation: (c: Conversation) => void;
   onNewChat: () => void;
 }
 
@@ -35,8 +35,8 @@ export const ChatHistory = ({
               key={conversation.id}
               id={conversation.id}
               title={conversation.title}
-              isSelected={selectedConversation === conversation.id}
-              onClick={() => onSelectConversation(conversation.id)}
+              isSelected={selectedConversation?.id === conversation.id}
+              onClick={() => onSelectConversation(conversation)}
               updatedAt={conversation.updatedAt}
             />
           ))}
