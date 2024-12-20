@@ -38,7 +38,7 @@ export const Chat = () => {
 
   // Save conversation whenever they change
   useEffect(() => {
-    saveConversations(conversations);
+    saveConversations(conversations.sort((a, b) => b.updatedAt - a.updatedAt));
   }, [conversations])
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
@@ -46,28 +46,27 @@ export const Chat = () => {
 
     if (!input.trim() || isLoading) return;
 
-    const userMessage: MessageParam = {
+    const message: MessageParam = {
       role: 'user',
       content: input.trim(),
     };
 
-    const updatedMessages = [...currentConversation.messages, userMessage];
+    const messages = [...currentConversation.messages, message];
     updateConversation({
       ...currentConversation,
-      messages: updatedMessages,
+      messages: messages,
       updatedAt: Date.now(),
     });
     setInput('');
     setIsLoading(true);
 
+    const shouldGenerateTitle = messages.length === 1 || currentConversation.title === DEFAULT_CONVERSATION_TITLE;
+
     try {
       const claudeService = getClaudeService();
-      if (updatedMessages.length === 1) {
-        const [response, title] = await Promise.all([
-          claudeService.sendMessage(updatedMessages),
-          claudeService.generateTitle(input.trim()),
-        ]);
+      let responseMessages = messages;  // Collect all the messages from the completion
 
+      for await (const response of claudeService.sendMessage(messages)) {
         const assistantMessage: MessageParam = {
           role: 'assistant',
           content: response.content.map(block => {
@@ -83,34 +82,27 @@ export const Chat = () => {
           }),
         };
 
+        responseMessages = [...responseMessages, assistantMessage];
         updateConversation({
           ...currentConversation,
-          title: title,
-          messages: [...updatedMessages, assistantMessage],
+          messages: responseMessages,
           updatedAt: Date.now(),
         });
-      } else {
-        const response = await claudeService.sendMessage(updatedMessages);
-        const assistantMessage: MessageParam = {
-          role: 'assistant',
-          content: response.content.map(block => {
-            if (block.type === 'text') {
-              return block as TextBlockParam
-            }
+      }
 
-            if (block.type === 'tool_use') {
-              return block as ToolUseBlockParam;
-            }
-
-            throw new Error('Unexpected response type from Claude');
-          }),
-        };
-
-        updateConversation({
-          ...currentConversation,
-          messages: [...updatedMessages, assistantMessage],
-          updatedAt: Date.now(),
-        });
+      if (shouldGenerateTitle) {
+        claudeService.generateTitle(currentConversation.messages[0]?.content as string || input.trim())
+          .then(title => {
+            updateConversation({
+              ...currentConversation,
+              messages: responseMessages,
+              title: title,
+              updatedAt: Date.now()
+            });
+          })
+          .catch(error => {
+            console.error('Error generating title:', error);
+          });
       }
 
       setError(null); // Clear any previous errors

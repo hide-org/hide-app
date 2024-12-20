@@ -1,28 +1,44 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { MessageParam } from '@anthropic-ai/sdk/resources/messages';
-import { Message } from '@anthropic-ai/sdk/src/resources/messages';
+import { Message, MessageParam, Tool as AnthropicTool } from '@anthropic-ai/sdk/resources/messages';
+import { callTool, listTools } from './mcp/client';
+import { mcpToAnthropicTool } from './mcp/adapters';
 
 export class ClaudeService {
     private client: Anthropic;
     private chatModel = 'claude-3-5-sonnet-20241022';
     private titleModel = 'claude-3-5-haiku-20241022';
+    private tools: AnthropicTool[];
 
     constructor(apiKey: string) {
         this.client = new Anthropic({
             apiKey,
             dangerouslyAllowBrowser: true
         });
+
+        this.tools = [];
     }
 
-    async sendMessage(messages: MessageParam[]): Promise<Message> {
+    async initializeTools() {
+        try {
+            const mcpTools = await listTools();
+            console.log('Loaded tools from MCP:', mcpTools);
+            this.tools = mcpTools.map(mcpToAnthropicTool);
+        } catch (error) {
+            console.error('Error initializing tools:', error);
+            this.tools = [];
+        }
+    }
+
+    async *sendMessage(messages: MessageParam[]): AsyncGenerator<Message> {
         try {
             const response = await this.client.messages.create({
                 model: this.chatModel,
                 max_tokens: 4096,
                 messages: messages,
+                tools: this.tools,
             });
 
-            return response;
+            yield response;
         } catch (error) {
             console.error('Error sending message to Claude:', error);
             throw error;
