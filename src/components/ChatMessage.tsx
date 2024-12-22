@@ -1,3 +1,4 @@
+import { Baby, Bot, Wrench } from 'lucide-react';
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
@@ -47,14 +48,18 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLoading }) 
         return (
           <Avatar className="w-8 h-8 border">
             <AvatarImage src="/bot-avatar.png" alt="AI" />
-            <AvatarFallback>AI</AvatarFallback>
+            <AvatarFallback>
+              <Bot className="w-5 h-5" />
+            </AvatarFallback>
           </Avatar>
         );
       case 'user':
         return (
           <Avatar className="w-8 h-8 border">
             <AvatarImage src="/user-avatar.png" alt="User" />
-            <AvatarFallback>U</AvatarFallback>
+            <AvatarFallback>
+              <Baby className="w-5 h-5" />
+            </AvatarFallback>
           </Avatar>
         );
       case 'tool_use':
@@ -62,7 +67,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLoading }) 
         return (
           <Avatar className="w-8 h-8 border">
             <AvatarImage src="/tool-avatar.png" alt="Tool" />
-            <AvatarFallback>T</AvatarFallback>
+            <AvatarFallback>
+              <Wrench className="w-5 h-5" />
+            </AvatarFallback>
           </Avatar>
         );
     }
@@ -76,16 +83,16 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLoading }) 
           rehypePlugins={[rehypeHighlight]}
           components={{
             // Headers
-            h1: ({node, ...props}) => <h1 className="text-2xl font-bold mb-4 mt-6" {...props}/>,
-            h2: ({node, ...props}) => <h2 className="text-xl font-bold mb-3 mt-5" {...props}/>,
-            h3: ({node, ...props}) => <h3 className="text-lg font-bold mb-3 mt-4" {...props}/>,
+            h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mb-4 mt-6" {...props} />,
+            h2: ({ node, ...props }) => <h2 className="text-xl font-bold mb-3 mt-5" {...props} />,
+            h3: ({ node, ...props }) => <h3 className="text-lg font-bold mb-3 mt-4" {...props} />,
             // Paragraphs and lists
-            p: ({node, ...props}) => <p className="mb-4" {...props}/>,
-            ul: ({node, ...props}) => <ul className="list-disc list-inside mb-4" {...props}/>,
-            ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-4" {...props}/>,
-            li: ({node, ...props}) => <li className="mb-1" {...props}/>,
+            p: ({ node, ...props }) => <p className="mb-4" {...props} />,
+            ul: ({ node, ...props }) => <ul className="list-disc list-inside mb-4" {...props} />,
+            ol: ({ node, ...props }) => <ol className="list-decimal list-inside mb-4" {...props} />,
+            li: ({ node, ...props }) => <li className="mb-1" {...props} />,
             // Code blocks
-            code: ({node, inline, className, children, ...props}) => {
+            code: ({ node, inline, className, children, ...props }) => {
               const isInline = inline || !className?.includes('language-');
               return (
                 <code className={`font-mono ${isInline ? 'text-sm bg-gray-100 dark:bg-gray-800 rounded px-1.5 py-0.5' : 'block text-sm text-gray-100 bg-gray-800 p-4 rounded-lg mb-4 overflow-x-auto'}`} {...props}>
@@ -94,12 +101,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLoading }) 
               );
             },
             // Blockquotes
-            blockquote: ({node, ...props}) => (
-              <blockquote className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 my-4 italic" {...props}/>
+            blockquote: ({ node, ...props }) => (
+              <blockquote className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 my-4 italic" {...props} />
             ),
             // Links
-            a: ({node, ...props}) => (
-              <a className="text-blue-600 dark:text-blue-400 hover:underline" {...props}/>
+            a: ({ node, ...props }) => (
+              <a className="text-blue-600 dark:text-blue-400 hover:underline" {...props} />
             ),
           }}
         >
