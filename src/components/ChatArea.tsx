@@ -66,7 +66,6 @@ export const ChatArea = ({
                       onChange={onInputChange}
                       onKeyDown={onKeyDown}
                       placeholder="Type your message..."
-                      disabled={isLoading}
                       className="p-3 resize-none min-h-[44px] max-h-[300px] overflow-y-hidden"
                     />
                   </div>
