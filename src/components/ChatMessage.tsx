@@ -95,7 +95,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLoading }) 
             code: ({ node, inline, className, children, ...props }) => {
               const isInline = inline || !className?.includes('language-');
               return (
-                <code className={`font-mono ${isInline ? 'text-sm bg-gray-100 dark:bg-gray-800 rounded px-1.5 py-0.5' : 'block text-sm text-gray-100 bg-gray-800 p-4 rounded-lg mb-4 overflow-x-auto'}`} {...props}>
+                <code className={`font-mono ${isInline
+                  ? 'text-sm bg-gray-100 dark:bg-gray-800 rounded px-1.5 py-0.5'
+                  : 'block text-sm text-gray-100 bg-gray-800 p-4 rounded-lg mb-4 overflow-x-auto max-w-3xl whitespace-pre'}`} {...props}>
                   {children}
                 </code>
               );
