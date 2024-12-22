@@ -1,10 +1,16 @@
 import type { Tool as AnthropicTool } from '@anthropic-ai/sdk/resources/messages';
-import type { Tool as MCPTool } from './types';
+import type { Tool as MCPTool } from '@modelcontextprotocol/sdk/types';
 
-export function mcpToAnthropicTool(mcpTool: MCPTool): AnthropicTool {
+export function mcpToAnthropicTool(tool: MCPTool): AnthropicTool {
+    const { name, description, inputSchema, ...rest } = tool;
     return {
-        name: mcpTool.name,
-        description: mcpTool.description,
-        input_schema: mcpTool.inputSchema
+        name,
+        description,
+        input_schema: {
+            type: inputSchema.type,
+            properties: inputSchema.properties,
+            ...inputSchema
+        },
+        ...rest
     };
 }

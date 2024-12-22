@@ -46,8 +46,7 @@ export const ChatArea = ({
                 {messages.map((message) => (
                   <ChatMessage
                     key={message.id}
-                    role={message.role}
-                    content={message.content}
+                    message={message}
                     isLoading={isLoading && message === messages[messages.length - 1]}
                   />
                 ))}

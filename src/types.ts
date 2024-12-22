@@ -1,10 +1,11 @@
 import { MessageParam } from '@anthropic-ai/sdk/resources/messages';
 
-// internal representation of a message
+// internal representation of a message for the UI
 export interface Message {
   id: string;
-  role: 'user' | 'assistant' | 'tool';
+  role: 'user' | 'assistant' | 'tool_use' | 'tool_result';
   content: string;
+  isError?: boolean;
 }
 
 export interface Conversation {

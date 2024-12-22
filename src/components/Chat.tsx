@@ -9,7 +9,6 @@ import { initializeClaudeService, getClaudeService } from '../lib/claude';
 import { getAnthropicApiKey, isApiKeyConfigured } from '../lib/config';
 import { loadConversations, saveConversations } from '../lib/storage';
 import { simpleHash } from '../lib/utils';
-import { TextBlockParam, ToolUseBlockParam } from '@anthropic-ai/sdk/resources';
 
 const DEFAULT_CONVERSATION_TITLE = 'Untitled Chat';
 
@@ -67,22 +66,7 @@ export const Chat = () => {
       let responseMessages = messages;  // Collect all the messages from the completion
 
       for await (const response of claudeService.sendMessage(messages)) {
-        const assistantMessage: MessageParam = {
-          role: 'assistant',
-          content: response.content.map(block => {
-            if (block.type === 'text') {
-              return block as TextBlockParam
-            }
-
-            if (block.type === 'tool_use') {
-              return block as ToolUseBlockParam;
-            }
-
-            throw new Error('Unexpected response type from Claude');
-          }),
-        };
-
-        responseMessages = [...responseMessages, assistantMessage];
+        responseMessages = [...responseMessages, response];
         updateConversation({
           ...currentConversation,
           messages: responseMessages,
@@ -148,6 +132,8 @@ export const Chat = () => {
   }
 
   const toMessages = (messages: MessageParam[]): Message[] => {
+    // TODO: understand why this method is called on every key input
+    console.log('Converting messages to messages:', messages);
     return messages.flatMap(message => {
       if (typeof message.content === 'string') {
         return [{
@@ -167,20 +153,58 @@ export const Chat = () => {
             };
           }
 
+          if (block.type === 'image') {
+            return {
+              id: simpleHash(block.source.data).toString(),
+              role: message.role,
+              content: 'Images are not supported yet',
+            }
+          }
+
           if (block.type === 'tool_use') {
-            const content = `Tool: ${block.name}\n\nInput: ${block.input}`;
+            const content = `Tool: \`${block.name}\`\n\nInput:\n\`\`\`json\n${JSON.stringify(block.input, null, 2)}\n\`\`\``;
             return {
               id: simpleHash(content).toString(),
-              role: 'tool',
+              role: 'tool_use',
               content: content,
             };
           }
 
-          throw new Error('Unexpected response type from Claude');
+          if (block.type === 'tool_result') {
+            if (typeof block.content === 'string') {
+              const content = `Tool Result:\n\`\`\`text\n${block.content as string}\n\`\`\``;
+              return {
+                id: simpleHash(content).toString(),
+                role: 'tool_result',
+                content: content,
+                isError: block.is_error,
+              };
+            }
+
+            if (Array.isArray(block.content)) {
+              const contents = block.content.map(block => {
+                if (block.type === 'text') {
+                  return block.text;
+                }
+
+                if (block.type === 'image') {
+                  return "Images are not supported yet";
+                }
+              })
+
+              const content = `Tool Result:\n\`\`\`text\n${contents.join('\n')}\n\`\`\``;
+              return {
+                id: simpleHash(content).toString(),
+                role: 'tool_result',
+                content: content,
+                isError: block.is_error,
+              };
+            }
+          }
         });
       }
 
-      throw new Error('Unexpected response type from Claude');
+      throw new Error('Unexpected message type');
     });
   }
 

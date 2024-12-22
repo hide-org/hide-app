@@ -3,15 +3,15 @@ import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import 'highlight.js/styles/atom-one-dark.css';
+import { Message } from '../types';
 
 interface ChatMessageProps {
-  role: 'user' | 'assistant' | 'tool';
-  content: string;
+  message: Message;
   isLoading?: boolean;
 }
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, isLoading }) => {
-  if (isLoading && role === 'assistant') {
+export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLoading }) => {
+  if (isLoading && message.role === 'assistant') {
     return (
       <div className="flex items-start space-x-4 p-4">
         <Avatar className="w-8 h-8 border">
@@ -26,19 +26,51 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, isLoadi
     );
   }
 
+  const getMessageStyle = () => {
+    switch (message.role) {
+      case 'user':
+        return 'bg-gray-50';
+      case 'assistant':
+        return 'bg-white';
+      case 'tool_use':
+        return 'bg-blue-50';
+      case 'tool_result':
+        return (message.isError ?? false) ? 'bg-red-50' : 'bg-green-50';
+      default:
+        return 'bg-white';
+    }
+  };
+
+  const getAvatar = () => {
+    switch (message.role) {
+      case 'assistant':
+        return (
+          <Avatar className="w-8 h-8 border">
+            <AvatarImage src="/bot-avatar.png" alt="AI" />
+            <AvatarFallback>AI</AvatarFallback>
+          </Avatar>
+        );
+      case 'user':
+        return (
+          <Avatar className="w-8 h-8 border">
+            <AvatarImage src="/user-avatar.png" alt="User" />
+            <AvatarFallback>U</AvatarFallback>
+          </Avatar>
+        );
+      case 'tool_use':
+      case 'tool_result':
+        return (
+          <Avatar className="w-8 h-8 border">
+            <AvatarImage src="/tool-avatar.png" alt="Tool" />
+            <AvatarFallback>T</AvatarFallback>
+          </Avatar>
+        );
+    }
+  };
+
   return (
-    <div className={`flex items-start space-x-4 p-4 ${role === 'user' ? 'bg-gray-50' : 'bg-white'}`}>
-      {role === 'assistant' ? (
-        <Avatar className="w-8 h-8 border">
-          <AvatarImage src="/bot-avatar.png" alt="AI" />
-          <AvatarFallback>AI</AvatarFallback>
-        </Avatar>
-      ) : (
-        <Avatar className="w-8 h-8 border">
-          <AvatarImage src="/user-avatar.png" alt="User" />
-          <AvatarFallback>U</AvatarFallback>
-        </Avatar>
-      )}
+    <div className={`flex items-start space-x-4 p-4 ${getMessageStyle()}`}>
+      {getAvatar()}
       <div className="flex-1 text-gray-900 dark:text-gray-100 leading-relaxed">
         <ReactMarkdown
           rehypePlugins={[rehypeHighlight]}
@@ -71,7 +103,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, isLoadi
             ),
           }}
         >
-          {content}
+          {message.content}
         </ReactMarkdown>
       </div>
     </div>
