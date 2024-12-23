@@ -17,7 +17,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLoading }) 
       <div className="flex items-start space-x-4 p-4">
         <Avatar className="w-8 h-8 border">
           <AvatarImage src="/bot-avatar.png" alt="AI" />
-          <AvatarFallback>AI</AvatarFallback>
+          <AvatarFallback>
+            <Bot className="w-5 h-5" />
+          </AvatarFallback>
         </Avatar>
         <div className="flex items-center">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2" />
