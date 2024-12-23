@@ -8,26 +8,9 @@ import { Message } from '../types';
 
 interface ChatMessageProps {
   message: Message;
-  isLoading?: boolean;
 }
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLoading }) => {
-  if (isLoading && message.role === 'assistant') {
-    return (
-      <div className="flex items-start space-x-4 p-4">
-        <Avatar className="w-8 h-8 border">
-          <AvatarImage src="/bot-avatar.png" alt="AI" />
-          <AvatarFallback>
-            <Bot className="w-5 h-5" />
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex items-center">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2" />
-          <span className="text-gray-500">Thinking...</span>
-        </div>
-      </div>
-    );
-  }
+export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
 
   const getMessageStyle = () => {
     switch (message.role) {

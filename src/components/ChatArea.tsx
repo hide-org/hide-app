@@ -3,9 +3,10 @@ import { Message } from '../types';
 import { Button } from './ui/button';
 import { Card, CardContent, CardFooter } from './ui/card';
 import { Textarea } from './ui/textarea';
-import { Send } from 'lucide-react';
+import { Send, Bot } from 'lucide-react';
 import { ChatMessage } from './ChatMessage';
 import { ScrollArea } from './ui/scroll-area';
+import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 
 interface ChatAreaProps {
   messages: Message[];
@@ -47,9 +48,22 @@ export const ChatArea = ({
                   <ChatMessage
                     key={message.id}
                     message={message}
-                    isLoading={isLoading && message === messages[messages.length - 1]}
                   />
                 ))}
+                {isLoading && (
+                  <div className="flex items-start space-x-4 p-4">
+                    <Avatar className="w-8 h-8 border">
+                      <AvatarImage src="/bot-avatar.png" alt="AI" />
+                      <AvatarFallback>
+                        <Bot className="w-5 h-5" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-200 border-t-gray-900 mr-2" />
+                        <span className="text-gray-500">Thinking...</span>
+                    </div>
+                  </div>
+                )}
                 <div ref={messagesEndRef} className="h-0" />
               </div>
             </ScrollArea>
