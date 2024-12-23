@@ -14,7 +14,8 @@ export class ClaudeService {
     constructor(apiKey: string) {
         this.client = new Anthropic({
             apiKey,
-            dangerouslyAllowBrowser: true
+            dangerouslyAllowBrowser: true,
+            maxRetries: 16,
         });
 
         this.tools = [];
