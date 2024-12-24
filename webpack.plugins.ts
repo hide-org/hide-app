@@ -9,6 +9,11 @@ require('dotenv').config();
 export const plugins = [
   new ForkTsCheckerWebpackPlugin({
     logger: 'webpack-infrastructure',
+    issue: {
+      exclude: [
+        { file: '**/node_modules/**' }
+      ]
+    }
   }),
   new webpack.EnvironmentPlugin(['ANTHROPIC_API_KEY']),
 ];
