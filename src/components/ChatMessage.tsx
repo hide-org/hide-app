@@ -63,7 +63,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   return (
     <div className={`flex items-start space-x-4 p-4 ${getMessageStyle()}`}>
       {getAvatar()}
-      <div className="flex-1 text-gray-900 dark:text-gray-100 leading-relaxed">
+      <div className="flex-1 text-gray-900 dark:text-gray-100 leading-relaxed max-w-3xl">
         <ReactMarkdown
           rehypePlugins={[rehypeHighlight]}
           components={{
@@ -81,7 +81,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
               const isInline = inline || !className?.includes('language-');
               return (
                 <code className={`font-mono ${isInline
-                  ? 'text-sm bg-gray-100 dark:bg-gray-800 rounded px-1.5 py-0.5'
+                  ? 'text-sm bg-gray-100 dark:bg-gray-800 rounded px-1.5 py-0.5 max-w-3xl break-words'
                   : 'block text-sm text-gray-100 bg-gray-800 p-4 rounded-lg mb-4 overflow-x-auto max-w-3xl whitespace-pre'}`} {...props}>
                   {children}
                 </code>
