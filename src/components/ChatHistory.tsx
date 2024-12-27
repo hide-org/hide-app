@@ -31,7 +31,7 @@ export const ChatHistory = ({
           </Button>
         </CardHeader>
         <CardContent className="p-0">
-          <ScrollArea className="h-[calc(100vh-172px)]" type="hover">
+          <ScrollArea className="h-[calc(100vh-200px)]" type="hover">
             <div className="px-4 space-y-2">
               {conversations.map((conversation) => (
                 <ChatPreview

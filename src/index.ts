@@ -15,6 +15,9 @@ const createWindow = (): void => {
   const mainWindow = new BrowserWindow({
     height: 900,
     width: 1440,
+    titleBarStyle: 'hiddenInset',  // Makes title bar blend with the app
+    // backgroundColor: '#ffffff',     // Match your app's background
+    // trafficLightPosition: { x: 20, y: 20 },
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       webSecurity: true,
