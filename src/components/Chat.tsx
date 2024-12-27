@@ -4,7 +4,6 @@ import { useState, useCallback, useEffect } from 'react';
 import { Conversation } from '../types';
 import { ChatArea } from './ChatArea';
 import { ChatHistory } from './ChatHistory';
-import { Details } from './Details';
 import { initializeClaudeService, getClaudeService } from '../lib/claude';
 import { getAnthropicApiKey, isApiKeyConfigured } from '../lib/config';
 import { loadConversations, saveConversations } from '../lib/storage';
