@@ -133,7 +133,7 @@ export const Chat = () => {
   const currentMessages = useMessageConversion(currentConversation?.messages);
 
   return (
-    <div className="flex h-[calc(100vh-28px)] mt-[28px]">
+    <div className="flex h-screen">
       <ChatHistory
         conversations={conversations}
         selectedConversation={currentConversation}
