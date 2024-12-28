@@ -2,6 +2,7 @@ import { ipcMain } from 'electron';
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { CallToolResultSchema, JSONRPCMessage } from "@modelcontextprotocol/sdk/types";
+import { shellExec, escapeShellArg, getUserShell } from './shell';
 
 // 5-minute timeout
 const DEFAULT_TIMEOUT = 300_000;
@@ -12,26 +13,27 @@ export async function initializeMCP(command: string, args: string[] = []) {
         try {
             console.log('Creating StdioClientTransport...', { command, args });
             // First verify that uv is working
-            const { exec } = require('child_process');
-            const util = require('util');
-            const execAsync = util.promisify(exec);
-
             console.log('Checking uv installation...');
             try {
-                const { stdout: uvVersion } = await execAsync(`${command} --version`);
+                const { stdout: uvVersion } = await shellExec(`${escapeShellArg(command)} --version`);
                 console.log('uv version:', uvVersion.trim());
             } catch (err) {
                 console.error('Error checking uv:', err);
                 throw new Error(`uv check failed: ${err.message}`);
             }
 
+            // Get the user's shell for process execution
+            const shell = await getUserShell();
+            console.log('Using shell:', shell);
+
             // Create transport with stdout/stderr capture
             const transport = new StdioClientTransport({
                 command,
                 args,
                 env: {
-                    ...process.env,
-                    PYTHONUNBUFFERED: '1'  // Ensure Python output isn't buffered
+                    ...process.env,  // Preserve user's environment
+                    PYTHONUNBUFFERED: '1',  // Ensure Python output isn't buffered
+                    PATH: process.env.PATH  // Ensure PATH is preserved
                 }
             });
 
