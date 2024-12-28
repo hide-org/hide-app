@@ -14,8 +14,14 @@ import { rendererConfig } from './webpack.renderer.config';
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    extraResource: [
+      // Copy the entire MCP project
+      '/Users/artemm/Code/hide-mcp'
+    ]
   },
-  rebuildConfig: {},
+  rebuildConfig: {
+    onlyModules: ['@modelcontextprotocol/sdk']
+  },
   makers: [new MakerSquirrel({}), new MakerZIP({}, ['darwin']), new MakerRpm({}), new MakerDeb({})],
   plugins: [
     new AutoUnpackNativesPlugin({}),
