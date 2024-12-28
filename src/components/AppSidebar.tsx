@@ -1,6 +1,7 @@
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react"
-
-import { ProjectSwitcher } from "@/components/ProjectSwitcher"
+import { Calendar, Home, Inbox, Plus, Search, Settings } from "lucide-react"
+import { Button } from './ui/button'
+import { Conversation } from '../types'
+import { ProjectSwitcher } from "./ProjectSwitcher"
 import {
   Sidebar,
   SidebarContent,
@@ -12,87 +13,79 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { formatTimestamp } from "../lib/utils"
 
-// Menu items.
-const items = [
-  {
-    title: "Home",
-    url: "#",
-    icon: Home,
-  },
-  {
-    title: "Inbox",
-    url: "#",
-    icon: Inbox,
-  },
-  {
-    title: "Calendar",
-    url: "#",
-    icon: Calendar,
-  },
-  {
-    title: "Search",
-    url: "#",
-    icon: Search,
-  },
-  {
-    title: "Settings",
-    url: "#",
-    icon: Settings,
-  },
-]
-
+// Sample projects data - you can move this to a separate config file later
 const projects = [
   {
-    name: "Project 1",
+    name: "Personal",
     logo: Home,
-    path: "/project-1",
+    path: "/personal",
   },
   {
-    name: "Project 2",
+    name: "Work",
     logo: Inbox,
-    path: "/project-2",
+    path: "/work",
   },
   {
-    name: "Project 3",
-    logo: Calendar,
-    path: "/project-3",
-  },
-  {
-    name: "Project 4",
+    name: "Research",
     logo: Search,
-    path: "/project-4",
+    path: "/research",
   },
   {
-    name: "Project 5",
-    logo: Settings,
-    path: "/project-5",
-  }
-]
-
-const chats = [
+    name: "Archive",
+    logo: Calendar,
+    path: "/archive",
+  },
   {
-    id: "1",
-    title: "React Markdown Code Block Rendering Issue",
+    name: "Settings",
+    logo: Settings,
+    path: "/settings",
   }
 ]
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  conversations: Conversation[];
+  selectedConversation: Conversation | null;
+  onSelectConversation: (c: Conversation) => void;
+  onNewChat: () => void;
+}
+
+export function AppSidebar({
+  conversations = [],
+  selectedConversation,
+  onSelectConversation,
+  onNewChat,
+}: AppSidebarProps) {
   return (
     <Sidebar>
-      <SidebarHeader>
+      <SidebarHeader className="space-y-4 p-4">
         <ProjectSwitcher projects={projects} />
+        <Button
+          onClick={onNewChat}
+          className="w-full"
+          variant="outline"
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          New Chat
+        </Button>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Chats</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {chats.map((item) => (
-                <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton asChild>
-                    <a href="#">
-                      <span>{item.title}</span>
+              {conversations.map((conversation) => (
+                <SidebarMenuItem
+                  key={conversation.id}
+                  className={selectedConversation?.id === conversation.id ? 'bg-accent' : ''}
+                >
+                  <SidebarMenuButton
+                    onClick={() => onSelectConversation(conversation)}
+                    asChild
+                  >
+                    <a title={formatTimestamp(conversation.updatedAt)} href="#">
+                      <span>{conversation.title}</span>
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

@@ -14,3 +14,23 @@ export const simpleHash = (str: string): number => {
   }
   return hash;
 };
+
+export const formatTimestamp = (timestamp: number) => {
+    const date = new Date(timestamp);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const isToday = date.toDateString() === today.toDateString();
+    const isYesterday = date.toDateString() === yesterday.toDateString();
+
+    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    if (isToday) {
+      return `Today at ${time}`;
+    } else if (isYesterday) {
+      return `Yesterday at ${time}`;
+    } else {
+      return `${date.toLocaleDateString()} ${time}`;
+    }
+  };

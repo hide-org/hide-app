@@ -3,7 +3,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { useState, useCallback, useEffect } from 'react';
 import { Conversation } from '../types';
 import { ChatArea } from './ChatArea';
-import { ChatHistory } from './ChatHistory';
+import { AppSidebar } from './AppSidebar';
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { initializeClaudeService, getClaudeService } from '../lib/claude';
 import { getAnthropicApiKey, isApiKeyConfigured } from '../lib/config';
 import { loadConversations, saveConversations } from '../lib/storage';
@@ -134,33 +135,36 @@ export const Chat = () => {
 
   return (
     <div className="flex h-screen">
-      <ChatHistory
-        conversations={conversations}
-        selectedConversation={currentConversation}
-        onSelectConversation={setCurrentConversation}
-        onNewChat={newConversation}
-      />
-      <div className="flex-1 flex flex-col">
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-            <span className="block sm:inline">{error}</span>
-          </div>
-        )}
-        {currentConversation ? (
-          <ChatArea
-            messages={currentMessages}
-            input={input}
-            isLoading={isLoading}
-            onSubmit={handleSubmit}
-            onInputChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <div className="text-xl">Select a conversation or start a new one</div>
-          </div>
-        )}
-      </div>
+      <SidebarProvider>
+        <AppSidebar
+          conversations={conversations}
+          selectedConversation={currentConversation}
+          onSelectConversation={setCurrentConversation}
+          onNewChat={newConversation}
+        />
+        <SidebarTrigger />
+        <div className="flex-1 flex flex-col">
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+              <span className="block sm:inline">{error}</span>
+            </div>
+          )}
+          {currentConversation ? (
+            <ChatArea
+              messages={currentMessages}
+              input={input}
+              isLoading={isLoading}
+              onSubmit={handleSubmit}
+              onInputChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <div className="text-xl">Select a conversation or start a new one</div>
+            </div>
+          )}
+        </div>
+      </SidebarProvider>
     </div>
   );
 };
