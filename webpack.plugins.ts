@@ -13,7 +13,8 @@ export const plugins = [
       exclude: [
         { file: '**/node_modules/**' }
       ]
-    }
+    },
+    devServer: false
   }),
   new webpack.EnvironmentPlugin(['ANTHROPIC_API_KEY']),
 ];
