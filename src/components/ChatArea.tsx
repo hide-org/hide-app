@@ -60,7 +60,7 @@ export const ChatArea = ({
                     </Avatar>
                     <div className="flex items-center">
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-200 border-t-gray-900 mr-2" />
-                        <span className="text-gray-500">Thinking...</span>
+                      <span className="text-gray-500">Thinking...</span>
                     </div>
                   </div>
                 )}
