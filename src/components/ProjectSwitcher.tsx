@@ -39,7 +39,7 @@ export function ProjectSwitcher({
                 <span className="truncate font-semibold">
                   {activeProject.name}
                 </span>
-                <span className="truncate text-xs">{activeProject.uri}</span>
+                <span className="truncate text-xs">{activeProject.path}</span>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>

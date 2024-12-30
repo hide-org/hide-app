@@ -20,6 +20,6 @@ export interface Conversation {
 export interface Project {
   id: string;
   name: string;
-  uri: string;
+  path: string;
   description: string;
 }

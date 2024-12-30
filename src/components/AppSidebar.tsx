@@ -29,6 +29,7 @@ interface AppSidebarProps {
   projects: Project[];
   selectedProject: Project | null;
   onSelectProject: (p: Project) => void;
+  onSaveProject?: (p: Project) => void;
 }
 
 export function AppSidebar({
@@ -39,6 +40,7 @@ export function AppSidebar({
   projects = [],
   selectedProject,
   onSelectProject,
+  onSaveProject,
 }: AppSidebarProps) {
   const [projectToEdit, setProjectToEdit] = React.useState<Project | null>(null);
   return (
@@ -49,6 +51,7 @@ export function AppSidebar({
         onOpenChange={(open) => {
           if (!open) setProjectToEdit(null);
         }}
+        onSave={onSaveProject}
       />
       <SidebarHeader className="space-y-4 p-4">
         <ProjectSwitcher projects={projects} />
@@ -64,7 +67,7 @@ export function AppSidebar({
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Projects</SidebarGroupLabel>
-          <SidebarGroupAction title="Add Project" onClick={() => console.log('Add project')}>
+          <SidebarGroupAction title="Add Project" onClick={() => setProjectToEdit({} as Project)}>
             <Plus /> <span className="sr-only">Add Project</span>
           </SidebarGroupAction>
           <SidebarGroupContent>

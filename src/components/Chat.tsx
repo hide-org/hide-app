@@ -11,37 +11,37 @@ import { loadConversations, saveConversations } from '../lib/storage';
 import { useMessageConversion } from '../hooks/useMessageConversion';
 
 const DEFAULT_CONVERSATION_TITLE = 'Untitled Chat';
-//
+
 // Sample projects data - you can move this to a separate config file later
-const projects: Project[] = [
+const projectsData: Project[] = [
   {
     id: "personal",
     name: "Personal",
-    uri: "/personal",
+    path: "/personal",
     description: "Your personal notes and thoughts",
   },
   {
     id: "work",
     name: "Work",
-    uri: "/work",
+    path: "/work",
     description: "Your work notes and thoughts",
   },
   {
     id: "research",
     name: "Research",
-    uri: "/research",
+    path: "/research",
     description: "Your research notes and thoughts",
   },
   {
     id: "archive",
     name: "Archive",
-    uri: "/archive",
+    path: "/archive",
     description: "Your archived notes and thoughts",
   },
   {
     id: "settings",
     name: "Settings",
-    uri: "/settings",
+    path: "/settings",
     description: "Your settings and preferences",
   }
 ]
@@ -49,6 +49,7 @@ const projects: Project[] = [
 export const Chat = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
+  const [projects, setProjects] = useState<Project[]>(projectsData);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -168,6 +169,18 @@ export const Chat = () => {
 
   const currentMessages = useMessageConversion(currentConversation?.messages);
 
+  const onSaveProject = (project: Project) => {
+    if (projects.some(p => p.id === project.id)) {
+      // Existing project - update it
+      setProjects(projects.map(p =>
+        p.id === project.id ? project : p
+      ));
+    } else {
+      // New project - add it to the list
+      setProjects([...projects, project]);
+    }
+  };
+
   return (
     <div className="flex h-screen">
       <SidebarProvider>
@@ -179,6 +192,7 @@ export const Chat = () => {
           projects={projects}
           selectedProject={selectedProject}
           onSelectProject={setSelectedProject}
+          onSaveProject={onSaveProject}
         />
         <div className="flex-1 flex flex-col">
           <SidebarTrigger />
