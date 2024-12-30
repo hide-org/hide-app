@@ -16,3 +16,10 @@ export interface Conversation {
   createdAt: number;
   updatedAt: number;
 }
+
+export interface Project {
+  id: string;
+  name: string;
+  uri: string;
+  description: string;
+}

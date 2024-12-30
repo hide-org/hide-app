@@ -1,54 +1,32 @@
-import { Calendar, Home, Inbox, Plus, Search, Settings } from "lucide-react"
+import { Calendar, Home, Inbox, MoreHorizontal, Plus, Search, Settings } from "lucide-react"
 import { Button } from './ui/button'
-import { Conversation } from '../types'
+import { Conversation, Project } from '../types'
 import { ProjectSwitcher } from "./ProjectSwitcher"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
+  SidebarGroupAction,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { formatTimestamp } from "../lib/utils"
 
-// Sample projects data - you can move this to a separate config file later
-const projects = [
-  {
-    name: "Personal",
-    logo: Home,
-    path: "/personal",
-  },
-  {
-    name: "Work",
-    logo: Inbox,
-    path: "/work",
-  },
-  {
-    name: "Research",
-    logo: Search,
-    path: "/research",
-  },
-  {
-    name: "Archive",
-    logo: Calendar,
-    path: "/archive",
-  },
-  {
-    name: "Settings",
-    logo: Settings,
-    path: "/settings",
-  }
-]
 
 interface AppSidebarProps {
   conversations: Conversation[];
   selectedConversation: Conversation | null;
   onSelectConversation: (c: Conversation) => void;
   onNewChat: () => void;
+  projects: Project[];
+  selectedProject: Project | null;
+  onSelectProject: (p: Project) => void;
 }
 
 export function AppSidebar({
@@ -56,6 +34,9 @@ export function AppSidebar({
   selectedConversation,
   onSelectConversation,
   onNewChat,
+  projects = [],
+  selectedProject,
+  onSelectProject,
 }: AppSidebarProps) {
   return (
     <Sidebar>
@@ -71,6 +52,46 @@ export function AppSidebar({
         </Button>
       </SidebarHeader>
       <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Projects</SidebarGroupLabel>
+          <SidebarGroupAction title="Add Project" onClick={() => console.log('Add project')}>
+            <Plus /> <span className="sr-only">Add Project</span>
+          </SidebarGroupAction>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {projects.map((project) => (
+                <SidebarMenuItem
+                  key={project.name}
+                  className={selectedProject?.name === project.name ? 'bg-accent' : ''}
+                >
+                  <SidebarMenuButton
+                    onClick={() => onSelectProject(project)}
+                    asChild
+                  >
+                    <a href="#">
+                      <span>{project.name}</span>
+                    </a>
+                  </SidebarMenuButton>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <SidebarMenuAction>
+                        <MoreHorizontal />
+                      </SidebarMenuAction>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="right" align="start">
+                      <DropdownMenuItem onClick={() => console.log('Edit project')}>
+                        <span>Edit Project</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => console.log('Delete project')}>
+                        <span>Delete Project</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
         <SidebarGroup>
           <SidebarGroupLabel>Chats</SidebarGroupLabel>
           <SidebarGroupContent>

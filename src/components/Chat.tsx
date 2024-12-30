@@ -1,7 +1,7 @@
 import { MessageParam } from '@anthropic-ai/sdk/src/resources/messages';
 import { v4 as uuidv4 } from 'uuid';
 import { useState, useCallback, useEffect } from 'react';
-import { Conversation } from '../types';
+import { Conversation, Project } from '../types';
 import { ChatArea } from './ChatArea';
 import { AppSidebar } from './AppSidebar';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
@@ -11,10 +11,45 @@ import { loadConversations, saveConversations } from '../lib/storage';
 import { useMessageConversion } from '../hooks/useMessageConversion';
 
 const DEFAULT_CONVERSATION_TITLE = 'Untitled Chat';
+//
+// Sample projects data - you can move this to a separate config file later
+const projects: Project[] = [
+  {
+    id: "personal",
+    name: "Personal",
+    uri: "/personal",
+    description: "Your personal notes and thoughts",
+  },
+  {
+    id: "work",
+    name: "Work",
+    uri: "/work",
+    description: "Your work notes and thoughts",
+  },
+  {
+    id: "research",
+    name: "Research",
+    uri: "/research",
+    description: "Your research notes and thoughts",
+  },
+  {
+    id: "archive",
+    name: "Archive",
+    uri: "/archive",
+    description: "Your archived notes and thoughts",
+  },
+  {
+    id: "settings",
+    name: "Settings",
+    uri: "/settings",
+    description: "Your settings and preferences",
+  }
+]
 
 export const Chat = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -141,6 +176,9 @@ export const Chat = () => {
           selectedConversation={currentConversation}
           onSelectConversation={setCurrentConversation}
           onNewChat={newConversation}
+          projects={projects}
+          selectedProject={selectedProject}
+          onSelectProject={setSelectedProject}
         />
         <div className="flex-1 flex flex-col">
           <SidebarTrigger />
