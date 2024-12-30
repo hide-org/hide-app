@@ -181,6 +181,10 @@ export const Chat = () => {
     }
   };
 
+  const onDeleteProject = (project: Project) => {
+    setProjects(projects.filter(p => p.id !== project.id));
+  };
+
   return (
     <div className="flex h-screen">
       <SidebarProvider>
@@ -193,6 +197,7 @@ export const Chat = () => {
           selectedProject={selectedProject}
           onSelectProject={setSelectedProject}
           onSaveProject={onSaveProject}
+          onDeleteProject={onDeleteProject}
         />
         <div className="flex-1 flex flex-col">
           <SidebarTrigger />

@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/sidebar"
 import { formatTimestamp } from "../lib/utils"
 import { ProjectDialog } from "./ProjectDialog"
+import { DeleteProjectDialog } from "./DeleteProjectDialog"
 
 
 interface AppSidebarProps {
@@ -30,6 +31,7 @@ interface AppSidebarProps {
   selectedProject: Project | null;
   onSelectProject: (p: Project) => void;
   onSaveProject?: (p: Project) => void;
+  onDeleteProject?: (p: Project) => void;
 }
 
 export function AppSidebar({
@@ -41,17 +43,28 @@ export function AppSidebar({
   selectedProject,
   onSelectProject,
   onSaveProject,
+  onDeleteProject,
 }: AppSidebarProps) {
   const [projectToEdit, setProjectToEdit] = React.useState<Project | null>(null);
+  const [projectToDelete, setProjectToDelete] = React.useState<Project | null>(null);
+
   return (
     <Sidebar>
-      <ProjectDialog 
+      <ProjectDialog
         project={projectToEdit}
         open={projectToEdit !== null}
         onOpenChange={(open) => {
           if (!open) setProjectToEdit(null);
         }}
         onSave={onSaveProject}
+      />
+      <DeleteProjectDialog
+        project={projectToDelete}
+        open={projectToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setProjectToDelete(null);
+        }}
+        onDelete={onDeleteProject}
       />
       <SidebarHeader className="space-y-4 p-4">
         <ProjectSwitcher projects={projects} />
@@ -95,7 +108,7 @@ export function AppSidebar({
                       <DropdownMenuItem onClick={() => setProjectToEdit(project)}>
                         <span>Edit Project</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => console.log('Delete project')}>
+                      <DropdownMenuItem onClick={() => setProjectToDelete(project)}>
                         <span>Delete Project</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
