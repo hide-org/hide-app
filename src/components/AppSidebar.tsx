@@ -18,7 +18,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { formatTimestamp } from "../lib/utils"
-import { ProjectDialog } from "./Project"
+import { ProjectDialog } from "./ProjectDialog"
 
 
 interface AppSidebarProps {

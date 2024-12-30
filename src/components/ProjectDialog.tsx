@@ -13,13 +13,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
-import { Project as ProjectType } from '../types'
+import { Project } from '../types'
 
 interface ProjectDialogProps {
-  project: Partial<ProjectType> | null;
+  project: Partial<Project> | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave?: (project: ProjectType) => void;
+  onSave?: (project: Project) => void;
 }
 
 export function ProjectDialog({ project, open, onOpenChange, onSave }: ProjectDialogProps) {
@@ -43,7 +43,7 @@ export function ProjectDialog({ project, open, onOpenChange, onSave }: ProjectDi
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (onSave) {
-      onSave(formData as ProjectType);
+      onSave(formData as Project);
     }
     onOpenChange(false);
   };
@@ -63,11 +63,11 @@ export function ProjectDialog({ project, open, onOpenChange, onSave }: ProjectDi
               <Label htmlFor="name" className="text-right">
                 Name
               </Label>
-              <Input 
-                id="name" 
+              <Input
+                id="name"
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="project-name" 
+                placeholder="project-name"
                 className="col-span-3"
                 pattern="^[^\s]+$"
                 title="Name cannot contain spaces"
@@ -79,17 +79,17 @@ export function ProjectDialog({ project, open, onOpenChange, onSave }: ProjectDi
                 Path
               </Label>
               <div className="col-span-3 flex">
-                <Input 
-                  id="path" 
+                <Input
+                  id="path"
                   value={formData.path}
                   onChange={(e) => setFormData(prev => ({ ...prev, path: e.target.value }))}
-                  placeholder="/path/to/project" 
+                  placeholder="/path/to/project"
                   className="flex-grow"
                   required
                 />
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   className="ml-2"
                   onClick={async () => {
                     try {
@@ -110,11 +110,11 @@ export function ProjectDialog({ project, open, onOpenChange, onSave }: ProjectDi
               <Label htmlFor="description" className="text-right pt-2">
                 Description
               </Label>
-              <Textarea 
-                id="description" 
+              <Textarea
+                id="description"
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Project description" 
+                placeholder="Project description"
                 className="col-span-3 h-32 resize-none"
               />
             </div>
