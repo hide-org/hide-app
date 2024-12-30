@@ -1,3 +1,4 @@
+import * as React from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -12,12 +13,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
-export function ProjectDialog() {
+import { Project as ProjectType } from '../types'
+
+interface ProjectDialogProps {
+  project: ProjectType | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function ProjectDialog({ project, open, onOpenChange }: ProjectDialogProps) {
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <span>Edit Project</span>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Create/Edit Project</DialogTitle>
@@ -32,6 +38,7 @@ export function ProjectDialog() {
             </Label>
             <Input 
               id="name" 
+              defaultValue={project?.name}
               placeholder="project-name" 
               className="col-span-3"
               pattern="^[^\s]+$"
@@ -45,6 +52,7 @@ export function ProjectDialog() {
             <div className="col-span-3 flex">
               <Input 
                 id="path" 
+                defaultValue={project?.uri}
                 placeholder="/path/to/project" 
                 className="flex-grow"
                 readOnly
@@ -65,6 +73,7 @@ export function ProjectDialog() {
             </Label>
             <Textarea 
               id="description" 
+              defaultValue={project?.description}
               placeholder="Project description" 
               className="col-span-3 h-32 resize-none"
             />

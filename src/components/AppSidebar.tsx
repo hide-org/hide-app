@@ -1,3 +1,4 @@
+import * as React from "react"
 import { Calendar, Home, Inbox, MoreHorizontal, Plus, Search, Settings } from "lucide-react"
 import { Button } from './ui/button'
 import { Conversation, Project } from '../types'
@@ -17,6 +18,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { formatTimestamp } from "../lib/utils"
+import { ProjectDialog } from "./Project"
 
 
 interface AppSidebarProps {
@@ -38,8 +40,16 @@ export function AppSidebar({
   selectedProject,
   onSelectProject,
 }: AppSidebarProps) {
+  const [projectToEdit, setProjectToEdit] = React.useState<Project | null>(null);
   return (
     <Sidebar>
+      <ProjectDialog 
+        project={projectToEdit}
+        open={projectToEdit !== null}
+        onOpenChange={(open) => {
+          if (!open) setProjectToEdit(null);
+        }}
+      />
       <SidebarHeader className="space-y-4 p-4">
         <ProjectSwitcher projects={projects} />
         <Button
@@ -79,7 +89,7 @@ export function AppSidebar({
                       </SidebarMenuAction>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent side="right" align="start">
-                      <DropdownMenuItem onClick={() => console.log('Edit project')}>
+                      <DropdownMenuItem onClick={() => setProjectToEdit(project)}>
                         <span>Edit Project</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => console.log('Delete project')}>
