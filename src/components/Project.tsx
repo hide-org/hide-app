@@ -85,14 +85,22 @@ export function ProjectDialog({ project, open, onOpenChange, onSave }: ProjectDi
                   onChange={(e) => setFormData(prev => ({ ...prev, path: e.target.value }))}
                   placeholder="/path/to/project" 
                   className="flex-grow"
-                  readOnly
                   required
                 />
                 <Button 
                   type="button" 
                   variant="outline" 
                   className="ml-2"
-                  onClick={() => alert('Open file dialog here')}
+                  onClick={async () => {
+                    try {
+                      const result = await window.electron.showDirectoryPicker();
+                      if (!result.canceled && result.filePaths.length > 0) {
+                        setFormData(prev => ({ ...prev, path: result.filePaths[0] }));
+                      }
+                    } catch (error) {
+                      console.error('Error picking directory:', error);
+                    }
+                  }}
                 >
                   Browse
                 </Button>

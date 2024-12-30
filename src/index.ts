@@ -179,6 +179,18 @@ const getMCPConfig = async () => {
 // Import the UV installer
 import { ensureUV } from './main/install-uv';
 
+// Import ipcMain
+import { ipcMain } from 'electron';
+
+// Handle directory picker dialog
+ipcMain.handle('dialog:showDirectoryPicker', async () => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openDirectory', 'createDirectory'],
+    title: 'Select Project Directory',
+  });
+  return result;
+});
+
 app.whenReady().then(async () => {
   const { cmd, args } = await getMCPConfig();
   console.log('Initializing MCP...', { cmd, args });
