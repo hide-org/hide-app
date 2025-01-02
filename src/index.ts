@@ -1,6 +1,10 @@
-import { app, BrowserWindow, session, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, session, dialog } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
+
+import { initializeDatabase, setupProjectHandlers } from './main/db';
+import { ensureUV } from './main/install-uv';
+import { initializeMCP } from './main/mcp';
 
 // Set up logging
 const setupLogging = () => {
@@ -131,9 +135,6 @@ app.on('activate', () => {
   }
 });
 
-// Initialize MCP service
-import { initializeMCP } from './main/mcp';
-
 // TODO: Make this configurable
 const getMCPConfig = async () => {
   const mcpPath = !app.isPackaged
@@ -176,12 +177,6 @@ const getMCPConfig = async () => {
   };
 };
 
-// Import the UV installer
-import { ensureUV } from './main/install-uv';
-
-// Import ipcMain
-import { ipcMain } from 'electron';
-
 // Handle directory picker dialog
 ipcMain.handle('dialog:showDirectoryPicker', async () => {
   const result = await dialog.showOpenDialog({
@@ -192,8 +187,13 @@ ipcMain.handle('dialog:showDirectoryPicker', async () => {
 });
 
 app.whenReady().then(async () => {
+  // Initialize the database and set up IPC handlers
+  initializeDatabase();
+  setupProjectHandlers();
+
   const { cmd, args } = await getMCPConfig();
   console.log('Initializing MCP...', { cmd, args });
+
   try {
     const initPromise = initializeMCP(cmd, args);
 

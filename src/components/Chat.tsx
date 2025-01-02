@@ -12,44 +12,12 @@ import { useMessageConversion } from '../hooks/useMessageConversion';
 
 const DEFAULT_CONVERSATION_TITLE = 'Untitled Chat';
 
-// Sample projects data - you can move this to a separate config file later
-const projectsData: Project[] = [
-  {
-    id: "personal",
-    name: "Personal",
-    path: "/personal",
-    description: "Your personal notes and thoughts",
-  },
-  {
-    id: "work",
-    name: "Work",
-    path: "/work",
-    description: "Your work notes and thoughts",
-  },
-  {
-    id: "research",
-    name: "Research",
-    path: "/research",
-    description: "Your research notes and thoughts",
-  },
-  {
-    id: "archive",
-    name: "Archive",
-    path: "/archive",
-    description: "Your archived notes and thoughts",
-  },
-  {
-    id: "settings",
-    name: "Settings",
-    path: "/settings",
-    description: "Your settings and preferences",
-  }
-]
+// Projects are now loaded from the database
 
 export const Chat = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
-  const [projects, setProjects] = useState<Project[]>(projectsData);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -63,6 +31,20 @@ export const Chat = () => {
     } else {
       setError('API key not configured. Please set up your Anthropic API key.');
     }
+  }, []);
+
+  // Load projects from the database
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        const loadedProjects = await window.projects.getAll();
+        setProjects(loadedProjects);
+      } catch (err) {
+        console.error('Error loading projects:', err);
+        setError('Failed to load projects');
+      }
+    };
+    loadProjects();
   }, []);
 
   // Load conversations from local storage
@@ -169,20 +151,26 @@ export const Chat = () => {
 
   const currentMessages = useMessageConversion(currentConversation?.messages);
 
-  const onSaveProject = (project: Project) => {
-    if (projects.some(p => p.id === project.id)) {
-      // Existing project - update it
-      setProjects(projects.map(p =>
-        p.id === project.id ? project : p
-      ));
-    } else {
-      // New project - add it to the list
-      setProjects([...projects, project]);
+  const onSaveProject = async (project: Project) => {
+    try {
+      const updatedProjects = projects.some(p => p.id === project.id)
+        ? await window.projects.update(project)
+        : await window.projects.create(project);
+      setProjects(updatedProjects);
+    } catch (err) {
+      console.error('Error saving project:', err);
+      setError('Failed to save project');
     }
   };
 
-  const onDeleteProject = (project: Project) => {
-    setProjects(projects.filter(p => p.id !== project.id));
+  const onDeleteProject = async (project: Project) => {
+    try {
+      const updatedProjects = await window.projects.delete(project.id);
+      setProjects(updatedProjects);
+    } catch (err) {
+      console.error('Error deleting project:', err);
+      setError('Failed to delete project');
+    }
   };
 
   return (

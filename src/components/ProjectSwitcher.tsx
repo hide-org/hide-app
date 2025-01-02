@@ -24,7 +24,39 @@ export function ProjectSwitcher({
   projects: Project[]
 }) {
   const { isMobile } = useSidebar()
-  const [activeProject, setActiveProject] = React.useState(projects[0])
+  const [activeProject, setActiveProject] = React.useState<Project | null>(
+    projects.length > 0 ? projects[0] : null
+  )
+
+  // Update active project when projects change and current active is null
+  React.useEffect(() => {
+    if (!activeProject && projects.length > 0) {
+      setActiveProject(projects[0])
+    }
+  }, [projects, activeProject])
+
+  // If there are no projects, show a simplified version with just the "Add project" button
+  if (!projects.length) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            size="lg"
+            onClick={() => {/* Handle add project click */ }}
+            className="grid gap-2"
+          >
+            <div className="flex size-6 items-center justify-center rounded-md border bg-background">
+              <Plus className="size-4" />
+            </div>
+            <span className="text-sm font-medium text-muted-foreground">Add your first project</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    )
+  }
+
+  // Safety check - shouldn't occur with above logic but TypeScript will be happy
+  if (!activeProject) return null;
 
   return (
     <SidebarMenu>
