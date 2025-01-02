@@ -176,11 +176,22 @@ export const Chat = () => {
   };
 
   const title = () => {
-    if (selectedProject?.name) {
-      return `Good evening, how may I assist you with ${selectedProject.name}?`;
+    const hour = new Date().getHours();
+    let greeting;
+
+    if (hour >= 5 && hour < 12) {
+      greeting = 'Good morning';
+    } else if (hour >= 12 && hour < 18) {
+      greeting = 'Good afternoon';
+    } else {
+      greeting = 'Good evening';
     }
 
-    return 'Good evening, how may I assist you?';
+    if (selectedProject?.name) {
+      return `${greeting}, how may I assist you with ${selectedProject.name}?`;
+    }
+
+    return `${greeting}, how may I assist you?`;
   }
 
   return (
