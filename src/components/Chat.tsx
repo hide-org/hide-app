@@ -3,8 +3,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { useState, useCallback, useEffect } from 'react';
 import { Conversation, Project } from '../types';
 import { ChatArea } from './ChatArea';
+import { ChatInput } from './ChatInput';
 import { AppSidebar } from './AppSidebar';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { H1, H2, H3 } from '@/components/ui/typography';
 import { initializeClaudeService, getClaudeService } from '../lib/claude';
 import { getAnthropicApiKey, isApiKeyConfigured } from '../lib/config';
 import { loadConversations, saveConversations } from '../lib/storage';
@@ -173,6 +175,14 @@ export const Chat = () => {
     }
   };
 
+  const title = () => {
+    if (selectedProject?.name) {
+      return `Good evening, how may I assist you with ${selectedProject.name}?`;
+    }
+
+    return 'Good evening, how may I assist you?';
+  }
+
   return (
     <div className="flex h-screen">
       <SidebarProvider>
@@ -204,8 +214,11 @@ export const Chat = () => {
               onKeyDown={handleKeyDown}
             />
           ) : (
-            <div className="flex h-full items-center justify-center">
-              <div className="text-xl">Select a conversation or start a new one</div>
+            <div className="flex h-full flex-col justify-center">
+              <H2 className="w-full max-w-2xl mx-auto border-0">
+                {title()}
+              </H2>
+              <ChatInput />
             </div>
           )}
         </div>
