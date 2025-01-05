@@ -9,6 +9,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { H1, H2, H3 } from '@/components/ui/typography';
 import { initializeClaudeService, getClaudeService } from '../lib/claude';
 import { getAnthropicApiKey, isApiKeyConfigured } from '../lib/config';
+import { projectPrompt } from '../lib/prompts';
 import { loadConversations, saveConversations } from '../lib/storage';
 import { useMessageConversion } from '../hooks/useMessageConversion';
 
@@ -70,7 +71,7 @@ export const Chat = () => {
       content: input.trim(),
     };
 
-    const messages = [...currentConversation.messages, message];
+    let messages = [...currentConversation.messages, message];
     updateConversation({
       ...currentConversation,
       messages: messages,
@@ -83,23 +84,31 @@ export const Chat = () => {
 
     try {
       const claudeService = getClaudeService();
-      let responseMessages = messages;  // Collect all the messages from the completion
 
-      for await (const response of claudeService.sendMessage(messages)) {
-        responseMessages = [...responseMessages, response];
+      // Clone messages for the API call
+      const _messages = [...messages];
+      if (selectedProject) {
+        // Apply project prompt to the first message
+        _messages[0] = { ..._messages[0], content: projectPrompt(selectedProject, _messages[0].content as string) };
+      }
+
+      console.log('Messages:', _messages);
+
+      for await (const response of claudeService.sendMessage(_messages)) {
+        messages = [...messages, response];
         updateConversation({
           ...currentConversation,
-          messages: responseMessages,
+          messages: messages,
           updatedAt: Date.now(),
         });
       }
 
       if (shouldGenerateTitle) {
-        claudeService.generateTitle(currentConversation.messages[0]?.content as string || input.trim())
+        claudeService.generateTitle(messages[0]?.content as string || input.trim())
           .then(title => {
             updateConversation({
               ...currentConversation,
-              messages: responseMessages,
+              messages: messages,
               title: title,
               updatedAt: Date.now()
             });
