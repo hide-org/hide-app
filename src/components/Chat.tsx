@@ -14,6 +14,7 @@ import { loadConversations, saveConversations } from '../lib/storage';
 import { useMessageConversion } from '../hooks/useMessageConversion';
 
 const DEFAULT_CONVERSATION_TITLE = 'Untitled Chat';
+const DEFAULT_PROJECT_NAME = 'General';
 
 // Projects are now loaded from the database
 
@@ -218,7 +219,6 @@ export const Chat = () => {
           onDeleteProject={onDeleteProject}
         />
         <div className="flex-1 flex flex-col">
-          <SidebarTrigger />
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
               <span className="block sm:inline">{error}</span>
@@ -229,6 +229,8 @@ export const Chat = () => {
               messages={currentMessages}
               input={input}
               isLoading={isLoading}
+              projectName={selectedProject?.name || DEFAULT_PROJECT_NAME}
+              conversationTitle={currentConversation?.title || DEFAULT_CONVERSATION_TITLE}
               onSubmit={handleSubmit}
               onInputChange={handleInputChange}
               onKeyDown={handleKeyDown}

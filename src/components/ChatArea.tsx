@@ -6,12 +6,17 @@ import { Textarea } from './ui/textarea';
 import { Send, Bot } from 'lucide-react';
 import { ChatMessage } from './ChatMessage';
 import { ScrollArea } from './ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from './ui/breadcrumb';
 
 interface ChatAreaProps {
   messages: Message[];
   input: string;
   isLoading: boolean;
+  projectName: string;
+  conversationTitle: string;
   onSubmit: (e: React.FormEvent) => void;
   onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
@@ -21,6 +26,8 @@ export const ChatArea = ({
   messages,
   input,
   isLoading,
+  projectName,
+  conversationTitle,
   onSubmit,
   onInputChange,
   onKeyDown,
@@ -38,11 +45,28 @@ export const ChatArea = ({
 
   return (
     <div className="flex-1 flex flex-col">
+      {/* Breadcrumbs */}
+      <div className="flex items-center gap-2 px-4 pt-6 pb-0">
+        <SidebarTrigger />
+        <Separator orientation="vertical" className="mr-2 h-4" />
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              {projectName}
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{conversationTitle}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
+
       {/* Messages Area */}
       <div className="flex-1 p-4">
         <Card className="h-full flex flex-col">
           <CardContent className="flex-1 p-0">
-            <ScrollArea className="h-[calc(100vh-140px)]" type="hover">
+            <ScrollArea className="h-[calc(100vh-180px)]" type="hover">
               <div className="px-4 py-4">
                 {messages.map((message) => (
                   <ChatMessage
