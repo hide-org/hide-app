@@ -13,7 +13,7 @@ import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage, BreadcrumbS
 import { useMessageConversion } from '@/hooks/useMessageConversion';
 import { MessageParam } from '@anthropic-ai/sdk/resources/messages';
 import { getClaudeService } from '@/lib/claude';
-import { projectPrompt } from '@/lib/prompts';
+import { systemPrompt } from '@/lib/prompts';
 
 
 interface ChatAreaProps {
@@ -90,14 +90,8 @@ export const ChatArea = ({
 
       // Clone messages for the API call
       const _messages = [...messages];
-      if (project) {
-        // Apply project prompt to the first message
-        _messages[0] = { ..._messages[0], content: projectPrompt(project, _messages[0].content as string) };
-      }
 
-      console.log('Messages:', _messages);
-
-      for await (const response of claudeService.sendMessage(_messages)) {
+      for await (const response of claudeService.sendMessage(_messages, systemPrompt(project))) {
         messages = [...messages, response];
         onUpdateConversation({
           ...conversation,

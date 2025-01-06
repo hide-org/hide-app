@@ -2,8 +2,10 @@ import Anthropic from '@anthropic-ai/sdk';
 import { ImageBlockParam, TextBlockParam, ToolUseBlockParam } from '@anthropic-ai/sdk/resources';
 import { MessageParam, Tool as AnthropicTool, ToolResultBlockParam } from '@anthropic-ai/sdk/resources/messages';
 import type { CallToolResult as ToolResult } from '@modelcontextprotocol/sdk/types';
+import { systemPrompt } from '@/lib/prompts';
 import { callTool, listTools } from './mcp/client';
 import { mcpToAnthropicTool } from './mcp/adapters';
+import { Project } from '@/types';
 
 export class ClaudeService {
     private client: Anthropic;
@@ -32,13 +34,14 @@ export class ClaudeService {
         }
     }
 
-    async *sendMessage(messages: MessageParam[]): AsyncGenerator<MessageParam> {
+    async *sendMessage(messages: MessageParam[], systemPrompt: string = ''): AsyncGenerator<MessageParam> {
         try {
             let loopMessages = messages;
             while (true) {
                 const response = await this.client.messages.create({
                     model: this.chatModel,
                     max_tokens: 4096,
+                    system: systemPrompt,
                     messages: loopMessages,
                     tools: this.tools,
                 });
