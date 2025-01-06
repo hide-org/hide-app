@@ -98,6 +98,13 @@ export const Chat = () => {
     }
   };
 
+  const onSelectProject = (project: Project | null) => {
+    setSelectedProject(project);
+    // Reset chat area by creating a new conversation
+    const c = newConversation();
+    setCurrentConversation(c);
+  };
+
   return (
     <div className="flex h-screen">
       <SidebarProvider>
@@ -108,7 +115,7 @@ export const Chat = () => {
           onNewChat={onNewChat}
           projects={projects}
           selectedProject={selectedProject}
-          onSelectProject={setSelectedProject}
+          onSelectProject={onSelectProject}
           onSaveProject={onSaveProject}
           onDeleteProject={onDeleteProject}
         />
