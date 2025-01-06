@@ -1,50 +1,143 @@
-import { useRef, useEffect } from 'react';
-import { Message } from '../types';
-import { Button } from './ui/button';
+import { useRef, useEffect, useState } from 'react';
+import { Conversation, DEFAULT_CONVERSATION_TITLE, Project } from '../types';
 import { Card, CardContent, CardFooter } from './ui/card';
-import { Textarea } from './ui/textarea';
-import { Send, Bot } from 'lucide-react';
+import { Bot } from 'lucide-react';
+import { ChatInput } from '@/components/ChatInput';
 import { ChatMessage } from './ChatMessage';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { H2 } from '@/components/ui/typography';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
-import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from './ui/breadcrumb';
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage, BreadcrumbSeparator } from './ui/breadcrumb';
+import { useMessageConversion } from '@/hooks/useMessageConversion';
+import { MessageParam } from '@anthropic-ai/sdk/resources/messages';
+import { getClaudeService } from '@/lib/claude';
+import { projectPrompt } from '@/lib/prompts';
+
 
 interface ChatAreaProps {
-  messages: Message[];
-  input: string;
-  isLoading: boolean;
-  projectName: string;
-  conversationTitle: string;
-  onSubmit: (e: React.FormEvent) => void;
-  onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  conversation: Conversation | null;
+  onUpdateConversation: (conversation: Conversation) => void;
+  project: Project | null;
+  error: string | null;
+  onError: (error: string | null) => void;
 }
 
 export const ChatArea = ({
-  messages,
-  input,
-  isLoading,
-  projectName,
-  conversationTitle,
-  onSubmit,
-  onInputChange,
-  onKeyDown,
+  conversation,
+  onUpdateConversation,
+  project,
+  error,
+  onError,
 }: ChatAreaProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Scroll to the bottom of the chat when new messages are added
   useEffect(() => {
     if (messagesEndRef.current) {
-      const behavior = messages.length <= 2 ? 'auto' : 'smooth';
+      const behavior = conversation?.messages.length <= 2 ? 'auto' : 'smooth';
       messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
     }
-  }, [messages]);
+  }, [conversation?.messages]);
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const title = () => {
+    const hour = new Date().getHours();
+    let greeting;
+
+    if (hour >= 5 && hour < 12) {
+      greeting = 'Good morning';
+    } else if (hour >= 12 && hour < 18) {
+      greeting = 'Good afternoon';
+    } else {
+      greeting = 'Good evening';
+    }
+
+    if (project?.name) {
+      return `${greeting}, how may I assist you with ${project.name}?`;
+    }
+
+    return `${greeting}, how may I assist you?`;
+  }
+
+  const currentMessages = useMessageConversion(conversation?.messages);
+
+  const onSendMessage = (async (input: string) => {
+
+    if (!input.trim() || isLoading) return;
+
+    setIsLoading(true);
+
+    const message: MessageParam = {
+      role: 'user',
+      content: input.trim(),
+    };
+
+    let messages = [...conversation.messages, message];
+
+    onUpdateConversation({
+      ...conversation,
+      messages: messages,
+      updatedAt: Date.now(),
+    });
+
+    const shouldGenerateTitle = messages.length === 1 || conversation.title === DEFAULT_CONVERSATION_TITLE;
+
+    try {
+      const claudeService = getClaudeService();
+
+      // Clone messages for the API call
+      const _messages = [...messages];
+      if (project) {
+        // Apply project prompt to the first message
+        _messages[0] = { ..._messages[0], content: projectPrompt(project, _messages[0].content as string) };
+      }
+
+      console.log('Messages:', _messages);
+
+      for await (const response of claudeService.sendMessage(_messages)) {
+        messages = [...messages, response];
+        onUpdateConversation({
+          ...conversation,
+          messages: messages,
+          updatedAt: Date.now(),
+        });
+      }
+
+      if (shouldGenerateTitle) {
+        claudeService.generateTitle(messages[0]?.content as string || input.trim())
+          .then(title => {
+            onUpdateConversation({
+              ...conversation,
+              messages: messages,
+              title: title,
+              updatedAt: Date.now()
+            });
+          })
+          .catch(error => {
+            console.error('Error generating title:', error);
+          });
+      }
+
+      onError(null); // Clear any previous errors
+    } catch (err) {
+      console.error('Error sending message:', err);
+      onError(err instanceof Error ? err.message : 'Failed to send message');
+    } finally {
+      setIsLoading(false);
+    }
+  })
 
   return (
     <div className="flex-1 flex flex-col">
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <span className="block sm:inline">{error}</span>
+        </div>
+      )}
+
       {/* Breadcrumbs */}
       <div className="flex items-center gap-2 px-4 pt-6 pb-0">
         <SidebarTrigger />
@@ -52,79 +145,60 @@ export const ChatArea = ({
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              {projectName}
+              {project?.name}
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>{conversationTitle}</BreadcrumbPage>
+              <BreadcrumbPage>{conversation?.title}</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 p-4">
-        <Card className="h-full flex flex-col">
-          <CardContent className="flex-1 p-0">
-            <ScrollArea className="h-[calc(100vh-180px)]" type="hover">
-              <div className="px-4 py-4">
-                {messages.map((message) => (
-                  <ChatMessage
-                    key={message.id}
-                    message={message}
-                  />
-                ))}
-                {isLoading && (
-                  <div className="flex items-start space-x-4 p-4">
-                    <Avatar className="w-8 h-8 border">
-                      <AvatarImage src="/bot-avatar.png" alt="AI" />
-                      <AvatarFallback>
-                        <Bot className="w-5 h-5" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-200 border-t-gray-900 mr-2" />
-                      <span className="text-gray-500">Thinking...</span>
-                    </div>
-                  </div>
-                )}
-                <div ref={messagesEndRef} className="h-0" />
-              </div>
-            </ScrollArea>
-          </CardContent>
-          <CardFooter className="px-1 py-2 border-t">
-            <form onSubmit={onSubmit} className="w-full">
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <div className="relative flex flex-col h-full">
-                    <Textarea
-                      ref={textareaRef}
-                      rows={1}
-                      value={input}
-                      onChange={onInputChange}
-                      onKeyDown={onKeyDown}
-                      placeholder="Type your message..."
-                      className="p-3 resize-none min-h-[44px] max-h-[300px] overflow-y-hidden"
+      {conversation?.messages.length > 0 ? (
+        <div className="flex-1 p-4">
+          <Card className="h-full flex flex-col">
+            <CardContent className="flex-1 p-0">
+              <ScrollArea className="h-[calc(100vh-180px)]" type="hover">
+                <div className="px-4 py-4">
+                  {currentMessages.map((message) => (
+                    <ChatMessage
+                      key={message.id}
+                      message={message}
                     />
-                  </div>
+                  ))}
+                  {isLoading && (
+                    <div className="flex items-start space-x-4 p-4">
+                      <Avatar className="w-8 h-8 border">
+                        <AvatarImage src="/bot-avatar.png" alt="AI" />
+                        <AvatarFallback>
+                          <Bot className="w-5 h-5" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex items-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-200 border-t-gray-900 mr-2" />
+                        <span className="text-gray-500">Thinking...</span>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} className="h-0" />
                 </div>
-                <div className="flex items-end py-1.5 pr-1.5">
-                  <Button
-                    type="submit"
-                    disabled={isLoading || !input.trim()}
-                    className="gap-2"
-                  >
-                    <>
-                      Send
-                      <Send className="h-5 w-5" />
-                    </>
-                  </Button>
-                </div>
-              </div>
-            </form>
-          </CardFooter>
-        </Card>
-      </div>
+              </ScrollArea>
+            </CardContent>
+            <CardFooter className="px-1 py-2 border-t">
+              <ChatInput onSendMessage={onSendMessage} disabled={isLoading} />
+            </CardFooter>
+          </Card>
+        </div>
+      ) : (
+        <div className="flex h-full flex-col justify-center">
+          <H2 className="w-full max-w-2xl mx-auto border-0">
+            {title()}
+          </H2>
+          <ChatInput onSendMessage={onSendMessage} disabled={isLoading} />
+        </div>
+      )}
     </div>
   );
 };

@@ -66,7 +66,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            disabled={disabled}
             className="flex-1 resize-none overflow-y-auto min-h-9 border-0 shadow-none focus:outline-none focus-visible:ring-0 disabled:bg-gray-100"
             style={{ maxHeight: `${maxHeight}px` }}
             rows={1}

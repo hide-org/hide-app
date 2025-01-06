@@ -1,5 +1,8 @@
 import { MessageParam } from '@anthropic-ai/sdk/resources/messages';
+import { v4 as uuidv4 } from 'uuid';
 
+export const DEFAULT_CONVERSATION_TITLE = 'Untitled Chat';
+//
 // internal representation of a message for the UI
 export interface Message {
   id: string;
@@ -15,6 +18,17 @@ export interface Conversation {
   messages: MessageParam[];
   createdAt: number;
   updatedAt: number;
+}
+
+export const newConversation = () => {
+  const timestamp = Date.now();
+  return {
+    id: uuidv4(),
+    title: DEFAULT_CONVERSATION_TITLE,
+    messages: [],
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  } as Conversation;
 }
 
 export interface Project {
