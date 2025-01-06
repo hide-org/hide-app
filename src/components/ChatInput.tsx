@@ -42,9 +42,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      const form = e.currentTarget.form;
-      if (form) {
-        form.dispatchEvent(new Event('submit', { cancelable: true }));
+      if (message.trim() && !disabled) {
+        onSendMessage(message.trim());
+        setMessage('');
       }
     }
   };
