@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, session, dialog } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 
-import { initializeDatabase, setupProjectHandlers } from './main/db';
+import { initializeDatabase, setupDbHandlers } from './main/db';
 import { ensureUV } from './main/install-uv';
 import { initializeMCP } from './main/mcp';
 
@@ -189,7 +189,7 @@ ipcMain.handle('dialog:showDirectoryPicker', async () => {
 app.whenReady().then(async () => {
   // Initialize the database and set up IPC handlers
   initializeDatabase();
-  setupProjectHandlers();
+  setupDbHandlers();
 
   const { cmd, args } = await getMCPConfig();
   console.log('Initializing MCP...', { cmd, args });

@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { Conversation, DEFAULT_CONVERSATION_TITLE, Project } from '../types';
+import { Conversation, DEFAULT_CONVERSATION_TITLE, newConversation, Project } from '../types';
 import { Card, CardContent, CardFooter } from './ui/card';
 import { Bot } from 'lucide-react';
 import { ChatInput } from '@/components/ChatInput';
@@ -18,6 +18,7 @@ import { systemPrompt } from '@/lib/prompts';
 
 interface ChatAreaProps {
   conversation: Conversation | null;
+  onNewConversation: (conversation: Conversation) => void;
   onUpdateConversation: (conversation: Conversation) => void;
   project: Project | null;
   error: string | null;
@@ -26,6 +27,7 @@ interface ChatAreaProps {
 
 export const ChatArea = ({
   conversation,
+  onNewConversation,
   onUpdateConversation,
   project,
   error,
@@ -70,20 +72,31 @@ export const ChatArea = ({
 
     setIsLoading(true);
 
+    let c = conversation;
+    let shouldGenerateTitle = false;
+
+    if (!conversation) {
+      c = newConversation(project?.id);
+      onNewConversation(c);
+      shouldGenerateTitle = true;
+    }
+
+    if (c.title === DEFAULT_CONVERSATION_TITLE) {
+      shouldGenerateTitle = true;
+    }
+
     const message: MessageParam = {
       role: 'user',
       content: input.trim(),
     };
 
-    let messages = [...conversation.messages, message];
+    let messages = [...c.messages, message];
 
     onUpdateConversation({
-      ...conversation,
+      ...c,
       messages: messages,
       updatedAt: Date.now(),
     });
-
-    const shouldGenerateTitle = messages.length === 1 || conversation.title === DEFAULT_CONVERSATION_TITLE;
 
     try {
       const claudeService = getClaudeService();
@@ -94,7 +107,7 @@ export const ChatArea = ({
       for await (const response of claudeService.sendMessage(_messages, systemPrompt(project))) {
         messages = [...messages, response];
         onUpdateConversation({
-          ...conversation,
+          ...c,
           messages: messages,
           updatedAt: Date.now(),
         });
@@ -104,7 +117,7 @@ export const ChatArea = ({
         claudeService.generateTitle(messages[0]?.content as string || input.trim())
           .then(title => {
             onUpdateConversation({
-              ...conversation,
+              ...c,
               messages: messages,
               title: title,
               updatedAt: Date.now()

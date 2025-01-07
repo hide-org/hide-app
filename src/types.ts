@@ -16,16 +16,18 @@ export interface Conversation {
   title: string;
   // NOTE: using anthropic message type here; later we can create our own type to support different providers
   messages: MessageParam[];
+  projectId: string;
   createdAt: number;
   updatedAt: number;
 }
 
-export const newConversation = () => {
+export const newConversation = (projectId: string) => {
   const timestamp = Date.now();
   return {
     id: uuidv4(),
     title: DEFAULT_CONVERSATION_TITLE,
     messages: [],
+    projectId: projectId,
     createdAt: timestamp,
     updatedAt: timestamp,
   } as Conversation;

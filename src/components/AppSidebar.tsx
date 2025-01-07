@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Calendar, Home, Inbox, MoreHorizontal, Plus, Search, Settings } from "lucide-react"
+import { MoreHorizontal, Plus } from "lucide-react"
 import { Button } from './ui/button'
 import { Conversation, Project } from '../types'
 import { ProjectSwitcher } from "./ProjectSwitcher"
@@ -32,6 +32,7 @@ interface AppSidebarProps {
   onSelectProject: (p: Project) => void;
   onSaveProject?: (p: Project) => void;
   onDeleteProject?: (p: Project) => void;
+  onDeleteConversation?: (id: string) => void;
 }
 
 export function AppSidebar({
@@ -44,6 +45,7 @@ export function AppSidebar({
   onSelectProject,
   onSaveProject,
   onDeleteProject,
+  onDeleteConversation,
 }: AppSidebarProps) {
   const [projectToEdit, setProjectToEdit] = React.useState<Project | null>(null);
   const [projectToDelete, setProjectToDelete] = React.useState<Project | null>(null);

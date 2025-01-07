@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
-import { Project } from '@/types';
+import { Project, Conversation } from '@/types';
 
 contextBridge.exposeInMainWorld('mcp', {
     listTools: () => ipcRenderer.invoke('mcp:list-tools'),
@@ -18,5 +18,11 @@ contextBridge.exposeInMainWorld('projects', {
     create: (project: Project) => ipcRenderer.invoke('projects:create', project),
     update: (project: Project) => ipcRenderer.invoke('projects:update', project),
     delete: (id: string) => ipcRenderer.invoke('projects:delete', id)
-}
-)
+});
+
+contextBridge.exposeInMainWorld('conversations', {
+    getAll: (projectId: string) => ipcRenderer.invoke('conversations:getAll', projectId),
+    create: (conversation: Conversation) => ipcRenderer.invoke('conversations:create', conversation),
+    update: (conversation: Conversation) => ipcRenderer.invoke('conversations:update', conversation),
+    delete: (id: string) => ipcRenderer.invoke('conversations:delete', { id })
+});

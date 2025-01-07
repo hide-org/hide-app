@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import { useState, useEffect } from 'react';
 import { Conversation, newConversation, Project } from '../types';
 import { ChatArea } from './ChatArea';
@@ -6,21 +5,13 @@ import { AppSidebar } from './AppSidebar';
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { initializeClaudeService } from '../lib/claude';
 import { getAnthropicApiKey, isApiKeyConfigured } from '../lib/config';
-import { loadConversations, saveConversations } from '../lib/storage';
 
-
-const DEFAULT_PROJECT: Project = {
-  id: uuidv4(),
-  name: 'General',
-  path: '/',
-  description: 'General project',
-};
 
 export const Chat = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [currentConversation, setCurrentConversation] = useState<Conversation | null>(newConversation());
+  const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(DEFAULT_PROJECT);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Initialize Claude service with API key
@@ -47,33 +38,70 @@ export const Chat = () => {
     loadProjects();
   }, []);
 
-  // Load conversations from local storage
+  // Load conversations when project changes
   useEffect(() => {
-    const loadedConversations = loadConversations();
-    setConversations(loadedConversations);
-  }, []);
+    if (selectedProject) {
+      const loadConversationsForProject = async () => {
+        try {
+          const loadedConversations = await window.conversations.getAll(selectedProject.id);
+          setConversations(loadedConversations);
+        } catch (err) {
+          console.error('Error loading conversations:', err);
+          setError('Failed to load conversations');
+        }
+      };
+      loadConversationsForProject();
+    } else {
+      setConversations([]);
+    }
+  }, [selectedProject]);
 
-  // Save conversation whenever they change
-  useEffect(() => {
-    saveConversations(conversations.sort((a, b) => b.updatedAt - a.updatedAt));
-  }, [conversations])
+  const onUpdatedConversation = async (c: Conversation) => {
+    try {
+      const conversation = await window.conversations.update(c);
+      setCurrentConversation(conversation);
 
-  const updateConversation = (c: Conversation) => {
-    setCurrentConversation(c)
-    setConversations(prev => {
-      if (prev.some(conv => conv.id === c.id)) {
-        return prev.map(conv =>
-          conv.id === c.id ? c : conv
-        );
+      if (selectedProject) {
+        const conversations = await window.conversations.getAll(selectedProject.id);
+        setConversations(conversations);
       }
-      return [...prev, c];
-    });
+    } catch (err) {
+      console.error('Error updating conversation:', err);
+      setError('Failed to update conversation');
+    }
   }
 
-  const onNewChat = () => {
-    const c: Conversation = newConversation();
-    setConversations(prev => [c, ...prev]);
-    setCurrentConversation(c);
+  const onNewConversation = async (c: Conversation) => {
+    try {
+      const conversation = await window.conversations.create(c);
+      setCurrentConversation(conversation);
+
+      if (selectedProject) {
+        const conversations = await window.conversations.getAll(selectedProject.id);
+        setConversations(conversations);
+      }
+    } catch (err) {
+      console.error('Error creating new conversation:', err);
+      setError('Failed to create new conversation');
+    }
+  }
+
+  // Deprecated, use onNewConversation instead
+  const onNewChat = async () => {
+    if (!selectedProject) return;
+    try {
+      const c: Conversation = newConversation(selectedProject.id);
+      const conversation = await window.conversations.create(c);
+      setCurrentConversation(conversation);
+
+      if (selectedProject) {
+        const conversations = await window.conversations.getAll(selectedProject.id);
+        setConversations(conversations);
+      }
+    } catch (err) {
+      console.error('Error creating new conversation:', err);
+      setError('Failed to create new conversation');
+    }
   }
 
   const onSaveProject = async (project: Project) => {
@@ -98,11 +126,32 @@ export const Chat = () => {
     }
   };
 
+  const onDeleteConversation = async (id: string) => {
+    try {
+      await window.conversations.delete(id);
+      if (currentConversation?.id === id) {
+        setCurrentConversation(null);
+      }
+
+      if (selectedProject) {
+        const conversations = await window.conversations.getAll(selectedProject.id);
+        setConversations(conversations);
+      }
+    } catch (err) {
+      console.error('Error deleting conversation:', err);
+      setError('Failed to delete conversation');
+    }
+  };
+
   const onSelectProject = (project: Project | null) => {
+    console.log('Selected project:', project);
     setSelectedProject(project);
     // Reset chat area by creating a new conversation
-    const c = newConversation();
-    setCurrentConversation(c);
+    if (!project) {
+      setCurrentConversation(null);
+      return;
+    }
+    setCurrentConversation(null);
   };
 
   return (
@@ -118,10 +167,12 @@ export const Chat = () => {
           onSelectProject={onSelectProject}
           onSaveProject={onSaveProject}
           onDeleteProject={onDeleteProject}
+          onDeleteConversation={onDeleteConversation}
         />
         <ChatArea
           conversation={currentConversation}
-          onUpdateConversation={updateConversation}
+          onNewConversation={onNewConversation}
+          onUpdateConversation={onUpdatedConversation}
           project={selectedProject}
           error={error}
           onError={setError}
