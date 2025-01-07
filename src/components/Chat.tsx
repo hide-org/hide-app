@@ -3,6 +3,7 @@ import { Conversation, newConversation, Project } from '../types';
 import { ChatArea } from './ChatArea';
 import { AppSidebar } from './AppSidebar';
 import { SidebarProvider } from "@/components/ui/sidebar"
+import { H2 } from '@/components/ui/typography';
 import { initializeClaudeService } from '../lib/claude';
 import { getAnthropicApiKey, isApiKeyConfigured } from '../lib/config';
 
@@ -169,14 +170,24 @@ export const Chat = () => {
           onDeleteProject={onDeleteProject}
           onDeleteConversation={onDeleteConversation}
         />
-        <ChatArea
-          conversation={currentConversation}
-          onNewConversation={onNewConversation}
-          onUpdateConversation={onUpdatedConversation}
-          project={selectedProject}
-          error={error}
-          onError={setError}
-        />
+        {selectedProject ? (
+          <ChatArea
+            conversation={currentConversation}
+            onNewConversation={onNewConversation}
+            onUpdateConversation={onUpdatedConversation}
+            project={selectedProject}
+            error={error}
+            onError={setError}
+          />
+        ) : (
+          <div className="flex-1 flex flex-col justify-center items-center text-center px-4">
+            <H2 className="mb-4">Welcome to Hide</H2>
+            <p className="text-muted-foreground max-w-md">
+              Select a project from the sidebar to start a conversation.
+            </p>
+          </div>
+        )}
+
       </SidebarProvider>
     </div>
   );
