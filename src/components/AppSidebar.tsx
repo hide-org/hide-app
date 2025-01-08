@@ -2,7 +2,7 @@ import * as React from "react"
 import { MoreHorizontal, Plus } from "lucide-react"
 import { Button } from './ui/button'
 import { Conversation, Project } from '../types'
-import { ProjectSwitcher } from "./ProjectSwitcher"
+import { UserSwitcher } from "./UserSwitcher"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import {
   Sidebar,
@@ -69,7 +69,7 @@ export function AppSidebar({
         onDelete={onDeleteProject}
       />
       <SidebarHeader className="space-y-4 p-4">
-        <ProjectSwitcher projects={projects} />
+        <UserSwitcher />
         <Button
           onClick={onNewChat}
           className="w-full"
