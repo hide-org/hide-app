@@ -61,9 +61,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   };
 
   return (
-    <div className={`flex items-start space-x-4 p-4 ${getMessageStyle()}`}>
+    <div className={`flex items-start space-x-4 p-4`}>
       {getAvatar()}
-      <div className="flex-1 text-gray-900 dark:text-gray-100 leading-relaxed max-w-3xl">
+      <div className={`flex-1 border p-4 rounded-lg text-gray-900 dark:text-gray-100 leading-relaxed w-full max-w-2xl mx-auto ${getMessageStyle()}`}>
         <ReactMarkdown
           rehypePlugins={[rehypeHighlight]}
           components={{
