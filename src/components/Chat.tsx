@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Conversation, newConversation, Project } from '../types';
+import { Conversation, Project } from '../types';
 import { ChatArea } from './ChatArea';
 import { AppSidebar } from './AppSidebar';
 import { SidebarProvider } from "@/components/ui/sidebar"
@@ -87,24 +87,6 @@ export const Chat = () => {
     }
   }
 
-  // Deprecated, use onNewConversation instead
-  const onNewChat = async () => {
-    if (!selectedProject) return;
-    try {
-      const c: Conversation = newConversation(selectedProject.id);
-      const conversation = await window.conversations.create(c);
-      setCurrentConversation(conversation);
-
-      if (selectedProject) {
-        const conversations = await window.conversations.getAll(selectedProject.id);
-        setConversations(conversations);
-      }
-    } catch (err) {
-      console.error('Error creating new conversation:', err);
-      setError('Failed to create new conversation');
-    }
-  }
-
   const onSaveProject = async (project: Project) => {
     try {
       const updatedProjects = projects.some(p => p.id === project.id)
@@ -162,7 +144,6 @@ export const Chat = () => {
           conversations={conversations}
           selectedConversation={currentConversation}
           onSelectConversation={setCurrentConversation}
-          onNewChat={onNewChat}
           projects={projects}
           selectedProject={selectedProject}
           onSelectProject={onSelectProject}

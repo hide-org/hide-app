@@ -1,6 +1,5 @@
 import * as React from "react"
 import { MoreHorizontal, Plus } from "lucide-react"
-import { Button } from './ui/button'
 import { Conversation, Project } from '../types'
 import { UserSwitcher } from "./UserSwitcher"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
@@ -26,7 +25,6 @@ interface AppSidebarProps {
   conversations: Conversation[];
   selectedConversation: Conversation | null;
   onSelectConversation: (c: Conversation) => void;
-  onNewChat: () => void;
   projects: Project[];
   selectedProject: Project | null;
   onSelectProject: (p: Project) => void;
@@ -39,7 +37,6 @@ export function AppSidebar({
   conversations = [],
   selectedConversation,
   onSelectConversation,
-  onNewChat,
   projects = [],
   selectedProject,
   onSelectProject,
@@ -70,14 +67,6 @@ export function AppSidebar({
       />
       <SidebarHeader className="space-y-4 p-4">
         <UserSwitcher />
-        <Button
-          onClick={onNewChat}
-          className="w-full"
-          variant="outline"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          New Chat
-        </Button>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
