@@ -190,7 +190,7 @@ export const ChatArea = ({
               <div ref={messagesEndRef} className="h-0" />
             </div>
           </ScrollArea>
-          <ChatInput onSendMessage={onSendMessage} disabled={isLoading} className="py-4 max-w-3xl sticky bottom-0" />
+          <ChatInput onSendMessage={onSendMessage} disabled={isLoading} className="py-4 max-w-3xl" />
         </>
       ) : (
         <div className="flex h-full flex-col justify-center">
