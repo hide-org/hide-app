@@ -19,6 +19,8 @@ import {
 import { formatTimestamp } from "../lib/utils"
 import { ProjectDialog } from "./ProjectDialog"
 import { DeleteProjectDialog } from "./DeleteProjectDialog"
+import { ChatDialog } from "./ChatDialog"
+import { DeleteChatDialog } from "./DeleteChatDialog"
 
 
 interface AppSidebarProps {
@@ -31,6 +33,7 @@ interface AppSidebarProps {
   onSaveProject?: (p: Project) => void;
   onDeleteProject?: (p: Project) => void;
   onDeleteConversation?: (id: string) => void;
+  onRenameChat?: (chat: Conversation) => void;
 }
 
 export function AppSidebar({
@@ -43,9 +46,12 @@ export function AppSidebar({
   onSaveProject,
   onDeleteProject,
   onDeleteConversation,
+  onRenameChat,
 }: AppSidebarProps) {
   const [projectToEdit, setProjectToEdit] = React.useState<Project | null>(null);
   const [projectToDelete, setProjectToDelete] = React.useState<Project | null>(null);
+  const [chatToEdit, setChatToEdit] = React.useState<Conversation | null>(null);
+  const [chatToDelete, setChatToDelete] = React.useState<Conversation | null>(null);
 
   return (
     <Sidebar>
@@ -64,6 +70,26 @@ export function AppSidebar({
           if (!open) setProjectToDelete(null);
         }}
         onDelete={onDeleteProject}
+      />
+      <ChatDialog
+        chat={chatToEdit}
+        open={chatToEdit !== null}
+        onOpenChange={(open) => {
+          if (!open) setChatToEdit(null);
+        }}
+        onSave={(chat) => {
+          if (onRenameChat) {
+            onRenameChat(chat);
+          }
+        }}
+      />
+      <DeleteChatDialog
+        chat={chatToDelete}
+        open={chatToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setChatToDelete(null);
+        }}
+        onDelete={onDeleteConversation}
       />
       <SidebarHeader className="space-y-4 p-4">
         <UserSwitcher />
@@ -126,6 +152,21 @@ export function AppSidebar({
                       <span>{conversation.title}</span>
                     </a>
                   </SidebarMenuButton>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <SidebarMenuAction>
+                        <MoreHorizontal />
+                      </SidebarMenuAction>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="right" align="start">
+                      <DropdownMenuItem onClick={() => setChatToEdit(conversation)}>
+                        <span>Rename</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setChatToDelete(conversation)}>
+                        <span>Delete</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>

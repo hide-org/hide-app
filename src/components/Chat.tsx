@@ -126,6 +126,23 @@ export const Chat = () => {
     }
   };
 
+  const onRenameChat = async (chat: Conversation) => {
+    try {
+      await window.conversations.update(chat);
+      if (currentConversation?.id === chat.id) {
+        setCurrentConversation(chat);
+      }
+      
+      if (selectedProject) {
+        const conversations = await window.conversations.getAll(selectedProject.id);
+        setConversations(conversations);
+      }
+    } catch (err) {
+      console.error('Error renaming chat:', err);
+      setError('Failed to rename chat');
+    }
+  };
+
   const onSelectProject = (project: Project | null) => {
     console.log('Selected project:', project);
     setSelectedProject(project);
@@ -150,6 +167,7 @@ export const Chat = () => {
           onSaveProject={onSaveProject}
           onDeleteProject={onDeleteProject}
           onDeleteConversation={onDeleteConversation}
+          onRenameChat={onRenameChat}
         />
         {selectedProject ? (
           <ChatArea
