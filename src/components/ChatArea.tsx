@@ -1,6 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
 import { Conversation, DEFAULT_CONVERSATION_TITLE, newConversation, Project } from '../types';
-import { Card, CardContent, CardFooter } from './ui/card';
 import { Bot } from 'lucide-react';
 import { ChatInput } from '@/components/ChatInput';
 import { ChatMessage } from './ChatMessage';
@@ -190,7 +189,7 @@ export const ChatArea = ({
               <div ref={messagesEndRef} className="h-0" />
             </div>
           </ScrollArea>
-          <ChatInput onSendMessage={onSendMessage} disabled={isLoading} className="py-4 max-w-3xl" />
+          <ChatInput onSendMessage={onSendMessage} disabled={isLoading} className="py-4 max-w-3xl mt-auto" />
         </>
       ) : (
         <div className="flex h-full flex-col justify-center">
