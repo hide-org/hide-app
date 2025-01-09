@@ -138,15 +138,15 @@ export const ChatArea = ({
   })
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col h-full relative">
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <div className="absolute top-0 left-0 right-0 z-50 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
           <span className="block sm:inline">{error}</span>
         </div>
       )}
 
       {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 px-4 pt-6 pb-0">
+      <div className="sticky top-0 z-10 bg-white flex items-center gap-2 px-4 pt-6 pb-0">
         <SidebarTrigger />
         <Separator orientation="vertical" className="mr-2 h-4" />
         <Breadcrumb>
@@ -164,9 +164,9 @@ export const ChatArea = ({
 
       {/* Messages Area */}
       {conversation?.messages.length > 0 ? (
-        <>
-          <ScrollArea className="mt-4" type="hover">
-            <div className="w-full max-w-3xl mx-auto">
+        <div className="flex flex-col h-[calc(100%-8rem)]">
+          <ScrollArea className="flex-1 mt-4 pr-4" type="hover">
+            <div className="w-full max-w-3xl mx-auto pb-4">
               {currentMessages.map((message) => (
                 <ChatMessage
                   key={message.id}
@@ -190,8 +190,10 @@ export const ChatArea = ({
               <div ref={messagesEndRef} className="h-0" />
             </div>
           </ScrollArea>
-          <ChatInput onSendMessage={onSendMessage} disabled={isLoading} className="py-4 max-w-3xl" />
-        </>
+          <div className="sticky bottom-0 w-full bg-white pt-2">
+            <ChatInput onSendMessage={onSendMessage} disabled={isLoading} className="py-4 max-w-3xl" />
+          </div>
+        </div>
       ) : (
         <div className="flex h-full flex-col justify-center">
           <H2 className="w-full max-w-2xl mx-auto border-0">
