@@ -16,7 +16,7 @@ const config: ForgeConfig = {
     asar: true,
     extraResource: [
       // Copy the entire MCP project
-      '/Users/artemm/Code/hide-mcp'
+      '/Users/artemm/Code/hide-mcp/dist/hide-mcp'
     ]
   },
   rebuildConfig: {

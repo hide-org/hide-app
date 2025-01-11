@@ -105,7 +105,8 @@ const createWindow = (): void => {
           "default-src 'self' 'unsafe-inline' data:;" +
           "connect-src 'self' https://api.anthropic.com data:;" +
           "script-src 'self' 'unsafe-eval' 'unsafe-inline' data:;" +
-          "style-src 'self' 'unsafe-inline' data:;"
+          "style-src 'self' 'unsafe-inline' data:;" +
+          "img-src 'self' data: https://github.com https://*.githubusercontent.com;"
         ]
       }
     });
@@ -135,23 +136,22 @@ app.on('activate', () => {
   }
 });
 
-// TODO: Make this configurable
 const getMCPConfig = async () => {
   const mcpPath = !app.isPackaged
-    ? '/Users/artemm/Code/hide-mcp'  // Development
-    : path.join(process.resourcesPath, 'hide-mcp');  // Production
+    ? '/Users/artemm/Code/hide-mcp'  // Development TODO: Make this configurable
+    : path.join(process.resourcesPath, 'hide-mcp');  // Production (binary)
 
   // Log some diagnostic information
   console.log('MCP configuration:', {
+    production: app.isPackaged,
     resourcesPath: process.resourcesPath,
     mcpPath,
-    exists: require('fs').existsSync(mcpPath),
-    contents: require('fs').existsSync(mcpPath) ? require('fs').readdirSync(mcpPath) : 'N/A'
+    exists: fs.existsSync(mcpPath),
   });
 
-  // Verify that the MCP directory exists
-  if (!require('fs').existsSync(mcpPath)) {
-    throw new Error(`MCP directory not found at ${mcpPath}`);
+  // Verify that MCP exists
+  if (!fs.existsSync(mcpPath)) {
+    throw new Error(`MCP not found at ${mcpPath}`);
   }
 
   // In development, use system's uv
@@ -162,16 +162,10 @@ const getMCPConfig = async () => {
     };
   }
 
-  // In production, use installed uv
-  const uvPath = await ensureUV();
-  console.log('Using uv configuration:', { uvPath, mcpPath });
-
+  // In production, use binary
   return {
-    cmd: uvPath,
+    cmd: mcpPath,
     args: [
-      '--directory', mcpPath,  // Point to MCP directory
-      'run',                   // uv will handle dependencies automatically
-      'hide-mcp',
       'server'
     ]
   };

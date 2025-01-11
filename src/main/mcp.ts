@@ -2,7 +2,7 @@ import { ipcMain } from 'electron';
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { CallToolResultSchema, JSONRPCMessage } from "@modelcontextprotocol/sdk/types";
-import { shellExec, escapeShellArg, getUserShell } from './shell';
+import { shellExec, escapeShellArg } from './shell';
 
 // 5-minute timeout
 const DEFAULT_TIMEOUT = 300_000;
@@ -11,20 +11,15 @@ let mcpClient: Client | null = null;
 export async function initializeMCP(command: string, args: string[] = []) {
     mcpReadyPromise = (async () => {
         try {
-            console.log('Creating StdioClientTransport...', { command, args });
-            // First verify that uv is working
-            console.log('Checking uv installation...');
+            console.log('Creating MCP StdioClientTransport...', { command, args });
+            console.log(`Checking ${command} installation...`);
             try {
-                const { stdout: uvVersion } = await shellExec(`${escapeShellArg(command)} --version`);
-                console.log('uv version:', uvVersion.trim());
+                const { stdout: usage } = await shellExec(`${escapeShellArg(command)} --help`);
+                console.log(`${command} usage:`, usage.trim());
             } catch (err) {
-                console.error('Error checking uv:', err);
-                throw new Error(`uv check failed: ${err.message}`);
+                console.error(`Error checking ${command}:`, err);
+                throw new Error(`${command} check failed: ${err.message}`);
             }
-
-            // Get the user's shell for process execution
-            const shell = await getUserShell();
-            console.log('Using shell:', shell);
 
             // Create transport with stdout/stderr capture
             const transport = new StdioClientTransport({
@@ -33,6 +28,7 @@ export async function initializeMCP(command: string, args: string[] = []) {
                 env: {
                     ...process.env,  // Preserve user's environment
                     PYTHONUNBUFFERED: '1',  // Ensure Python output isn't buffered
+                    // TODO: this is probably not necessary
                     PATH: process.env.PATH  // Ensure PATH is preserved
                 }
             });
@@ -51,6 +47,7 @@ export async function initializeMCP(command: string, args: string[] = []) {
                 name: "hide-app",
                 version: "1.0.0",
             }, {
+                // TODO: should this be filled in?
                 capabilities: {}
             });
 
