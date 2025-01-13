@@ -2,10 +2,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { ImageBlockParam, TextBlockParam, ToolUseBlockParam } from '@anthropic-ai/sdk/resources';
 import { MessageParam, Tool as AnthropicTool, ToolResultBlockParam } from '@anthropic-ai/sdk/resources/messages';
 import type { CallToolResult as ToolResult } from '@modelcontextprotocol/sdk/types';
-import { systemPrompt } from '@/lib/prompts';
 import { callTool, listTools } from './mcp/client';
 import { mcpToAnthropicTool } from './mcp/adapters';
-import { Project } from '@/types';
 
 export class ClaudeService {
     private client: Anthropic;
