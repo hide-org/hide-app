@@ -22,7 +22,7 @@ export const plugins = [
     patterns: [
       {
         from: path.resolve(__dirname, 'public'),
-        to: path.resolve(__dirname, '.webpack/renderer')
+        to: 'main_window'
       }
     ]
   })
