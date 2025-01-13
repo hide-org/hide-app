@@ -17,7 +17,8 @@ import { systemPrompt } from '@/lib/prompts';
 interface ChatAreaProps {
   conversation: Conversation | null;
   onNewConversation: (conversation: Conversation) => void;
-  onUpdateConversation: (conversation: Conversation) => void;
+  onAddMessage: (conversationId: string, message: MessageParam) => void;
+  onUpdateTitle: (conversationId: string, title: string) => void;
   project: Project | null;
   error: string | null;
   onError: (error: string | null) => void;
@@ -26,7 +27,8 @@ interface ChatAreaProps {
 export const ChatArea = ({
   conversation,
   onNewConversation,
-  onUpdateConversation,
+  onAddMessage,
+  onUpdateTitle,
   project,
   error,
   onError,
@@ -73,56 +75,50 @@ export const ChatArea = ({
     let c = conversation;
     let shouldGenerateTitle = false;
 
-    if (!conversation) {
-      c = newConversation(project?.id);
-      onNewConversation(c);
-      shouldGenerateTitle = true;
-    }
-
-    if (c.title === DEFAULT_CONVERSATION_TITLE) {
-      shouldGenerateTitle = true;
-    }
-
     const message: MessageParam = {
       role: 'user',
       content: input.trim(),
     };
 
-    let messages = [...c.messages, message];
+    let messages: MessageParam[];
 
-    onUpdateConversation({
-      ...c,
-      messages: messages,
-      updatedAt: Date.now(),
-    });
+    if (!conversation) {
+      // Create new conversation with the first message
+      c = newConversation(project?.id);
+      messages = [message];
+      c.messages = messages;
+      await onNewConversation(c);
+      shouldGenerateTitle = true;
+    } else {
+      if (c.title === DEFAULT_CONVERSATION_TITLE) {
+        shouldGenerateTitle = true;
+      }
+      // For existing conversations, add message and build complete array
+      onAddMessage(c.id, message);
+      messages = [...c.messages, message];
+    }
 
     try {
-      // Clone messages for the API call
-      const _messages = [...messages];
-      const { promise, onUpdate } = window.claude.sendMessage(_messages, systemPrompt(project));
+      const { promise, onUpdate } = window.claude.sendMessage(messages, systemPrompt(project));
 
-      // Set up update handler for streaming responses
-      onUpdate((response) => {
-        messages = [...messages, response];
-        onUpdateConversation({
-          ...c,
-          messages: messages,
-          updatedAt: Date.now(),
-        });
+      // Set up update handler for streaming responses and get cleanup function
+      const cleanup = onUpdate((message) => {
+        onAddMessage(c.id, message);
       });
 
-      // Wait for all messages
-      await promise;
+      try {
+        // Wait for all messages
+        await promise;
+      } finally {
+        // Always clean up the handler to prevent memory leaks and duplicates
+        cleanup();
+      }
 
       if (shouldGenerateTitle) {
         try {
+
           const title = await window.claude.generateTitle(messages[0]?.content as string || input.trim());
-          onUpdateConversation({
-            ...c,
-            messages: messages,
-            title: title,
-            updatedAt: Date.now()
-          });
+          onUpdateTitle(c.id, title);
         } catch (error) {
           console.error('Error generating title:', error);
         }

@@ -4,6 +4,7 @@ import { ChatArea } from './ChatArea';
 import { AppSidebar } from './AppSidebar';
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { H2 } from '@/components/ui/typography';
+import { MessageParam } from '@anthropic-ai/sdk/resources';
 
 
 export const Chat = () => {
@@ -56,18 +57,54 @@ export const Chat = () => {
     }
   }, [selectedProject]);
 
-  const onUpdatedConversation = async (c: Conversation) => {
+  const onAddMessage = async (conversationId: string, message: MessageParam) => {
     try {
-      const conversation = await window.conversations.update(c);
-      setCurrentConversation(conversation);
+      // Get the current conversation and update its messages
+      setCurrentConversation(prev => {
+        console.log('Updating conversation:', prev);
+        if (!prev || prev.id !== conversationId) return prev;
+        const updatedConversation = {
+          ...prev,
+          messages: [...prev.messages, message],
+          updatedAt: Date.now()
+        };
+        // Update in DB
+        window.conversations.update(updatedConversation)
+          .catch(err => console.error('Error saving conversation:', err));
+        return updatedConversation;
+      });
 
-      if (selectedProject) {
-        const conversations = await window.conversations.getAll(selectedProject.id);
-        setConversations(conversations);
-      }
+      // Update the conversations list
+      const conversations = await window.conversations.getAll(selectedProject?.id);
+      setConversations(conversations);
     } catch (err) {
-      console.error('Error updating conversation:', err);
-      setError('Failed to update conversation');
+      console.error('Error adding message:', err);
+      setError('Failed to add message');
+    }
+  }
+
+  const onUpdateTitle = async (conversationId: string, title: string) => {
+    try {
+      // Update current conversation title
+      setCurrentConversation(prev => {
+        if (!prev || prev.id !== conversationId) return prev;
+        const updatedConversation = {
+          ...prev,
+          title,
+          updatedAt: Date.now()
+        };
+        // Update in DB
+        window.conversations.update(updatedConversation)
+          .catch(err => console.error('Error saving conversation:', err));
+        return updatedConversation;
+      });
+
+      // Update conversations list
+      const conversations = await window.conversations.getAll(selectedProject?.id);
+      setConversations(conversations);
+    } catch (err) {
+      console.error('Error updating title:', err);
+      setError('Failed to update title');
     }
   }
 
@@ -131,7 +168,7 @@ export const Chat = () => {
       if (currentConversation?.id === chat.id) {
         setCurrentConversation(chat);
       }
-      
+
       if (selectedProject) {
         const conversations = await window.conversations.getAll(selectedProject.id);
         setConversations(conversations);
@@ -172,7 +209,8 @@ export const Chat = () => {
           <ChatArea
             conversation={currentConversation}
             onNewConversation={onNewConversation}
-            onUpdateConversation={onUpdatedConversation}
+            onAddMessage={onAddMessage}
+            onUpdateTitle={onUpdateTitle}
             project={selectedProject}
             error={error}
             onError={setError}

@@ -27,7 +27,13 @@ contextBridge.exposeInMainWorld('claude', {
     sendMessage: (messages: any[], systemPrompt?: string) => {
         const promise = ipcRenderer.invoke('claude:sendMessage', { messages, systemPrompt });
         const onUpdate = (callback: (message: any) => void) => {
-            ipcRenderer.on('claude:messageUpdate', (_event, message) => callback(message));
+            // Create the handler function that we can reference later for removal
+            const handler = (_event: any, message: any) => callback(message);
+            ipcRenderer.on('claude:messageUpdate', handler);
+            // Return a cleanup function
+            return () => {
+                ipcRenderer.removeListener('claude:messageUpdate', handler);
+            };
         };
         return { promise, onUpdate };
     },

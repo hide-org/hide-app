@@ -36,7 +36,7 @@ class ClaudeService {
 
     async *sendMessage(messages: MessageParam[], systemPrompt: string = ''): AsyncGenerator<MessageParam> {
         try {
-            let loopMessages = messages;
+            const loopMessages = [...messages];
             while (true) {
                 const response = await this.client.messages.create({
                     model: this.chatModel,
@@ -63,7 +63,7 @@ class ClaudeService {
 
                 yield responseMessage;
 
-                loopMessages = [...loopMessages, responseMessage];
+                loopMessages.push(responseMessage);
 
                 const toolUseBlocks = responseMessage.content.filter(block => block.type === 'tool_use') as ToolUseBlockParam[];
 
@@ -83,7 +83,7 @@ class ClaudeService {
 
                     yield toolResultMessage;
 
-                    loopMessages = [...loopMessages, toolResultMessage];
+                    loopMessages.push(toolResultMessage);
                 }
             }
         } catch (error) {
@@ -171,7 +171,7 @@ ipcMain.handle('claude:checkApiKey', () => {
     return isApiKeyConfigured();
 });
 
-ipcMain.handle('claude:sendMessage', async (_event, {messages, systemPrompt}: {messages: any[], systemPrompt?: string}) => {
+ipcMain.handle('claude:sendMessage', async (_event, { messages, systemPrompt }: { messages: any[], systemPrompt?: string }) => {
     if (!claudeService) {
         throw new Error('Claude service not initialized. Please configure your API key.');
     }

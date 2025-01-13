@@ -21,7 +21,7 @@ declare global {
       checkApiKey: () => Promise<boolean>;
       sendMessage: (messages: any[], systemPrompt?: string) => {
         promise: Promise<any[]>;
-        onUpdate: (callback: (message: any) => void) => void;
+        onUpdate: (callback: (message: any) => void) => () => void;
       };
       generateTitle: (message: string) => Promise<string>;
     };
