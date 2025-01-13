@@ -1,12 +1,7 @@
-import type { CallToolResult, Tool } from '@modelcontextprotocol/sdk/types';
 import { Project, Conversation } from './types';
 
 declare global {
   interface Window {
-    mcp: {
-      listTools: () => Promise<{ tools: Tool[] }>;
-      callTool: (name: string, parameters: any) => Promise<CallToolResult>;
-    };
     electron: {
       showDirectoryPicker: () => Promise<{ canceled: boolean; filePaths: string[] }>;
     };
@@ -21,6 +16,14 @@ declare global {
       create: (conversation: Conversation) => Promise<Conversation>;
       update: (conversation: Conversation) => Promise<Conversation>;
       delete: (id: string) => Promise<void>;
+    };
+    claude: {
+      checkApiKey: () => Promise<boolean>;
+      sendMessage: (messages: any[], systemPrompt?: string) => {
+        promise: Promise<any[]>;
+        onUpdate: (callback: (message: any) => void) => void;
+      };
+      generateTitle: (message: string) => Promise<string>;
     };
   }
 }

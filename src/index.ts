@@ -3,8 +3,8 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 import { initializeDatabase, setupDbHandlers } from './main/db';
-import { ensureUV } from './main/install-uv';
 import { initializeMCP } from './main/mcp';
+import { initializeClaudeService } from './main/claude';
 
 // Set up logging
 const setupLogging = () => {
@@ -189,14 +189,19 @@ app.whenReady().then(async () => {
   console.log('Initializing MCP...', { cmd, args });
 
   try {
+    // Initialize MCP first
     const initPromise = initializeMCP(cmd, args);
 
-    // Create window immediately but show it only after MCP is ready
+    // Create window immediately but don't wait for services
     createWindow();
 
     // Wait for MCP initialization
     await initPromise;
     console.log('MCP initialized successfully');
+
+    // Now that MCP is ready, initialize Claude service
+    await initializeClaudeService();
+    console.log('Claude service initialized successfully');
   } catch (err) {
     console.error('Failed to initialize MCP:', err);
     // Show an error dialog to the user

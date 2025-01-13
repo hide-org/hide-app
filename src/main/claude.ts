@@ -1,11 +1,13 @@
+import { BrowserWindow, ipcMain } from 'electron';
+import { isApiKeyConfigured, getAnthropicApiKey } from '../lib/config';
 import Anthropic from '@anthropic-ai/sdk';
 import { ImageBlockParam, TextBlockParam, ToolUseBlockParam } from '@anthropic-ai/sdk/resources';
 import { MessageParam, Tool as AnthropicTool, ToolResultBlockParam } from '@anthropic-ai/sdk/resources/messages';
 import type { CallToolResult as ToolResult } from '@modelcontextprotocol/sdk/types';
-import { callTool, listTools } from './mcp/client';
-import { mcpToAnthropicTool } from './mcp/adapters';
+import { callTool, listTools } from './mcp';
+import { mcpToAnthropicTool } from '../lib/mcp/adapters';
 
-export class ClaudeService {
+class ClaudeService {
     private client: Anthropic;
     private chatModel = 'claude-3-5-sonnet-20241022';
     private titleModel = 'claude-3-5-haiku-20241022';
@@ -14,7 +16,7 @@ export class ClaudeService {
     constructor(apiKey: string) {
         this.client = new Anthropic({
             apiKey,
-            dangerouslyAllowBrowser: true,
+            dangerouslyAllowBrowser: false, // We're in the main process now
             maxRetries: 16,
         });
 
@@ -45,7 +47,7 @@ export class ClaudeService {
                 });
 
                 const responseMessage = {
-                    role: response.role, // Always 'assistant'
+                    role: response.role,
                     content: response.content.map(block => {
                         if (block.type === 'text') {
                             return block as TextBlockParam
@@ -148,15 +150,47 @@ export class ClaudeService {
 
 let claudeService: ClaudeService | null = null;
 
-export const initializeClaudeService = async (apiKey: string) => {
-    claudeService = new ClaudeService(apiKey);
-    await claudeService.initializeTools();
-    return claudeService;
+export const initializeClaudeService = async () => {
+    const apiKey = getAnthropicApiKey();
+    if (!isApiKeyConfigured()) {
+        console.log('API key not configured. Claude service will not be initialized.');
+        return;
+    }
+
+    try {
+        claudeService = new ClaudeService(apiKey);
+        await claudeService.initializeTools();
+        console.log('Claude service initialized successfully');
+    } catch (error) {
+        console.error('Error initializing Claude service:', error);
+    }
 };
 
-export const getClaudeService = () => {
+// IPC handlers
+ipcMain.handle('claude:checkApiKey', () => {
+    return isApiKeyConfigured();
+});
+
+ipcMain.handle('claude:sendMessage', async (_event, {messages, systemPrompt}: {messages: any[], systemPrompt?: string}) => {
     if (!claudeService) {
-        throw new Error('Claude service not initialized. Call initializeClaudeService first.');
+        throw new Error('Claude service not initialized. Please configure your API key.');
     }
-    return claudeService;
-};
+
+    const messageGenerator = claudeService.sendMessage(messages, systemPrompt);
+    const allMessages = [];
+
+    for await (const message of messageGenerator) {
+        // Send each message back to the renderer immediately
+        BrowserWindow.getFocusedWindow()?.webContents.send('claude:messageUpdate', message);
+        allMessages.push(message);
+    }
+
+    return allMessages;
+});
+
+ipcMain.handle('claude:generateTitle', async (_event, message: string) => {
+    if (!claudeService) {
+        throw new Error('Claude service not initialized. Please configure your API key.');
+    }
+    return await claudeService.generateTitle(message);
+});

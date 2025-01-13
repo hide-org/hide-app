@@ -4,8 +4,6 @@ import { ChatArea } from './ChatArea';
 import { AppSidebar } from './AppSidebar';
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { H2 } from '@/components/ui/typography';
-import { initializeClaudeService } from '../lib/claude';
-import { getAnthropicApiKey, isApiKeyConfigured } from '../lib/config';
 
 
 export const Chat = () => {
@@ -15,14 +13,15 @@ export const Chat = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize Claude service with API key
+  // Check API key status
   useEffect(() => {
-    const apiKey = getAnthropicApiKey();
-    if (isApiKeyConfigured()) {
-      initializeClaudeService(apiKey);
-    } else {
-      setError('API key not configured. Please set up your Anthropic API key.');
-    }
+    const checkApiKey = async () => {
+      const isConfigured = await window.claude.checkApiKey();
+      if (!isConfigured) {
+        setError('API key not configured. Please set up your Anthropic API key.');
+      }
+    };
+    checkApiKey();
   }, []);
 
   // Load projects from the database

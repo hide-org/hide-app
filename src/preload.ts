@@ -2,12 +2,6 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 import { Project, Conversation } from '@/types';
 
-contextBridge.exposeInMainWorld('mcp', {
-    listTools: () => ipcRenderer.invoke('mcp:list-tools'),
-    callTool: (name: string, parameters: any) =>
-        ipcRenderer.invoke('mcp:call-tool', { name, parameters }),
-});
-
 // Expose file dialog API
 contextBridge.exposeInMainWorld('electron', {
     showDirectoryPicker: () => ipcRenderer.invoke('dialog:showDirectoryPicker'),
@@ -25,4 +19,17 @@ contextBridge.exposeInMainWorld('conversations', {
     create: (conversation: Conversation) => ipcRenderer.invoke('conversations:create', conversation),
     update: (conversation: Conversation) => ipcRenderer.invoke('conversations:update', conversation),
     delete: (id: string) => ipcRenderer.invoke('conversations:delete', { id })
+});
+
+// Expose Claude API
+contextBridge.exposeInMainWorld('claude', {
+    checkApiKey: () => ipcRenderer.invoke('claude:checkApiKey'),
+    sendMessage: (messages: any[], systemPrompt?: string) => {
+        const promise = ipcRenderer.invoke('claude:sendMessage', { messages, systemPrompt });
+        const onUpdate = (callback: (message: any) => void) => {
+            ipcRenderer.on('claude:messageUpdate', (_event, message) => callback(message));
+        };
+        return { promise, onUpdate };
+    },
+    generateTitle: (message: string) => ipcRenderer.invoke('claude:generateTitle', message)
 });

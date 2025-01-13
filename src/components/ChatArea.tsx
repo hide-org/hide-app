@@ -11,7 +11,6 @@ import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage, BreadcrumbSeparator } from './ui/breadcrumb';
 import { useMessageConversion } from '@/hooks/useMessageConversion';
 import { MessageParam } from '@anthropic-ai/sdk/resources/messages';
-import { getClaudeService } from '@/lib/claude';
 import { systemPrompt } from '@/lib/prompts';
 
 
@@ -98,33 +97,35 @@ export const ChatArea = ({
     });
 
     try {
-      const claudeService = getClaudeService();
-
       // Clone messages for the API call
       const _messages = [...messages];
+      const { promise, onUpdate } = window.claude.sendMessage(_messages, systemPrompt(project));
 
-      for await (const response of claudeService.sendMessage(_messages, systemPrompt(project))) {
+      // Set up update handler for streaming responses
+      onUpdate((response) => {
         messages = [...messages, response];
         onUpdateConversation({
           ...c,
           messages: messages,
           updatedAt: Date.now(),
         });
-      }
+      });
+
+      // Wait for all messages
+      await promise;
 
       if (shouldGenerateTitle) {
-        claudeService.generateTitle(messages[0]?.content as string || input.trim())
-          .then(title => {
-            onUpdateConversation({
-              ...c,
-              messages: messages,
-              title: title,
-              updatedAt: Date.now()
-            });
-          })
-          .catch(error => {
-            console.error('Error generating title:', error);
+        try {
+          const title = await window.claude.generateTitle(messages[0]?.content as string || input.trim());
+          onUpdateConversation({
+            ...c,
+            messages: messages,
+            title: title,
+            updatedAt: Date.now()
           });
+        } catch (error) {
+          console.error('Error generating title:', error);
+        }
       }
 
       onError(null); // Clear any previous errors

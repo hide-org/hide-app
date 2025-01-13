@@ -1,7 +1,6 @@
-import { ipcMain } from 'electron';
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { CallToolResultSchema, JSONRPCMessage } from "@modelcontextprotocol/sdk/types";
+import { CallToolResultSchema, JSONRPCMessage, CallToolResult, Tool } from "@modelcontextprotocol/sdk/types";
 import { shellExec, escapeShellArg } from './shell';
 
 // 5-minute timeout
@@ -82,42 +81,26 @@ export async function initializeMCP(command: string, args: string[] = []) {
 // Track MCP readiness
 let mcpReadyPromise: Promise<void> | null = null;
 
-// IPC handlers
-ipcMain.handle('mcp:list-tools', async () => {
-    try {
-        // Wait for MCP to be ready
-        if (mcpReadyPromise) {
-            await mcpReadyPromise;
-        }
-
-        if (!mcpClient) throw new Error('MCP client not initialized');
-        return await mcpClient.listTools(undefined, { timeout: DEFAULT_TIMEOUT });
-    } catch (error) {
-        console.error('Error in mcp:list-tools:', {
-            error: error.toString(),
-            stack: error.stack,
-            details: error
-        });
-        throw error;
+// Direct MCP functions for main process use
+export async function listTools(): Promise<Tool[]> {
+    // Wait for MCP to be ready
+    if (mcpReadyPromise) {
+        await mcpReadyPromise;
     }
-});
 
-ipcMain.handle('mcp:call-tool', async (_, args: { name: string; parameters: any; }) => {
-    try {
-        // Wait for MCP to be ready
-        if (mcpReadyPromise) {
-            await mcpReadyPromise;
-        }
+    if (!mcpClient) throw new Error('MCP client not initialized');
+    const toolsResult = await mcpClient.listTools(undefined, { timeout: DEFAULT_TIMEOUT });
+    return toolsResult.tools;
+}
 
-        if (!mcpClient) throw new Error('MCP client not initialized');
-        return await mcpClient.callTool({ name: args.name, arguments: args.parameters }, CallToolResultSchema, { timeout: DEFAULT_TIMEOUT });
-    } catch (error) {
-        console.error('Error in mcp:call-tool:', {
-            error: error.toString(),
-            stack: error.stack,
-            details: error,
-            args
-        });
-        throw error;
+export async function callTool(name: string, parameters: any): Promise<CallToolResult> {
+    // Wait for MCP to be ready
+    if (mcpReadyPromise) {
+        await mcpReadyPromise;
     }
-});
+
+    if (!mcpClient) throw new Error('MCP client not initialized');
+    return await mcpClient.callTool({ name, arguments: parameters }, CallToolResultSchema, { timeout: DEFAULT_TIMEOUT });
+}
+
+
