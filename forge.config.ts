@@ -20,6 +20,10 @@ const config: ForgeConfig = {
     ],
     icon: './public/Icon', // no file extension required
     name: 'Hide',
+    osxSign: {},
+    osxNotarize: {
+      keychainProfile: 'HideApp-ASP',
+    },
   },
   rebuildConfig: {
     onlyModules: ['@modelcontextprotocol/sdk']
