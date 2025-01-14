@@ -1,3 +1,4 @@
+import { CoreMessage, CoreTool, generateText } from 'ai';
 import { BrowserWindow, ipcMain } from 'electron';
 import { isApiKeyConfigured, getAnthropicApiKey } from '../lib/config';
 import Anthropic from '@anthropic-ai/sdk';
@@ -5,87 +6,59 @@ import { ImageBlockParam, TextBlockParam, ToolUseBlockParam } from '@anthropic-a
 import { MessageParam, Tool as AnthropicTool, ToolResultBlockParam } from '@anthropic-ai/sdk/resources/messages';
 import type { CallToolResult as ToolResult } from '@modelcontextprotocol/sdk/types';
 import { callTool, listTools } from './mcp';
-import { mcpToAnthropicTool } from '../lib/mcp/adapters';
+import { mcpToAnthropicTool, mcpToAiSdkTool } from '../lib/mcp/adapters';
+import { anthropic } from '@ai-sdk/anthropic';
 
 class ClaudeService {
-    private client: Anthropic;
+    // private client: Anthropic;
     private chatModel = 'claude-3-5-sonnet-20241022';
     private titleModel = 'claude-3-5-haiku-20241022';
-    private tools: AnthropicTool[];
+    private tools: Record<string, CoreTool>;
 
     constructor(apiKey: string) {
-        this.client = new Anthropic({
-            apiKey,
-            dangerouslyAllowBrowser: false, // We're in the main process now
-            maxRetries: 16,
-        });
+        // this.client = new Anthropic({
+        //     apiKey,
+        //     maxRetries: 16,
+        // });
 
-        this.tools = [];
+        this.tools = {};
     }
 
     async initializeTools() {
         try {
             const mcpTools = await listTools();
             console.log('Loaded tools from MCP:', mcpTools);
-            this.tools = mcpTools.map(mcpToAnthropicTool);
+            this.tools = mcpTools
+                .map(tool => mcpToAiSdkTool(tool, callTool))
+                .reduce((acc, tool) => ({ ...acc, ...tool }), {});
         } catch (error) {
             console.error('Error initializing tools:', error);
-            this.tools = [];
+            this.tools = {};
         }
     }
 
-    async *sendMessage(messages: MessageParam[], systemPrompt: string = ''): AsyncGenerator<MessageParam> {
+    async sendMessage(messages: CoreMessage[], systemPrompt: string = '', onMessage: (message: CoreMessage) => void): Promise<CoreMessage[]> {
         try {
-            const loopMessages = [...messages];
-            while (true) {
-                const response = await this.client.messages.create({
-                    model: this.chatModel,
-                    max_tokens: 4096,
-                    system: systemPrompt,
-                    messages: loopMessages,
-                    tools: this.tools,
-                });
+            const { response } = await generateText({
+                model: anthropic(this.chatModel),
+                messages,
+                system: systemPrompt,
+                tools: this.tools,
+                maxSteps: 1024,
+                maxTokens: 4096,
+                onStepFinish({ text, toolCalls, toolResults, usage }) {
+                    if (text) {
+                        onMessage({ role: 'assistant', content: text });
+                    }
 
-                const responseMessage = {
-                    role: response.role,
-                    content: response.content.map(block => {
-                        if (block.type === 'text') {
-                            return block as TextBlockParam
-                        }
-
-                        if (block.type === 'tool_use') {
-                            return block as ToolUseBlockParam;
-                        }
-
-                        throw new Error('Unexpected response type from Claude');
-                    }),
-                };
-
-                yield responseMessage;
-
-                loopMessages.push(responseMessage);
-
-                const toolUseBlocks = responseMessage.content.filter(block => block.type === 'tool_use') as ToolUseBlockParam[];
-
-                if (toolUseBlocks.length === 0) {
-                    // no tool_use blocks, exit loop
-                    break;
+                    toolCalls.map((call, i) => {
+                        onMessage({ role: 'assistant', content: [call] });
+                        onMessage({ role: 'tool', content: toolResults[i] });
+                    });
                 }
+            })
 
-                for (const block of toolUseBlocks) {
-                    console.log('Calling tool:', block.name, 'with input:', block.input);
-                    const result = await callTool(block.name, block.input);
-                    console.log('Got tool result:', result);
-                    const toolResultMessage: MessageParam = {
-                        role: 'user',
-                        content: [this.makeToolResultBlock(result, block.id)],
-                    };
-
-                    yield toolResultMessage;
-
-                    loopMessages.push(toolResultMessage);
-                }
-            }
+            return [...messages, ...response.messages]
         } catch (error) {
             console.error('Error sending message to Claude:', error);
             throw error;
