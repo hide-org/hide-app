@@ -4,7 +4,7 @@ import { ChatArea } from './ChatArea';
 import { AppSidebar } from './AppSidebar';
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { H2 } from '@/components/ui/typography';
-import { MessageParam } from '@anthropic-ai/sdk/resources';
+import { CoreMessage } from 'ai';
 
 
 export const Chat = () => {
@@ -57,7 +57,7 @@ export const Chat = () => {
     }
   }, [selectedProject]);
 
-  const onAddMessage = async (conversationId: string, message: MessageParam) => {
+  const onAddMessage = async (conversationId: string, message: CoreMessage) => {
     try {
       // Get the current conversation and update its messages
       setCurrentConversation(prev => {

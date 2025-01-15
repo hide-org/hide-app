@@ -28,8 +28,7 @@ export async function initializeMCP(command: string, args: string[] = []) {
                     ...process.env,  // Preserve user's environment
                     PYTHONUNBUFFERED: '1',  // Ensure Python output isn't buffered
                     // TODO: this is probably not necessary
-                    PATH: process.env.PATH,  // Ensure PATH is preserved
-                    HIDE_MCP_LOG_LEVEL: 'DEBUG',
+                    PATH: process.env.PATH  // Ensure PATH is preserved
                 }
             });
 

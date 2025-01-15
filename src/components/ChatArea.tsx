@@ -10,14 +10,14 @@ import { H2 } from '@/components/ui/typography';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage, BreadcrumbSeparator } from './ui/breadcrumb';
 import { useMessageConversion } from '@/hooks/useMessageConversion';
-import { MessageParam } from '@anthropic-ai/sdk/resources/messages';
 import { systemPrompt } from '@/lib/prompts';
+import { CoreMessage } from 'ai';
 
 
 interface ChatAreaProps {
   conversation: Conversation | null;
   onNewConversation: (conversation: Conversation) => void;
-  onAddMessage: (conversationId: string, message: MessageParam) => void;
+  onAddMessage: (conversationId: string, message: CoreMessage) => void;
   onUpdateTitle: (conversationId: string, title: string) => void;
   project: Project | null;
   error: string | null;
@@ -75,19 +75,19 @@ export const ChatArea = ({
     let c = conversation;
     let shouldGenerateTitle = false;
 
-    const message: MessageParam = {
+    const message: CoreMessage = {
       role: 'user',
       content: input.trim(),
     };
 
-    let messages: MessageParam[];
+    let messages: CoreMessage[];
 
     if (!conversation) {
       // Create new conversation with the first message
       c = newConversation(project?.id);
       messages = [message];
       c.messages = messages;
-      await onNewConversation(c);
+      onNewConversation(c);
       shouldGenerateTitle = true;
     } else {
       if (c.title === DEFAULT_CONVERSATION_TITLE) {

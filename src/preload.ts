@@ -1,3 +1,4 @@
+import { CoreMessage } from 'ai';
 import { contextBridge, ipcRenderer } from 'electron';
 
 import { Project, Conversation } from '@/types';
@@ -24,11 +25,11 @@ contextBridge.exposeInMainWorld('conversations', {
 // Expose Claude API
 contextBridge.exposeInMainWorld('claude', {
     checkApiKey: () => ipcRenderer.invoke('claude:checkApiKey'),
-    sendMessage: (messages: any[], systemPrompt?: string) => {
+    sendMessage: (messages: CoreMessage[], systemPrompt?: string) => {
         const promise = ipcRenderer.invoke('claude:sendMessage', { messages, systemPrompt });
-        const onUpdate = (callback: (message: any) => void) => {
+        const onUpdate = (callback: (message: CoreMessage) => void) => {
             // Create the handler function that we can reference later for removal
-            const handler = (_event: any, message: any) => callback(message);
+            const handler = (_event: any, message: CoreMessage) => callback(message);
             ipcRenderer.on('claude:messageUpdate', handler);
             // Return a cleanup function
             return () => {

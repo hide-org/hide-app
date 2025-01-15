@@ -1,78 +1,100 @@
-import { MessageParam } from '@anthropic-ai/sdk/src/resources/messages';
+import {
+  CoreMessage,
+  CoreSystemMessage,
+  CoreUserMessage,
+  CoreAssistantMessage,
+  CoreToolMessage,
+} from 'ai';
+import { v4 as uuidv4 } from 'uuid';
 import { Message } from '../types';
-import { simpleHash } from './utils';
 
-export function convertClaudeMessages(messages: MessageParam[]): Message[] {
-  return messages.flatMap(message => {
-    if (typeof message.content === 'string') {
-      return [{
-        id: simpleHash(message.content).toString(),
+function convertSystemMessage(message: CoreSystemMessage): Message[] {
+  return [{
+    id: uuidv4(),
+    role: message.role,
+    content: message.content,
+  }];
+}
+
+function convertUserMessage(message: CoreUserMessage): Message[] {
+  if (typeof message.content === 'string') {
+    return [{
+      id: uuidv4(),
+      role: message.role,
+      content: message.content,
+    }];
+  }
+
+  return message.content.map(part => {
+    if (part.type === 'text') {
+      return {
+        id: uuidv4(),
         role: message.role,
-        content: message.content,
-      }];
+        content: part.text,
+      };
     }
 
-    if (Array.isArray(message.content)) {
-      return message.content.map(block => {
-        if (block.type === 'text') {
-          return {
-            id: simpleHash(block.text).toString(),
-            role: message.role,
-            content: block.text,
-          };
-        }
+    // Handle image and file attachments
+    return {
+      id: uuidv4(),
+      role: message.role,
+      content: `Attachments (${part.type}) are not supported yet`,
+    };
+  });
+}
 
-        if (block.type === 'image') {
-          return {
-            id: simpleHash(block.source.data).toString(),
-            role: message.role,
-            content: 'Images are not supported yet',
-          }
-        }
+function convertAssistantMessage(message: CoreAssistantMessage): Message[] {
+  if (typeof message.content === 'string') {
+    return [{
+      id: uuidv4(),
+      role: message.role,
+      content: message.content,
+    }];
+  }
 
-        if (block.type === 'tool_use') {
-          const content = `Tool: \`${block.name}\`\n\nInput:\n\`\`\`json\n${JSON.stringify(block.input, null, 2)}\n\`\`\``;
-          return {
-            id: simpleHash(content).toString(),
-            role: 'tool_use',
-            content: content,
-          };
-        }
-
-        if (block.type === 'tool_result') {
-          if (typeof block.content === 'string') {
-            const content = `Tool Result:\n\`\`\`text\n${block.content as string}\n\`\`\``;
-            return {
-              id: simpleHash(content).toString(),
-              role: 'tool_result',
-              content: content,
-              isError: block.is_error,
-            };
-          }
-
-          if (Array.isArray(block.content)) {
-            const contents = block.content.map(block => {
-              if (block.type === 'text') {
-                return block.text;
-              }
-
-              if (block.type === 'image') {
-                return "Images are not supported yet";
-              }
-            })
-
-            const content = `Tool Result:\n\`\`\`text\n${contents.join('\n')}\n\`\`\``;
-            return {
-              id: simpleHash(content).toString(),
-              role: 'tool_result',
-              content: content,
-              isError: block.is_error,
-            };
-          }
-        }
-      });
+  return message.content.map(part => {
+    if (part.type === 'text') {
+      return {
+        id: uuidv4(),
+        role: message.role,
+        content: part.text,
+      };
     }
 
-    throw new Error('Unexpected message type');
+    if (part.type === 'tool-call') {
+      return {
+        id: uuidv4(),
+        role: 'tool_use',
+        content: `Tool: \`${part.toolName}\`\n\nInput:\n\`\`\`json\n${JSON.stringify(part.args, null, 2)}\n\`\`\``,
+      };
+    }
+  });
+}
+
+function convertToolMessage(message: CoreToolMessage): Message[] {
+  return message.content.map(part => {
+    return {
+      id: uuidv4(),
+      role: 'tool_result',
+      content: `Tool Result:\n\`\`\`text\n${part.result as string}\n\`\`\``,
+      isError: part.isError,
+    };
+  });
+}
+
+export function convertClaudeMessages(messages: CoreMessage[]): Message[] {
+  return messages.flatMap(message => {
+    switch (message.role) {
+      case 'system':
+        return convertSystemMessage(message);
+      case 'user':
+        return convertUserMessage(message);
+      case 'assistant':
+        return convertAssistantMessage(message);
+      case 'tool':
+        return convertToolMessage(message);
+      default:
+        throw new Error(`Unexpected message role: ${(message as any).role}`);
+    }
   });
 }

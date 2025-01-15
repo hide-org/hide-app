@@ -22,8 +22,7 @@ export function mcpToAiSdkTool(tool: MCPTool, callTool: (name: string, args: any
         [name]: aiTool({
             description,
             parameters: jsonSchema(inputSchema),
-            // TODO: callTool might need to be tranformed further
-            execute: async ({ args }) => (callTool(name, args)),
+            execute: async (args) => (callTool(name, args)),
         })
     }
 }
