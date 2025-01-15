@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import { MessageParam } from '@anthropic-ai/sdk/src/resources/messages';
 import { Message } from '../types';
 import { convertClaudeMessages } from '../lib/messageConverters';
+import { CoreMessage } from 'ai';
 
-export function useMessageConversion(messages: MessageParam[] | undefined): Message[] {
+export function useMessageConversion(messages: CoreMessage[] | undefined): Message[] {
   return useMemo(() => {
     if (!messages) return [];
     return convertClaudeMessages(messages);

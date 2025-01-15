@@ -1,3 +1,4 @@
+import { CoreMessage } from 'ai';
 import { Project, Conversation } from './types';
 
 declare global {
@@ -19,9 +20,9 @@ declare global {
     };
     claude: {
       checkApiKey: () => Promise<boolean>;
-      sendMessage: (messages: any[], systemPrompt?: string) => {
-        promise: Promise<any[]>;
-        onUpdate: (callback: (message: any) => void) => () => void;
+      sendMessage: (messages: CoreMessage[], systemPrompt?: string) => {
+        promise: Promise<CoreMessage[]>;
+        onUpdate: (callback: (message: CoreMessage) => void) => () => void;
       };
       generateTitle: (message: string) => Promise<string>;
     };

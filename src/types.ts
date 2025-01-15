@@ -1,4 +1,4 @@
-import { MessageParam } from '@anthropic-ai/sdk/resources/messages';
+import { CoreMessage } from 'ai';
 import { v4 as uuidv4 } from 'uuid';
 
 export const DEFAULT_CONVERSATION_TITLE = 'Untitled Chat';
@@ -6,7 +6,7 @@ export const DEFAULT_CONVERSATION_TITLE = 'Untitled Chat';
 // internal representation of a message for the UI
 export interface Message {
   id: string;
-  role: 'user' | 'assistant' | 'tool_use' | 'tool_result';
+  role: 'system' | 'user' | 'assistant' | 'tool' | 'tool_use' | 'tool_result';
   content: string;
   isError?: boolean;
 }
@@ -14,8 +14,8 @@ export interface Message {
 export interface Conversation {
   id: string;
   title: string;
-  // NOTE: using anthropic message type here; later we can create our own type to support different providers
-  messages: MessageParam[];
+  // NOTE: using vercel ai message type here; later we can create our own type to support different providers
+  messages: CoreMessage[];
   projectId: string;
   createdAt: number;
   updatedAt: number;
