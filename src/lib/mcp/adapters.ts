@@ -33,7 +33,7 @@ export function mcpToAiSdkTool(tool: MCPTool, callTool: (name: string, args: any
                     const r = result as MCPToolResult;
                     return r.content.map(c => {
                         if (c.type === 'text') {
-                            return { type: 'text', text: c.text };
+                            return { type: 'text', text: r.isError ? `Error: ${c.text}` : c.text };
                         }
 
                         if (c.type === 'image') {
