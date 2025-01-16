@@ -5,12 +5,12 @@ import {
   CoreAssistantMessage,
   CoreToolMessage,
 } from 'ai';
-import { v4 as uuidv4 } from 'uuid';
 import { Message } from '../types';
+import { simpleHash } from './utils';
 
 function convertSystemMessage(message: CoreSystemMessage): Message[] {
   return [{
-    id: uuidv4(),
+    id: simpleHash(message.content).toString(),
     role: message.role,
     content: message.content,
   }];
@@ -19,7 +19,7 @@ function convertSystemMessage(message: CoreSystemMessage): Message[] {
 function convertUserMessage(message: CoreUserMessage): Message[] {
   if (typeof message.content === 'string') {
     return [{
-      id: uuidv4(),
+      id: simpleHash(message.content).toString(),
       role: message.role,
       content: message.content,
     }];
@@ -28,17 +28,18 @@ function convertUserMessage(message: CoreUserMessage): Message[] {
   return message.content.map(part => {
     if (part.type === 'text') {
       return {
-        id: uuidv4(),
+        id: simpleHash(part.text).toString(),
         role: message.role,
         content: part.text,
       };
     }
 
     // Handle image and file attachments
+    const content = `Attachments (${part.type}) are not supported yet`;
     return {
-      id: uuidv4(),
+      id: simpleHash(content).toString(),
       role: message.role,
-      content: `Attachments (${part.type}) are not supported yet`,
+      content: content,
     };
   });
 }
@@ -46,7 +47,7 @@ function convertUserMessage(message: CoreUserMessage): Message[] {
 function convertAssistantMessage(message: CoreAssistantMessage): Message[] {
   if (typeof message.content === 'string') {
     return [{
-      id: uuidv4(),
+      id: simpleHash(message.content).toString(),
       role: message.role,
       content: message.content,
     }];
@@ -55,17 +56,18 @@ function convertAssistantMessage(message: CoreAssistantMessage): Message[] {
   return message.content.map(part => {
     if (part.type === 'text') {
       return {
-        id: uuidv4(),
+        id: simpleHash(part.text).toString(),
         role: message.role,
         content: part.text,
       };
     }
 
     if (part.type === 'tool-call') {
+      const content = `Tool: \`${part.toolName}\`\n\nInput:\n\`\`\`json\n${JSON.stringify(part.args, null, 2)}\n\`\`\``;
       return {
-        id: uuidv4(),
+        id: simpleHash(content).toString(),
         role: 'tool_use',
-        content: `Tool: \`${part.toolName}\`\n\nInput:\n\`\`\`json\n${JSON.stringify(part.args, null, 2)}\n\`\`\``,
+        content: content,
       };
     }
   });
@@ -73,10 +75,11 @@ function convertAssistantMessage(message: CoreAssistantMessage): Message[] {
 
 function convertToolMessage(message: CoreToolMessage): Message[] {
   return message.content.map(part => {
+    const content = `Tool Result:\n\`\`\`text\n${part.result as string}\n\`\`\``;
     return {
-      id: uuidv4(),
+      id: simpleHash(content).toString(),
       role: 'tool_result',
-      content: `Tool Result:\n\`\`\`text\n${part.result as string}\n\`\`\``,
+      content: content,
       isError: part.isError,
     };
   });
