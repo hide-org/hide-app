@@ -1,4 +1,4 @@
-import { CoreMessage, CoreTool, generateText, ToolResultPart, CoreToolResultUnion } from 'ai';
+import { CoreMessage, CoreTool, generateText, streamText, ToolResultPart, CoreToolResultUnion } from 'ai';
 import { BrowserWindow, ipcMain } from 'electron';
 import { isApiKeyConfigured } from '../lib/config';
 import type { CallToolResult as ToolResult } from '@modelcontextprotocol/sdk/types';
@@ -28,9 +28,10 @@ class ClaudeService {
         }
     }
 
-    async sendMessage(messages: CoreMessage[], systemPrompt: string = '', onMessage: (message: CoreMessage) => void): Promise<CoreMessage[]> {
+    async sendMessage(messages: CoreMessage[], systemPrompt: string = '', onMessage: (message: CoreMessage) => void): Promise<string> {
         try {
-            const { response } = await generateText({
+            let currentMessage = '';
+            const result = streamText({
                 model: anthropic(this.chatModel),
                 messages,
                 system: systemPrompt,
@@ -38,22 +39,52 @@ class ClaudeService {
                 maxRetries: 16,
                 maxSteps: 1024,
                 maxTokens: 4096,
-                onStepFinish: ({ text, toolCalls, toolResults, usage }) => {
-                    if (text) {
-                        onMessage({ role: 'assistant', content: text });
-                    }
-
-                    toolCalls.map((call, i) => {
-                        onMessage({ role: 'assistant', content: [call] });
-                        onMessage({
-                            role: 'tool',
-                            content: this.makeToolResultParts(toolResults[i])
-                        });
-                    });
-                }
             })
 
-            return [...messages, ...response.messages]
+            for await (const part of result.fullStream) {
+                switch (part.type) {
+                    case 'text-delta': {
+                        // append chunk to current message
+                        currentMessage += part.textDelta;
+                        break;
+                    }
+                    case 'tool-call': {
+                        // emit current message if it's not empty
+                        if (currentMessage.trim()) {
+                            onMessage({ role: 'assistant', content: currentMessage });
+                            currentMessage = '';
+                        }
+
+                        // emit tool call
+                        onMessage({ role: 'assistant', content: [part] });
+                        break;
+                    }
+                    // @ts-ignore
+                    case 'tool-result': {
+                        // emit tool result
+                        onMessage({
+                            role: 'tool',
+                            content: this.makeToolResultParts(part)
+                        });
+                        break;
+                    }
+                    case 'finish': {
+                        // emit current message if it's not empty
+                        if (currentMessage.trim()) {
+                            onMessage({ role: 'assistant', content: currentMessage });
+                            currentMessage = '';
+                        }
+                        break;
+                    }
+                    case 'error': {
+                        // handle error here
+                        console.error(`\n\nSystem: Error: ${part.error}\n`);
+                        break;
+                    }
+                }
+            }
+
+            return result.text;
         } catch (error) {
             console.error('Error sending message to Claude:', error);
             throw error;
