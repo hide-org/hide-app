@@ -1,18 +1,20 @@
 import { CoreMessage, CoreTool, generateText, streamText, ToolResultPart, CoreToolResultUnion } from 'ai';
 import { BrowserWindow, ipcMain } from 'electron';
-import { isApiKeyConfigured } from '../lib/config';
+import { getAnthropicApiKey, isApiKeyConfigured } from '../lib/config';
 import type { CallToolResult as ToolResult } from '@modelcontextprotocol/sdk/types';
 import { callTool, listTools } from './mcp';
 import { mcpToAiSdkTool } from '../lib/mcp/adapters';
-import { anthropic } from '@ai-sdk/anthropic';
+import { AnthropicProvider, createAnthropic } from '@ai-sdk/anthropic';
 
 class ClaudeService {
     private chatModel = 'claude-3-5-sonnet-20241022';
     private titleModel = 'claude-3-5-haiku-20241022';
     private tools: Record<string, CoreTool>;
+    private anthropic: AnthropicProvider;
 
-    constructor() {
+    constructor(apiKey: string) {
         this.tools = {};
+        this.anthropic = createAnthropic({ apiKey });
     }
 
     async initializeTools() {
@@ -32,7 +34,7 @@ class ClaudeService {
         try {
             let currentMessage = '';
             const result = streamText({
-                model: anthropic(this.chatModel),
+                model: this.anthropic(this.chatModel),
                 messages,
                 system: systemPrompt,
                 tools: this.tools,
@@ -94,7 +96,7 @@ class ClaudeService {
     async generateTitle(message: string): Promise<string> {
         try {
             const { text } = await generateText({
-                model: anthropic(this.titleModel),
+                model: this.anthropic(this.titleModel),
                 messages: [{ role: 'user', content: `Generate a very brief and concise title (maximum 40 characters) for a conversation that starts with this message: "${message}". Respond with just the title, no quotes or extra text.` }],
                 maxTokens: 50,
             })
@@ -159,7 +161,8 @@ export const initializeClaudeService = async () => {
     }
 
     try {
-        claudeService = new ClaudeService();
+        const apiKey = getAnthropicApiKey();
+        claudeService = new ClaudeService(apiKey);
         await claudeService.initializeTools();
         console.log('Claude service initialized successfully');
     } catch (error) {
