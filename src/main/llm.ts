@@ -263,17 +263,4 @@ ipcMain.handle('llm:generateTitle', async (_event, message: string) => {
     return await llmService!.generateTitle(message);
 });
 
-// Settings-related handlers
-ipcMain.handle('settings:update', async (_event, settings: Omit<UserSettings, 'created_at' | 'updated_at'>) => {
-    try {
-        await updateUserSettings(settings);
-        
-        // Reinitialize LLM service with new settings
-        await initializeLLMService();
-        
-        return await getUserSettings();
-    } catch (error) {
-        console.error('Error updating settings:', error);
-        throw error;
-    }
-});
+
