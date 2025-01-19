@@ -1,6 +1,4 @@
-import { useState } from "react"
 import { ChevronsUpDown } from "lucide-react"
-import { SettingsDialog } from "./SettingsDialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,9 +15,12 @@ import {
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 
-export function UserSwitcher() {
+interface UserSwitcherProps {
+  onSettingsClick: () => void;
+}
+
+export function UserSwitcher({ onSettingsClick }: UserSwitcherProps) {
   const { isMobile } = useSidebar()
-  const [showSettings, setShowSettings] = useState(false)
   const user = {
     name: "artm",
     email: "art@hide.sh",
@@ -71,15 +72,11 @@ export function UserSwitcher() {
               Account
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => setShowSettings(true)}
+              onClick={onSettingsClick}
               className="gap-2 p-2"
             >
               Settings
             </DropdownMenuItem>
-            <SettingsDialog
-              open={showSettings}
-              onOpenChange={setShowSettings}
-            />
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => console.log("Log out clicked")}

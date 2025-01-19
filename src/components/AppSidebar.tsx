@@ -21,6 +21,7 @@ import { ProjectDialog } from "./ProjectDialog"
 import { DeleteProjectDialog } from "./DeleteProjectDialog"
 import { ChatDialog } from "./ChatDialog"
 import { DeleteChatDialog } from "./DeleteChatDialog"
+import { SettingsDialog } from "./SettingsDialog"
 
 
 interface AppSidebarProps {
@@ -52,6 +53,7 @@ export function AppSidebar({
   const [projectToDelete, setProjectToDelete] = React.useState<Project | null>(null);
   const [chatToEdit, setChatToEdit] = React.useState<Conversation | null>(null);
   const [chatToDelete, setChatToDelete] = React.useState<Conversation | null>(null);
+  const [showSettings, setShowSettings] = React.useState(false);
 
   return (
     <Sidebar>
@@ -91,8 +93,12 @@ export function AppSidebar({
         }}
         onDelete={onDeleteConversation}
       />
+      <SettingsDialog
+        open={showSettings}
+        onOpenChange={setShowSettings}
+      />
       <SidebarHeader className="space-y-4 p-4">
-        <UserSwitcher />
+        <UserSwitcher onSettingsClick={() => setShowSettings(true)} />
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
