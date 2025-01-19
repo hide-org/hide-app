@@ -48,6 +48,9 @@ class LLMService {
                 throw new Error(`No API key found for ${this.settings.model_provider}`);
             }
 
+            // Clear existing provider
+            this.provider = null;
+
             switch (this.settings.model_provider) {
                 case 'anthropic':
                     this.provider = createAnthropic({ apiKey: providerSettings.apiKey });
@@ -60,21 +63,32 @@ class LLMService {
             }
 
             await this.initializeTools();
-            console.log('LLM service initialized successfully');
+            console.log('LLM service initialized successfully with provider:', this.settings.model_provider);
         } catch (error) {
             console.error('Error initializing LLM service:', error);
+            this.provider = null;
+            this.settings = null;
             throw error;
         }
     }
 
     async sendMessage(messages: CoreMessage[], systemPrompt: string = '', onMessage: (message: CoreMessage) => void): Promise<string> {
         if (!this.provider || !this.settings) {
-            throw new Error('LLM service not initialized');
+            throw new Error('LLM service not initialized. Please check your API key and provider settings.');
         }
 
         try {
             let currentMessage = '';
             const providerSettings = this.settings.provider_settings[this.settings.model_provider];
+            
+            // Validate API key and model before sending
+            if (!providerSettings?.apiKey) {
+                throw new Error(`No API key found for ${this.settings.model_provider}. Please check your settings.`);
+            }
+            if (!providerSettings.models?.chat) {
+                throw new Error(`No chat model selected for ${this.settings.model_provider}. Please check your settings.`);
+            }
+
             const result = streamText({
                 model: this.provider(providerSettings.models.chat),
                 messages,
@@ -213,25 +227,53 @@ export const initializeLLMService = async () => {
 
 // IPC handlers
 ipcMain.handle('llm:checkApiKey', async () => {
-    const settings = await getUserSettings();
-    if (!settings) return false;
-    
-    const provider = settings.model_provider;
-    return !!settings.provider_settings[provider]?.apiKey;
+    try {
+        const settings = await getUserSettings();
+        if (!settings) return false;
+        
+        const provider = settings.model_provider;
+        return !!settings.provider_settings[provider]?.apiKey;
+    } catch (error) {
+        console.error('Error checking API key:', error);
+        return false;
+    }
 });
 
 ipcMain.handle('llm:sendMessage', async (_event, { messages, systemPrompt }: { messages: any[], systemPrompt?: string }) => {
     if (!llmService) {
-        throw new Error('LLM service not initialized.');
+        try {
+            await initializeLLMService();
+        } catch (error) {
+            throw new Error('Failed to initialize LLM service. Please check your settings.');
+        }
     }
 
     const onMessage = (message: CoreMessage) => BrowserWindow.getFocusedWindow()?.webContents.send('llm:messageUpdate', message);
-    return await llmService.sendMessage(messages, systemPrompt, onMessage);
+    return await llmService!.sendMessage(messages, systemPrompt, onMessage);
 });
 
 ipcMain.handle('llm:generateTitle', async (_event, message: string) => {
     if (!llmService) {
-        throw new Error('LLM service not initialized.');
+        try {
+            await initializeLLMService();
+        } catch (error) {
+            throw new Error('Failed to initialize LLM service. Please check your settings.');
+        }
     }
-    return await llmService.generateTitle(message);
+    return await llmService!.generateTitle(message);
+});
+
+// Settings-related handlers
+ipcMain.handle('settings:update', async (_event, settings: Omit<UserSettings, 'created_at' | 'updated_at'>) => {
+    try {
+        await updateUserSettings(settings);
+        
+        // Reinitialize LLM service with new settings
+        await initializeLLMService();
+        
+        return await getUserSettings();
+    } catch (error) {
+        console.error('Error updating settings:', error);
+        throw error;
+    }
 });

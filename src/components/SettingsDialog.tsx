@@ -159,29 +159,33 @@ function OpenAISettings({ settings, onChange }: ProviderSettingsProps) {
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [settings, setSettings] = React.useState<UserSettings | null>(null);
+  const [draftSettings, setDraftSettings] = React.useState<UserSettings | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
   // Load settings when dialog opens
   React.useEffect(() => {
     if (open) {
-      window.settings.get().then(setSettings);
+      window.settings.get().then(settings => {
+        setSettings(settings);
+        setDraftSettings(settings); // Initialize draft with current settings
+      });
     }
   }, [open]);
 
   const handleProviderChange = (provider: string) => {
-    if (!settings) return;
-
-    setSettings({
-      ...settings,
+    if (!draftSettings) return;
+    setDraftSettings({
+      ...draftSettings,
       model_provider: provider as UserSettings['model_provider']
     });
   };
 
   const handleSettingChange = (path: string, value: string) => {
-    if (!settings) return;
+    if (!draftSettings) return;
 
     const [provider, ...rest] = path.split('.');
-    const newSettings = { ...settings };
+    const newSettings = { ...draftSettings };
 
     // Ensure provider settings exist
     if (!newSettings.provider_settings[provider]) {
@@ -199,32 +203,51 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     }
     target[lastKey] = value;
 
-    setSettings(newSettings);
+    setDraftSettings(newSettings);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!settings) return;
+    if (!draftSettings) return;
 
     try {
+      setError(null);
       setIsSaving(true);
+
+      // Validate API key for selected provider
+      const provider = draftSettings.model_provider;
+      const apiKey = draftSettings.provider_settings[provider]?.apiKey;
+      if (!apiKey?.trim()) {
+        throw new Error(`Please enter an API key for ${provider}`);
+      }
+
       await window.settings.update({
-        model_provider: settings.model_provider,
-        provider_settings: settings.provider_settings
+        model_provider: draftSettings.model_provider,
+        provider_settings: draftSettings.provider_settings
       });
+      setSettings(draftSettings); // Update actual settings after successful save
       onOpenChange(false);
     } catch (error) {
       console.error('Error saving settings:', error);
-      // TODO: Show error toast
+      setError(error instanceof Error ? error.message : 'Failed to save settings');
     } finally {
       setIsSaving(false);
     }
   };
 
-  if (!settings) return null;
+  // When dialog closes without saving, reset draft to current settings
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      setDraftSettings(settings);
+      setError(null);
+    }
+    onOpenChange(open);
+  };
+
+  if (!settings || !draftSettings) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
@@ -233,7 +256,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <Tabs defaultValue={settings.model_provider} onValueChange={handleProviderChange}>
+          <Tabs value={draftSettings.model_provider} onValueChange={handleProviderChange}>
             <div className="flex items-center justify-between">
               <Label>Model Provider</Label>
               <TabsList>
@@ -244,18 +267,23 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             <TabsContent value="anthropic">
               <AnthropicSettings
                 provider="anthropic"
-                settings={settings}
+                settings={draftSettings}
                 onChange={handleSettingChange}
               />
             </TabsContent>
             <TabsContent value="openai">
               <OpenAISettings
                 provider="openai"
-                settings={settings}
+                settings={draftSettings}
                 onChange={handleSettingChange}
               />
             </TabsContent>
           </Tabs>
+          {error && (
+            <div className="mt-4 text-sm text-red-500">
+              {error}
+            </div>
+          )}
           <DialogFooter className="mt-4">
             <Button type="submit" disabled={isSaving}>
               {isSaving ? "Saving..." : "Save"}
