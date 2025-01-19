@@ -99,7 +99,7 @@ export const ChatArea = ({
     }
 
     try {
-      const { promise, onUpdate } = window.claude.sendMessage(messages, systemPrompt(project));
+      const { promise, onUpdate } = window.llm.sendMessage(messages, systemPrompt(project));
 
       // Set up update handler for streaming responses and get cleanup function
       const cleanup = onUpdate((message) => {
@@ -117,7 +117,7 @@ export const ChatArea = ({
       if (shouldGenerateTitle) {
         try {
 
-          const title = await window.claude.generateTitle(messages[0]?.content as string || input.trim());
+          const title = await window.llm.generateTitle(messages[0]?.content as string || input.trim());
           onUpdateTitle(c.id, title);
         } catch (error) {
           console.error('Error generating title:', error);

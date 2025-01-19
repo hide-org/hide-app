@@ -17,9 +17,9 @@ export const Chat = () => {
   // Check API key status
   useEffect(() => {
     const checkApiKey = async () => {
-      const isConfigured = await window.claude.checkApiKey();
+      const isConfigured = await window.llm.checkApiKey();
       if (!isConfigured) {
-        setError('API key not configured. Please set up your Anthropic API key.');
+        setError('API key not configured. Please configure your API key in settings.');
       }
     };
     checkApiKey();
