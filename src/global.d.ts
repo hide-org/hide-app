@@ -1,5 +1,6 @@
 import { CoreMessage } from 'ai';
 import { Project, Conversation } from './types';
+import { UserSettings } from './types/settings';
 
 declare global {
   interface Window {
@@ -25,6 +26,10 @@ declare global {
         onUpdate: (callback: (message: CoreMessage) => void) => () => void;
       };
       generateTitle: (message: string) => Promise<string>;
+    };
+    settings: {
+      get: () => Promise<UserSettings | null>;
+      update: (settings: Omit<UserSettings, 'created_at' | 'updated_at'>) => Promise<UserSettings>;
     };
   }
 }

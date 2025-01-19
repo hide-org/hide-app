@@ -2,6 +2,7 @@ import { CoreMessage } from 'ai';
 import { contextBridge, ipcRenderer } from 'electron';
 
 import { Project, Conversation } from '@/types';
+import { UserSettings } from '@/types/settings';
 
 // Expose file dialog API
 contextBridge.exposeInMainWorld('electron', {
@@ -39,4 +40,11 @@ contextBridge.exposeInMainWorld('claude', {
         return { promise, onUpdate };
     },
     generateTitle: (message: string) => ipcRenderer.invoke('claude:generateTitle', message)
+});
+
+// Expose settings API
+contextBridge.exposeInMainWorld('settings', {
+    get: () => ipcRenderer.invoke('settings:get'),
+    update: (settings: Omit<UserSettings, 'created_at' | 'updated_at'>) => 
+        ipcRenderer.invoke('settings:update', settings)
 });
