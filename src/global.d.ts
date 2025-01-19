@@ -19,7 +19,7 @@ declare global {
       update: (conversation: Conversation) => Promise<Conversation>;
       delete: (id: string) => Promise<void>;
     };
-    claude: {
+    llm: {
       checkApiKey: () => Promise<boolean>;
       sendMessage: (messages: CoreMessage[], systemPrompt?: string) => {
         promise: Promise<CoreMessage[]>;

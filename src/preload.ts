@@ -23,23 +23,23 @@ contextBridge.exposeInMainWorld('conversations', {
     delete: (id: string) => ipcRenderer.invoke('conversations:delete', { id })
 });
 
-// Expose Claude API
-contextBridge.exposeInMainWorld('claude', {
-    checkApiKey: () => ipcRenderer.invoke('claude:checkApiKey'),
+// Expose LLM API
+contextBridge.exposeInMainWorld('llm', {
+    checkApiKey: () => ipcRenderer.invoke('llm:checkApiKey'),
     sendMessage: (messages: CoreMessage[], systemPrompt?: string) => {
-        const promise = ipcRenderer.invoke('claude:sendMessage', { messages, systemPrompt });
+        const promise = ipcRenderer.invoke('llm:sendMessage', { messages, systemPrompt });
         const onUpdate = (callback: (message: CoreMessage) => void) => {
             // Create the handler function that we can reference later for removal
             const handler = (_event: any, message: CoreMessage) => callback(message);
-            ipcRenderer.on('claude:messageUpdate', handler);
+            ipcRenderer.on('llm:messageUpdate', handler);
             // Return a cleanup function
             return () => {
-                ipcRenderer.removeListener('claude:messageUpdate', handler);
+                ipcRenderer.removeListener('llm:messageUpdate', handler);
             };
         };
         return { promise, onUpdate };
     },
-    generateTitle: (message: string) => ipcRenderer.invoke('claude:generateTitle', message)
+    generateTitle: (message: string) => ipcRenderer.invoke('llm:generateTitle', message)
 });
 
 // Expose settings API
