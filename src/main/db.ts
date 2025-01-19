@@ -4,6 +4,7 @@ import path from 'path';
 import { homedir } from 'os';
 import { v4 as uuidv4 } from 'uuid';
 import { Conversation, Project } from '../types';
+import { UserSettings, DEFAULT_USER_SETTINGS } from '../types/settings';
 
 let db: Database.Database;
 
@@ -36,9 +37,20 @@ export const initializeDatabase = () => {
         )
     `);
 
+  // Create user_settings table if it doesn't exist
+  db.exec(`
+        CREATE TABLE IF NOT EXISTS user_settings (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            model_provider TEXT NOT NULL,
+            provider_settings TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+        )
+    `);
+
   // Insert default projects if table is empty
-  const count = db.prepare('SELECT COUNT(*) as count FROM projects').get() as { count: number };
-  if (count.count === 0) {
+  const projectCount = db.prepare('SELECT COUNT(*) as count FROM projects').get() as { count: number };
+  if (projectCount.count === 0) {
     const defaultProjects = [
       {
         id: uuidv4(),
@@ -52,6 +64,28 @@ export const initializeDatabase = () => {
     defaultProjects.forEach(project => {
       insert.run(project.id, project.name, project.path, project.description);
     });
+  }
+
+  // Insert default settings if table is empty
+  const settingsCount = db.prepare('SELECT COUNT(*) as count FROM user_settings').get() as { count: number };
+  if (settingsCount.count === 0) {
+    const insert = db.prepare(`
+      INSERT INTO user_settings (
+        id, 
+        model_provider, 
+        provider_settings, 
+        created_at, 
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?)
+    `);
+    
+    insert.run(
+      1,
+      DEFAULT_USER_SETTINGS.model_provider,
+      JSON.stringify(DEFAULT_USER_SETTINGS.provider_settings),
+      DEFAULT_USER_SETTINGS.created_at,
+      DEFAULT_USER_SETTINGS.updated_at
+    );
   }
 };
 
@@ -131,7 +165,89 @@ export const deleteProjectConversations = (projectId: string): void => {
   stmt.run(projectId);
 };
 
+interface UserSettingsRow {
+  id: number;
+  model_provider: string;
+  provider_settings: string;
+  created_at: number;
+  updated_at: number;
+}
+
+export const getUserSettings = (): UserSettings | null => {
+  const stmt = db.prepare('SELECT * FROM user_settings WHERE id = 1');
+  const row = stmt.get() as UserSettingsRow | undefined;
+  
+  if (!row) return null;
+
+  return {
+    model_provider: row.model_provider as UserSettings['model_provider'],
+    provider_settings: JSON.parse(row.provider_settings),
+    created_at: row.created_at,
+    updated_at: row.updated_at
+  };
+};
+
+export const updateUserSettings = async (settings: Omit<UserSettings, 'created_at' | 'updated_at'>): Promise<void> => {
+  const currentSettings = db.prepare('SELECT created_at FROM user_settings WHERE id = 1').get();
+  
+  if (currentSettings) {
+    // Update existing settings
+    const stmt = db.prepare(`
+      UPDATE user_settings 
+      SET model_provider = ?,
+          provider_settings = ?,
+          updated_at = ?
+      WHERE id = 1
+    `);
+    stmt.run(
+      settings.model_provider,
+      JSON.stringify(settings.provider_settings),
+      Date.now()
+    );
+  } else {
+    // Insert new settings
+    const stmt = db.prepare(`
+      INSERT INTO user_settings (
+        id,
+        model_provider,
+        provider_settings,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?)
+    `);
+    const now = Date.now();
+    stmt.run(
+      1,
+      settings.model_provider,
+      JSON.stringify(settings.provider_settings),
+      now,
+      now
+    );
+  }
+};
+
 export const setupDbHandlers = () => {
+  // Settings handlers
+  ipcMain.handle('settings:get', async () => {
+    try {
+      return getUserSettings();
+    } catch (err) {
+      console.error('Error getting user settings:', err);
+      throw err;
+    }
+  });
+
+  ipcMain.handle('settings:update', async (_, settings: Omit<UserSettings, 'created_at' | 'updated_at'>) => {
+    try {
+      await updateUserSettings(settings);
+      return getUserSettings();
+    } catch (err) {
+      console.error('Error updating user settings:', err);
+      throw err;
+    }
+  });
+
+  // Project handlers
   ipcMain.handle('projects:getAll', async () => {
     try {
       return getAllProjects();
