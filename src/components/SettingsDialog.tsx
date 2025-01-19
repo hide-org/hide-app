@@ -196,12 +196,16 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     }
 
     // Update the specific setting
-    let target = newSettings.provider_settings[provider];
-    const lastKey = rest[rest.length - 1];
-    for (let i = 0; i < rest.length - 1; i++) {
-      target = target[rest[i]];
+    if (rest.length === 1 && rest[0] === 'apiKey') {
+      // Handle apiKey update
+      newSettings.provider_settings[provider].apiKey = value;
+    } else if (rest.length === 2 && rest[0] === 'models') {
+      // Handle models update
+      newSettings.provider_settings[provider].models[rest[1]] = value;
+    } else {
+      console.warn('Unexpected settings path:', path);
+      return;
     }
-    target[lastKey] = value;
 
     setDraftSettings(newSettings);
   };
