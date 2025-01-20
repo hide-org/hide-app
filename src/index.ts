@@ -207,7 +207,7 @@ app.whenReady().then(async () => {
     // Show an error dialog to the user
     dialog.showErrorBox(
       'Error Starting Application',
-      'Failed to initialize required services. The application may not work correctly.'
+      `Failed to initialize required services. Error: ${err.message}. The application may not work correctly.`
     );
   }
 });

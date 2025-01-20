@@ -67,8 +67,8 @@ function AnthropicSettings({ settings, onChange }: ProviderSettingsProps) {
             <SelectValue placeholder="Select model" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="claude-3-5-sonnet-20241022">Claude 3 Sonnet</SelectItem>
-            <SelectItem value="claude-3-5-haiku-20241022">Claude 3 Haiku</SelectItem>
+            <SelectItem value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</SelectItem>
+            <SelectItem value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -84,8 +84,8 @@ function AnthropicSettings({ settings, onChange }: ProviderSettingsProps) {
             <SelectValue placeholder="Select model" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="claude-3-5-sonnet-20241022">Claude 3 Sonnet</SelectItem>
-            <SelectItem value="claude-3-5-haiku-20241022">Claude 3 Haiku</SelectItem>
+            <SelectItem value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</SelectItem>
+            <SelectItem value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -97,8 +97,8 @@ function OpenAISettings({ settings, onChange }: ProviderSettingsProps) {
   const providerSettings = settings.provider_settings.openai || {
     apiKey: "",
     models: {
-      chat: "gpt-4-turbo-preview",
-      title: "gpt-3.5-turbo"
+      chat: "gpt-4o",
+      title: "gpt-4o-mini"
     }
   };
 
@@ -129,9 +129,10 @@ function OpenAISettings({ settings, onChange }: ProviderSettingsProps) {
             <SelectValue placeholder="Select model" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="gpt-4-turbo-preview">GPT-4 Turbo</SelectItem>
-            <SelectItem value="gpt-4">GPT-4</SelectItem>
-            <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+            <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+            <SelectItem value="gpt-4o-mini">GPT-4o mini</SelectItem>
+            <SelectItem value="o1">o1</SelectItem>
+            <SelectItem value="o1-mini">o1 mini</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -147,9 +148,10 @@ function OpenAISettings({ settings, onChange }: ProviderSettingsProps) {
             <SelectValue placeholder="Select model" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="gpt-4-turbo-preview">GPT-4 Turbo</SelectItem>
-            <SelectItem value="gpt-4">GPT-4</SelectItem>
-            <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+            <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+            <SelectItem value="gpt-4o-mini">GPT-4o mini</SelectItem>
+            <SelectItem value="o1">o1</SelectItem>
+            <SelectItem value="o1-mini">o1 mini</SelectItem>
           </SelectContent>
         </Select>
       </div>

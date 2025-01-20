@@ -4,7 +4,7 @@ import path from 'path';
 import { homedir } from 'os';
 import { v4 as uuidv4 } from 'uuid';
 import { Conversation, Project } from '../types';
-import { UserSettings, DEFAULT_USER_SETTINGS } from '../types/settings';
+import { UserSettings } from '../types/settings';
 
 let db: Database.Database;
 
@@ -64,28 +64,6 @@ export const initializeDatabase = () => {
     defaultProjects.forEach(project => {
       insert.run(project.id, project.name, project.path, project.description);
     });
-  }
-
-  // Insert default settings if table is empty
-  const settingsCount = db.prepare('SELECT COUNT(*) as count FROM user_settings').get() as { count: number };
-  if (settingsCount.count === 0) {
-    const insert = db.prepare(`
-      INSERT INTO user_settings (
-        id, 
-        model_provider, 
-        provider_settings, 
-        created_at, 
-        updated_at
-      ) VALUES (?, ?, ?, ?, ?)
-    `);
-    
-    insert.run(
-      1,
-      DEFAULT_USER_SETTINGS.model_provider,
-      JSON.stringify(DEFAULT_USER_SETTINGS.provider_settings),
-      DEFAULT_USER_SETTINGS.created_at,
-      DEFAULT_USER_SETTINGS.updated_at
-    );
   }
 };
 
@@ -176,7 +154,7 @@ interface UserSettingsRow {
 export const getUserSettings = (): UserSettings | null => {
   const stmt = db.prepare('SELECT * FROM user_settings WHERE id = 1');
   const row = stmt.get() as UserSettingsRow | undefined;
-  
+
   if (!row) return null;
 
   return {
@@ -189,7 +167,7 @@ export const getUserSettings = (): UserSettings | null => {
 
 export const updateUserSettings = async (settings: Omit<UserSettings, 'created_at' | 'updated_at'>): Promise<void> => {
   const currentSettings = db.prepare('SELECT created_at FROM user_settings WHERE id = 1').get();
-  
+
   if (currentSettings) {
     // Update existing settings
     const stmt = db.prepare(`
@@ -240,11 +218,11 @@ export const setupDbHandlers = () => {
   ipcMain.handle('settings:update', async (_, settings: Omit<UserSettings, 'created_at' | 'updated_at'>) => {
     try {
       await updateUserSettings(settings);
-      
+
       // Reinitialize LLM service with new settings
       const { initializeLLMService } = await import('./llm');
       await initializeLLMService();
-      
+
       return getUserSettings();
     } catch (err) {
       console.error('Error updating user settings:', err);

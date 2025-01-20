@@ -37,7 +37,7 @@ class LLMService {
     async initialize() {
         try {
             // Load settings from DB
-            this.settings = await getUserSettings();
+            this.settings = getUserSettings();
             if (!this.settings) {
                 throw new Error('No settings found');
             }
@@ -228,7 +228,7 @@ export const initializeLLMService = async () => {
 // IPC handlers
 ipcMain.handle('llm:checkApiKey', async () => {
     try {
-        const settings = await getUserSettings();
+        const settings = getUserSettings();
         if (!settings) return false;
         
         const provider = settings.model_provider;
