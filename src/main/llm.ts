@@ -1,20 +1,24 @@
 import { CoreMessage, CoreTool, generateText, streamText, ToolResultPart, CoreToolResultUnion } from 'ai';
 import { BrowserWindow, ipcMain } from 'electron';
-import { getAnthropicApiKey, isApiKeyConfigured } from '../lib/config';
 import type { CallToolResult as ToolResult } from '@modelcontextprotocol/sdk/types';
 import { callTool, listTools } from './mcp';
 import { mcpToAiSdkTool } from '../lib/mcp/adapters';
 import { AnthropicProvider, createAnthropic } from '@ai-sdk/anthropic';
+import { OpenAIProvider, createOpenAI } from '@ai-sdk/openai';
+import { getUserSettings } from './db';
+import { UserSettings } from '../types/settings';
 
-class ClaudeService {
-    private chatModel = 'claude-3-5-sonnet-20241022';
-    private titleModel = 'claude-3-5-haiku-20241022';
+type SupportedProvider = AnthropicProvider | OpenAIProvider;
+
+class LLMService {
     private tools: Record<string, CoreTool>;
-    private anthropic: AnthropicProvider;
+    private provider: SupportedProvider | null;
+    private settings: UserSettings | null;
 
-    constructor(apiKey: string) {
+    constructor() {
         this.tools = {};
-        this.anthropic = createAnthropic({ apiKey });
+        this.provider = null;
+        this.settings = null;
     }
 
     async initializeTools() {
@@ -30,11 +34,63 @@ class ClaudeService {
         }
     }
 
+    async initialize() {
+        try {
+            // Load settings from DB
+            this.settings = getUserSettings();
+            if (!this.settings) {
+                throw new Error('No settings found');
+            }
+
+            // Initialize provider based on settings
+            const providerSettings = this.settings.provider_settings[this.settings.model_provider];
+            if (!providerSettings?.apiKey) {
+                throw new Error(`No API key found for ${this.settings.model_provider}`);
+            }
+
+            // Clear existing provider
+            this.provider = null;
+
+            switch (this.settings.model_provider) {
+                case 'anthropic':
+                    this.provider = createAnthropic({ apiKey: providerSettings.apiKey });
+                    break;
+                case 'openai':
+                    this.provider = createOpenAI({ apiKey: providerSettings.apiKey });
+                    break;
+                default:
+                    throw new Error(`Unsupported provider: ${this.settings.model_provider}`);
+            }
+
+            await this.initializeTools();
+            console.log('LLM service initialized successfully with provider:', this.settings.model_provider);
+        } catch (error) {
+            console.error('Error initializing LLM service:', error);
+            this.provider = null;
+            this.settings = null;
+            throw error;
+        }
+    }
+
     async sendMessage(messages: CoreMessage[], systemPrompt: string = '', onMessage: (message: CoreMessage) => void): Promise<string> {
+        if (!this.provider || !this.settings) {
+            throw new Error('LLM service not initialized. Please check your API key and provider settings.');
+        }
+
         try {
             let currentMessage = '';
+            const providerSettings = this.settings.provider_settings[this.settings.model_provider];
+            
+            // Validate API key and model before sending
+            if (!providerSettings?.apiKey) {
+                throw new Error(`No API key found for ${this.settings.model_provider}. Please check your settings.`);
+            }
+            if (!providerSettings.models?.chat) {
+                throw new Error(`No chat model selected for ${this.settings.model_provider}. Please check your settings.`);
+            }
+
             const result = streamText({
-                model: this.anthropic(this.chatModel),
+                model: this.provider(providerSettings.models.chat),
                 messages,
                 system: systemPrompt,
                 tools: this.tools,
@@ -94,9 +150,14 @@ class ClaudeService {
     }
 
     async generateTitle(message: string): Promise<string> {
+        if (!this.provider || !this.settings) {
+            throw new Error('LLM service not initialized');
+        }
+
         try {
+            const providerSettings = this.settings.provider_settings[this.settings.model_provider];
             const { text } = await generateText({
-                model: this.anthropic(this.titleModel),
+                model: this.provider(providerSettings.models.title),
                 messages: [{ role: 'user', content: `Generate a very brief and concise title (maximum 40 characters) for a conversation that starts with this message: "${message}". Respond with just the title, no quotes or extra text.` }],
                 maxTokens: 50,
             })
@@ -152,41 +213,54 @@ class ClaudeService {
     }
 }
 
-let claudeService: ClaudeService | null = null;
+let llmService: LLMService | null = null;
 
-export const initializeClaudeService = async () => {
-    if (!isApiKeyConfigured()) {
-        console.log('API key not configured. Claude service will not be initialized.');
-        return;
-    }
-
+export const initializeLLMService = async () => {
     try {
-        const apiKey = getAnthropicApiKey();
-        claudeService = new ClaudeService(apiKey);
-        await claudeService.initializeTools();
-        console.log('Claude service initialized successfully');
+        llmService = new LLMService();
+        await llmService.initialize();
     } catch (error) {
-        console.error('Error initializing Claude service:', error);
+        console.error('Error initializing LLM service:', error);
+        throw error;
     }
 };
 
 // IPC handlers
-ipcMain.handle('claude:checkApiKey', () => {
-    return isApiKeyConfigured();
+ipcMain.handle('llm:checkApiKey', async () => {
+    try {
+        const settings = getUserSettings();
+        if (!settings) return false;
+        
+        const provider = settings.model_provider;
+        return !!settings.provider_settings[provider]?.apiKey;
+    } catch (error) {
+        console.error('Error checking API key:', error);
+        return false;
+    }
 });
 
-ipcMain.handle('claude:sendMessage', async (_event, { messages, systemPrompt }: { messages: any[], systemPrompt?: string }) => {
-    if (!claudeService) {
-        throw new Error('Claude service not initialized. Please configure your API key.');
+ipcMain.handle('llm:sendMessage', async (_event, { messages, systemPrompt }: { messages: any[], systemPrompt?: string }) => {
+    if (!llmService) {
+        try {
+            await initializeLLMService();
+        } catch (error) {
+            throw new Error('Failed to initialize LLM service. Please check your settings.');
+        }
     }
 
-    const onMessage = (message: CoreMessage) => BrowserWindow.getFocusedWindow()?.webContents.send('claude:messageUpdate', message);
-    return await claudeService.sendMessage(messages, systemPrompt, onMessage);
+    const onMessage = (message: CoreMessage) => BrowserWindow.getFocusedWindow()?.webContents.send('llm:messageUpdate', message);
+    return await llmService!.sendMessage(messages, systemPrompt, onMessage);
 });
 
-ipcMain.handle('claude:generateTitle', async (_event, message: string) => {
-    if (!claudeService) {
-        throw new Error('Claude service not initialized. Please configure your API key.');
+ipcMain.handle('llm:generateTitle', async (_event, message: string) => {
+    if (!llmService) {
+        try {
+            await initializeLLMService();
+        } catch (error) {
+            throw new Error('Failed to initialize LLM service. Please check your settings.');
+        }
     }
-    return await claudeService.generateTitle(message);
+    return await llmService!.generateTitle(message);
 });
+
+

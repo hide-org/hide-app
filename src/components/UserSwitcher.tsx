@@ -15,7 +15,11 @@ import {
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 
-export function UserSwitcher() {
+interface UserSwitcherProps {
+  onSettingsClick: () => void;
+}
+
+export function UserSwitcher({ onSettingsClick }: UserSwitcherProps) {
   const { isMobile } = useSidebar()
   const user = {
     name: "artm",
@@ -68,7 +72,7 @@ export function UserSwitcher() {
               Account
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => console.log("Settings clicked")}
+              onClick={onSettingsClick}
               className="gap-2 p-2"
             >
               Settings

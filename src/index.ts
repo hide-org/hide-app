@@ -4,7 +4,7 @@ import * as fs from 'fs';
 
 import { initializeDatabase, setupDbHandlers } from './main/db';
 import { initializeMCP } from './main/mcp';
-import { initializeClaudeService } from './main/claude';
+import { initializeLLMService } from './main/llm';
 
 // Set up logging
 const setupLogging = () => {
@@ -199,15 +199,15 @@ app.whenReady().then(async () => {
     await initPromise;
     console.log('MCP initialized successfully');
 
-    // Now that MCP is ready, initialize Claude service
-    await initializeClaudeService();
-    console.log('Claude service initialized successfully');
+    // Now that MCP is ready, initialize LLM service
+    await initializeLLMService();
+    console.log('LLM service initialized successfully');
   } catch (err) {
     console.error('Failed to initialize MCP:', err);
     // Show an error dialog to the user
     dialog.showErrorBox(
       'Error Starting Application',
-      'Failed to initialize required services. The application may not work correctly.'
+      `Failed to initialize required services. Error: ${err.message}. The application may not work correctly.`
     );
   }
 });

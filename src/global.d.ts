@@ -1,5 +1,6 @@
 import { CoreMessage } from 'ai';
 import { Project, Conversation } from './types';
+import { UserSettings } from './types/settings';
 
 declare global {
   interface Window {
@@ -18,13 +19,17 @@ declare global {
       update: (conversation: Conversation) => Promise<Conversation>;
       delete: (id: string) => Promise<void>;
     };
-    claude: {
+    llm: {
       checkApiKey: () => Promise<boolean>;
       sendMessage: (messages: CoreMessage[], systemPrompt?: string) => {
         promise: Promise<CoreMessage[]>;
         onUpdate: (callback: (message: CoreMessage) => void) => () => void;
       };
       generateTitle: (message: string) => Promise<string>;
+    };
+    settings: {
+      get: () => Promise<UserSettings | null>;
+      update: (settings: Omit<UserSettings, 'created_at' | 'updated_at'>) => Promise<UserSettings>;
     };
   }
 }
