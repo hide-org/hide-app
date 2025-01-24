@@ -80,7 +80,7 @@ class LLMService {
         try {
             let currentMessage = '';
             const providerSettings = this.settings.provider_settings[this.settings.model_provider];
-            
+
             // Validate API key and model before sending
             if (!providerSettings?.apiKey) {
                 throw new Error(`No API key found for ${this.settings.model_provider}. Please check your settings.`);
@@ -138,6 +138,9 @@ class LLMService {
                         // handle error here
                         console.error(`\n\nSystem: Error: ${part.error}\n`);
                         break;
+                    }
+                    default: {
+                        console.debug('Unknown message part:', part.type);
                     }
                 }
             }
@@ -230,7 +233,7 @@ ipcMain.handle('llm:checkApiKey', async () => {
     try {
         const settings = getUserSettings();
         if (!settings) return false;
-        
+
         const provider = settings.model_provider;
         return !!settings.provider_settings[provider]?.apiKey;
     } catch (error) {
@@ -248,7 +251,11 @@ ipcMain.handle('llm:sendMessage', async (_event, { messages, systemPrompt }: { m
         }
     }
 
-    const onMessage = (message: CoreMessage) => BrowserWindow.getFocusedWindow()?.webContents.send('llm:messageUpdate', message);
+    const onMessage = (message: CoreMessage) => {
+        BrowserWindow.getAllWindows().forEach(window => {
+            window.webContents.send('llm:messageUpdate', message);
+        });
+    };
     return await llmService!.sendMessage(messages, systemPrompt, onMessage);
 });
 
