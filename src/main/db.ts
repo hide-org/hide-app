@@ -3,7 +3,7 @@ import { app, ipcMain } from 'electron';
 import path from 'path';
 import { homedir } from 'os';
 import { v4 as uuidv4 } from 'uuid';
-import { Conversation, Project } from '../types';
+import { Conversation, Project, Task } from '../types';
 import { UserSettings } from '../types/settings';
 
 let db: Database.Database;
@@ -45,6 +45,23 @@ export const initializeDatabase = () => {
             provider_settings TEXT NOT NULL,
             created_at INTEGER NOT NULL,
             updated_at INTEGER NOT NULL
+        )
+    `);
+
+  // Create tasks table if it doesn't exist
+  db.exec(`
+        CREATE TABLE IF NOT EXISTS tasks (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            description TEXT,
+            status TEXT NOT NULL CHECK (status IN ('pending', 'running', 'completed', 'failed', 'cancelled')),
+            metadata TEXT NOT NULL,
+            projectId TEXT NOT NULL,
+            conversationId TEXT,
+            createdAt INTEGER NOT NULL,
+            updatedAt INTEGER NOT NULL,
+            FOREIGN KEY (projectId) REFERENCES projects(id),
+            FOREIGN KEY (conversationId) REFERENCES conversations(id)
         )
     `);
 
@@ -204,6 +221,79 @@ export const updateUserSettings = async (settings: Omit<UserSettings, 'created_a
   }
 };
 
+// Task CRUD operations
+export const getAllTasks = (projectId: string): Task[] => {
+  const stmt = db.prepare('SELECT * FROM tasks WHERE projectId = ? ORDER BY updatedAt DESC');
+  const rows = stmt.all(projectId) as any[];
+  return rows.map(row => ({
+    ...row,
+    metadata: JSON.parse(row.metadata)
+  }));
+};
+
+export const getTaskById = (id: string): Task | undefined => {
+  const stmt = db.prepare('SELECT * FROM tasks WHERE id = ?');
+  const row = stmt.get(id) as any;
+  if (!row) return undefined;
+  return {
+    ...row,
+    metadata: JSON.parse(row.metadata)
+  };
+};
+
+export const createTask = (task: Task): void => {
+  const stmt = db.prepare(`
+    INSERT INTO tasks (
+      id, title, description, status, metadata, 
+      projectId, conversationId, createdAt, updatedAt
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  stmt.run(
+    task.id,
+    task.title,
+    task.description,
+    task.status,
+    JSON.stringify(task.metadata),
+    task.projectId,
+    task.conversationId,
+    task.createdAt,
+    task.updatedAt
+  );
+};
+
+export const updateTask = (task: Task): void => {
+  const stmt = db.prepare(`
+    UPDATE tasks 
+    SET title = ?, description = ?, status = ?, 
+        metadata = ?, conversationId = ?, updatedAt = ? 
+    WHERE id = ?
+  `);
+  stmt.run(
+    task.title,
+    task.description,
+    task.status,
+    JSON.stringify(task.metadata),
+    task.conversationId,
+    task.updatedAt,
+    task.id
+  );
+};
+
+export const deleteTask = (id: string): void => {
+  const stmt = db.prepare('DELETE FROM tasks WHERE id = ?');
+  stmt.run(id);
+};
+
+export const deleteProjectTasks = (projectId: string): void => {
+  const stmt = db.prepare('DELETE FROM tasks WHERE projectId = ?');
+  stmt.run(projectId);
+};
+
+export const deleteConversationTasks = (conversationId: string): void => {
+  const stmt = db.prepare('DELETE FROM tasks WHERE conversationId = ?');
+  stmt.run(conversationId);
+};
+
 export const setupDbHandlers = () => {
   // Settings handlers
   ipcMain.handle('settings:get', async () => {
@@ -262,7 +352,8 @@ export const setupDbHandlers = () => {
 
   ipcMain.handle('projects:delete', async (_, id) => {
     try {
-      deleteProjectConversations(id);  // First delete associated conversations
+      deleteProjectTasks(id);
+      deleteProjectConversations(id);
       deleteProject(id);
       return getAllProjects();
     } catch (err) {
@@ -302,10 +393,60 @@ export const setupDbHandlers = () => {
 
   ipcMain.handle('conversations:delete', async (_, { id }) => {
     try {
+      deleteConversationTasks(id);
       deleteConversation(id);
       return;
     } catch (err) {
       console.error('Error deleting conversation:', err);
+      throw err;
+    }
+  });
+
+  // Task handlers
+  ipcMain.handle('tasks:getAll', async (_, projectId) => {
+    try {
+      return getAllTasks(projectId);
+    } catch (err) {
+      console.error('Error getting all tasks:', err);
+      throw err;
+    }
+  });
+
+  ipcMain.handle('tasks:getById', async (_, id) => {
+    try {
+      return getTaskById(id);
+    } catch (err) {
+      console.error('Error getting task by id:', err);
+      throw err;
+    }
+  });
+
+  ipcMain.handle('tasks:create', async (_, task) => {
+    try {
+      createTask(task);
+      return getTaskById(task.id);
+    } catch (err) {
+      console.error('Error creating task:', err);
+      throw err;
+    }
+  });
+
+  ipcMain.handle('tasks:update', async (_, task) => {
+    try {
+      updateTask(task);
+      return getTaskById(task.id);
+    } catch (err) {
+      console.error('Error updating task:', err);
+      throw err;
+    }
+  });
+
+  ipcMain.handle('tasks:delete', async (_, id) => {
+    try {
+      deleteTask(id);
+      return;
+    } catch (err) {
+      console.error('Error deleting task:', err);
       throw err;
     }
   });
