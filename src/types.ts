@@ -39,3 +39,30 @@ export interface Project {
   path: string;
   description: string;
 }
+
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+  metadata: Record<string, any>;
+  projectId: string;
+  conversationId: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export const newTask = (projectId: string, title: string, conversationId?: string, description?: string, metadata?: Record<string, any>) => {
+  const timestamp = Date.now();
+  return {
+    id: uuidv4(),
+    title,
+    description: description || null,
+    status: 'pending' as const,
+    metadata: metadata || {},
+    projectId,
+    conversationId: conversationId || null,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  } as Task;
+}
