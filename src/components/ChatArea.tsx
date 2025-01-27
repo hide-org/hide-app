@@ -16,22 +16,24 @@ import { CoreMessage } from 'ai';
 
 interface ChatAreaProps {
   conversation: Conversation | null;
-  onNewConversation: (conversation: Conversation) => void;
-  onAddMessage: (conversationId: string, message: CoreMessage) => void;
-  onUpdateTitle: (conversationId: string, title: string) => void;
+  // onNewConversation: (conversation: Conversation) => void;
+  // onAddMessage: (conversationId: string, message: CoreMessage) => void;
+  onSendMessage: (message: string) => void;
+  // onUpdateTitle: (conversationId: string, title: string) => void;
   project: Project | null;
   error: string | null;
-  onError: (error: string | null) => void;
+  // onError: (error: string | null) => void;
 }
 
 export const ChatArea = ({
   conversation,
-  onNewConversation,
-  onAddMessage,
-  onUpdateTitle,
+  // onNewConversation,
+  // onAddMessage,
+  onSendMessage,
+  // onUpdateTitle,
   project,
   error,
-  onError,
+  // onError,
 }: ChatAreaProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -66,71 +68,75 @@ export const ChatArea = ({
 
   const currentMessages = useMessageConversion(conversation?.messages);
 
-  const onSendMessage = (async (input: string) => {
+  const handleMessage = (async (input: string) => {
 
     if (!input.trim() || isLoading) return;
 
     setIsLoading(true);
 
-    let c = conversation;
-    let shouldGenerateTitle = false;
+    onSendMessage(input);
 
-    const message: CoreMessage = {
-      role: 'user',
-      content: input.trim(),
-    };
+    setIsLoading(false);
 
-    let messages: CoreMessage[];
+    // let c = conversation;
+    // let shouldGenerateTitle = false;
+    //
+    // const message: CoreMessage = {
+    //   role: 'user',
+    //   content: input.trim(),
+    // };
+    //
+    // let messages: CoreMessage[];
+    //
+    // if (!conversation) {
+    //   // Create new conversation with the first message
+    //   c = newConversation(project?.id);
+    //   messages = [message];
+    //   c.messages = messages;
+    //   onNewConversation(c);
+    //   shouldGenerateTitle = true;
+    // } else {
+    //   if (c.title === DEFAULT_CONVERSATION_TITLE) {
+    //     shouldGenerateTitle = true;
+    //   }
+    //   // For existing conversations, add message and build complete array
+    //   onAddMessage(c.id, message);
+    //   messages = [...c.messages, message];
+    // }
 
-    if (!conversation) {
-      // Create new conversation with the first message
-      c = newConversation(project?.id);
-      messages = [message];
-      c.messages = messages;
-      onNewConversation(c);
-      shouldGenerateTitle = true;
-    } else {
-      if (c.title === DEFAULT_CONVERSATION_TITLE) {
-        shouldGenerateTitle = true;
-      }
-      // For existing conversations, add message and build complete array
-      onAddMessage(c.id, message);
-      messages = [...c.messages, message];
-    }
-
-    try {
-      const { promise, onUpdate } = window.llm.sendMessage(messages, systemPrompt(project));
-
-      // Set up update handler for streaming responses and get cleanup function
-      const cleanup = onUpdate((message) => {
-        onAddMessage(c.id, message);
-      });
-
-      try {
-        // Wait for all messages
-        await promise;
-      } finally {
-        // Always clean up the handler to prevent memory leaks and duplicates
-        cleanup();
-      }
-
-      if (shouldGenerateTitle) {
-        try {
-
-          const title = await window.llm.generateTitle(messages[0]?.content as string || input.trim());
-          onUpdateTitle(c.id, title);
-        } catch (error) {
-          console.error('Error generating title:', error);
-        }
-      }
-
-      onError(null); // Clear any previous errors
-    } catch (err) {
-      console.error('Error sending message:', err);
-      onError(err instanceof Error ? err.message : 'Failed to send message');
-    } finally {
-      setIsLoading(false);
-    }
+    // try {
+    //   const { promise, onUpdate } = window.llm.sendMessage(messages, systemPrompt(project));
+    //
+    //   // Set up update handler for streaming responses and get cleanup function
+    //   const cleanup = onUpdate((message) => {
+    //     onAddMessage(c.id, message);
+    //   });
+    //
+    //   try {
+    //     // Wait for all messages
+    //     await promise;
+    //   } finally {
+    //     // Always clean up the handler to prevent memory leaks and duplicates
+    //     cleanup();
+    //   }
+    //
+    //   if (shouldGenerateTitle) {
+    //     try {
+    //
+    //       const title = await window.llm.generateTitle(messages[0]?.content as string || input.trim());
+    //       onUpdateTitle(c.id, title);
+    //     } catch (error) {
+    //       console.error('Error generating title:', error);
+    //     }
+    //   }
+    //
+    //   onError(null); // Clear any previous errors
+    // } catch (err) {
+    //   console.error('Error sending message:', err);
+    //   onError(err instanceof Error ? err.message : 'Failed to send message');
+    // } finally {
+    //   setIsLoading(false);
+    // }
   })
 
   return (
@@ -186,14 +192,14 @@ export const ChatArea = ({
               <div ref={messagesEndRef} className="h-0" />
             </div>
           </ScrollArea>
-          <ChatInput onSendMessage={onSendMessage} disabled={isLoading} className="py-4 max-w-3xl mt-auto" />
+          <ChatInput onSendMessage={handleMessage} disabled={isLoading} className="py-4 max-w-3xl mt-auto" />
         </>
       ) : (
         <div className="flex h-full flex-col justify-center">
           <H2 className="w-full max-w-2xl mx-auto border-0">
             {title()}
           </H2>
-          <ChatInput onSendMessage={onSendMessage} disabled={isLoading} />
+          <ChatInput onSendMessage={handleMessage} disabled={isLoading} />
         </div>
       )}
     </div>

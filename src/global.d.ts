@@ -31,5 +31,10 @@ declare global {
       get: () => Promise<UserSettings | null>;
       update: (settings: Omit<UserSettings, 'created_at' | 'updated_at'>) => Promise<UserSettings>;
     };
+    chat: {
+      start: (conversationId: string, systemPrompt?: string) => Promise<void>;
+      stop: (conversationId: string) => Promise<void>;
+      onMessage: (callback: (conversationId: string, message: CoreMessage) => void) => () => void;
+    };
   }
 }

@@ -45,6 +45,27 @@ contextBridge.exposeInMainWorld('llm', {
 // Expose settings API
 contextBridge.exposeInMainWorld('settings', {
     get: () => ipcRenderer.invoke('settings:get'),
-    update: (settings: Omit<UserSettings, 'created_at' | 'updated_at'>) => 
+    update: (settings: Omit<UserSettings, 'created_at' | 'updated_at'>) =>
         ipcRenderer.invoke('settings:update', settings)
+});
+
+// Expose chat API
+contextBridge.exposeInMainWorld('chat', {
+    start: (conversationId: string, systemPrompt?: string) =>
+        ipcRenderer.invoke('chat:start', { conversationId, systemPrompt }),
+
+    stop: (conversationId: string) =>
+        ipcRenderer.invoke('chat:pause', { conversationId }),
+
+    onMessage: (callback: (conversationId: string, message: CoreMessage) => void) => {
+        const handler = (_event: any, { conversationId, message }: { conversationId: string, message: CoreMessage }) => {
+            console.log(`Calling renderer callback for message (${conversationId})`)
+            console.dir(message)
+            callback(conversationId, message)
+        };
+        ipcRenderer.on('chat:messageUpdate', handler);
+        return () => {
+            ipcRenderer.off('chat:messageUpdate', handler);
+        };
+    }
 });

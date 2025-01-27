@@ -10,7 +10,7 @@ import { UserSettings } from '../types/settings';
 
 type SupportedProvider = AnthropicProvider | OpenAIProvider;
 
-class LLMService {
+export class LLMService {
     private tools: Record<string, CoreTool>;
     private provider: SupportedProvider | null;
     private settings: UserSettings | null;
