@@ -64,8 +64,6 @@ export const Chat = () => {
       conversationId: string,
       message: CoreMessage
     ) => {
-      console.log(`Received message from conversation ${conversationId}`)
-      console.dir(message)
       // Update conversation in our list
       setConversations(prev =>
         prev.map(conversation =>
@@ -120,6 +118,9 @@ export const Chat = () => {
     await window.conversations.create(newConv);
     setCurrentConversation(newConv);
     setConversations(await window.conversations.getAll(selectedProject.id));
+
+    window.chat.generateTitle(newConv.id, message)
+      .catch(err => console.error('Error generating title:', err));
 
     window.chat.start(newConv.id, systemPrompt(selectedProject))
       .catch(err => console.error('Error starting chat:', err));

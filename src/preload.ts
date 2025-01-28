@@ -26,20 +26,6 @@ contextBridge.exposeInMainWorld('conversations', {
 // Expose LLM API
 contextBridge.exposeInMainWorld('llm', {
     checkApiKey: () => ipcRenderer.invoke('llm:checkApiKey'),
-    sendMessage: (messages: CoreMessage[], systemPrompt?: string) => {
-        const promise = ipcRenderer.invoke('llm:sendMessage', { messages, systemPrompt });
-        const onUpdate = (callback: (message: CoreMessage) => void) => {
-            // Create the handler function that we can reference later for removal
-            const handler = (_event: any, message: CoreMessage) => callback(message);
-            ipcRenderer.on('llm:messageUpdate', handler);
-            // Return a cleanup function
-            return () => {
-                ipcRenderer.removeListener('llm:messageUpdate', handler);
-            };
-        };
-        return { promise, onUpdate };
-    },
-    generateTitle: (message: string) => ipcRenderer.invoke('llm:generateTitle', message)
 });
 
 // Expose settings API
@@ -62,8 +48,6 @@ contextBridge.exposeInMainWorld('chat', {
 
     onMessage: (callback: (conversationId: string, message: CoreMessage) => void) => {
         const handler = (_event: any, { conversationId, message }: { conversationId: string, message: CoreMessage }) => {
-            console.log(`Calling renderer callback for message (${conversationId})`)
-            console.dir(message)
             callback(conversationId, message)
         };
         ipcRenderer.on('chat:messageUpdate', handler);

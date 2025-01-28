@@ -1,5 +1,5 @@
 import { CoreMessage, CoreTool, generateText, streamText, ToolResultPart, CoreToolResultUnion } from 'ai';
-import { BrowserWindow, ipcMain } from 'electron';
+import { ipcMain } from 'electron';
 import type { CallToolResult as ToolResult } from '@modelcontextprotocol/sdk/types';
 import { callTool, listTools } from './mcp';
 import { mcpToAiSdkTool } from '../lib/mcp/adapters';
@@ -241,33 +241,4 @@ ipcMain.handle('llm:checkApiKey', async () => {
         return false;
     }
 });
-
-ipcMain.handle('llm:sendMessage', async (_event, { messages, systemPrompt }: { messages: any[], systemPrompt?: string }) => {
-    if (!llmService) {
-        try {
-            await initializeLLMService();
-        } catch (error) {
-            throw new Error('Failed to initialize LLM service. Please check your settings.');
-        }
-    }
-
-    const onMessage = (message: CoreMessage) => {
-        BrowserWindow.getAllWindows().forEach(window => {
-            window.webContents.send('llm:messageUpdate', message);
-        });
-    };
-    return await llmService!.sendMessage(messages, systemPrompt, onMessage);
-});
-
-ipcMain.handle('llm:generateTitle', async (_event, message: string) => {
-    if (!llmService) {
-        try {
-            await initializeLLMService();
-        } catch (error) {
-            throw new Error('Failed to initialize LLM service. Please check your settings.');
-        }
-    }
-    return await llmService!.generateTitle(message);
-});
-
 

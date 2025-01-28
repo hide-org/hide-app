@@ -15,7 +15,6 @@ export class ChatService {
     this.llmService = llmService;
   }
 
-  // TODO: should we pass system prompt here?
   async startChat(conversationId: string, systemPrompt?: string): Promise<void> {
     if (this.activeChats.has(conversationId)) {
       throw new Error('Chat is already running');
@@ -40,8 +39,6 @@ export class ChatService {
 
     try {
       const onMessage = (message: CoreMessage) => {
-        console.log(`Sending message from LLM service`)
-        console.dir(message)
         this.handleNewMessage(conversationId, message);
       };
 
@@ -64,7 +61,7 @@ export class ChatService {
       }
     } catch (error) {
       console.error(`Chat ${conversationId} error:`, error);
-      
+
       // Update status to inactive on error
       const errorConversation = getConversationById(conversationId);
       if (errorConversation) {
@@ -107,6 +104,9 @@ export class ChatService {
 
     try {
       const title = await this.llmService.generateTitle(message);
+      // fetching the conversation again in case it was updated by another process
+      // TODO: use transactions
+      const conversation = getConversationById(conversationId);
       const updatedConversation = {
         ...conversation,
         title,
@@ -120,62 +120,10 @@ export class ChatService {
     }
   }
 
-  // async resumeChat(conversationId: string): Promise<void> {
-  //   const conversation = await getConversationById(conversationId);
-  //   if (!conversation) throw new Error('Conversation not found');
-  //   
-  //   if (conversation.status !== 'paused') {
-  //     throw new Error('Can only resume paused chats');
-  //   }
-  //
-  //   await this.startChat(conversationId);
-  // }
-
-  // async createProgrammaticChat(options: {
-  //   projectId: string;
-  //   initialMessage?: string;
-  //   metadata?: Record<string, any>;
-  //   systemPrompt?: string;
-  // }): Promise<string> {
-  //   const conversation = newConversation(options.projectId);
-  //   conversation.metadata = options.metadata || {};
-  //
-  //   if (options.initialMessage) {
-  //     conversation.messages.push({
-  //       role: 'user',
-  //       content: options.initialMessage
-  //     });
-  //   }
-  //
-  //   await createConversation(conversation);
-  //
-  //   if (options.initialMessage) {
-  //     // Start chat automatically if initial message provided
-  //     await this.startChat(conversation.id, options.systemPrompt);
-  //   }
-  //
-  //   return conversation.id;
-  // }
-
-  // private async updateChatStatus(conversationId: string, status: ConversationStatus): Promise<void> {
-  //   const conversation = await getConversationById(conversationId);
-  //   if (!conversation) return;
-  //
-  //   await updateConversation({
-  //     ...conversation,
-  //     status,
-  //     updatedAt: Date.now()
-  //   });
-  //
-  //   this.broadcastStatusUpdate(conversationId, status);
-  // }
-
   private async handleNewMessage(conversationId: string, message: CoreMessage): Promise<void> {
     const conversation = getConversationById(conversationId);
     if (!conversation) return;
 
-    console.log(`Saving message (conversation ${conversationId})`)
-    console.dir(message)
     updateConversation({
       ...conversation,
       messages: [...conversation.messages, message],
@@ -185,15 +133,7 @@ export class ChatService {
     this.broadcastMessage(conversationId, message);
   }
 
-  // private broadcastStatusUpdate(conversationId: string, status: ConversationStatus): void {
-  //   BrowserWindow.getAllWindows().forEach(window => {
-  //     window.webContents.send('chat:statusUpdate', { conversationId, status });
-  //   });
-  // }
-
   private broadcastMessage(conversationId: string, message: CoreMessage): void {
-    console.log(`Broadcasting message (conversation ${conversationId})`)
-    console.dir(message)
     BrowserWindow.getAllWindows().forEach(window => {
       window.webContents.send('chat:messageUpdate', { conversationId, message });
     });

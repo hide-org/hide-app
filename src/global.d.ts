@@ -21,11 +21,6 @@ declare global {
     };
     llm: {
       checkApiKey: () => Promise<boolean>;
-      sendMessage: (messages: CoreMessage[], systemPrompt?: string) => {
-        promise: Promise<CoreMessage[]>;
-        onUpdate: (callback: (message: CoreMessage) => void) => () => void;
-      };
-      generateTitle: (message: string) => Promise<string>;
     };
     settings: {
       get: () => Promise<UserSettings | null>;

@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect } from 'react';
 import { Conversation, Project } from '../types';
 import { Bot } from 'lucide-react';
 import { ChatInput } from '@/components/ChatInput';
