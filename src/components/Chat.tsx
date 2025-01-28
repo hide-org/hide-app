@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Conversation, Project } from '../types';
+import { Conversation, newConversation, Project } from '../types';
 import { ChatArea } from './ChatArea';
 import { AppSidebar } from './AppSidebar';
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { H2 } from '@/components/ui/typography';
 import { CoreMessage } from 'ai';
+import { systemPrompt } from '@/lib/prompts';
 
 
 export const Chat = () => {
@@ -57,70 +58,98 @@ export const Chat = () => {
     }
   }, [selectedProject]);
 
-  const onAddMessage = async (conversationId: string, message: CoreMessage) => {
-    try {
-      // Get the current conversation and update its messages
+  // Listen for chat messages
+  useEffect(() => {
+    const handleMessage = (
+      conversationId: string,
+      message: CoreMessage
+    ) => {
+      // Update conversation in our list
+      setConversations(prev =>
+        prev.map(conversation =>
+          conversation.id === conversationId
+            ? {
+              ...conversation,
+              messages: [...conversation.messages, message],
+              updatedAt: Date.now()
+            }
+            : conversation
+        )
+      );
+
+      // Update current conversation if it's the active one
       setCurrentConversation(prev => {
-        console.log('Updating conversation:', prev);
         if (!prev || prev.id !== conversationId) return prev;
-        const updatedConversation = {
+        return {
           ...prev,
           messages: [...prev.messages, message],
           updatedAt: Date.now()
         };
-        // Update in DB
-        window.conversations.update(updatedConversation)
-          .catch(err => console.error('Error saving conversation:', err));
-        return updatedConversation;
       });
+    };
 
-      // Update the conversations list
-      const conversations = await window.conversations.getAll(selectedProject?.id);
-      setConversations(conversations);
-    } catch (err) {
-      console.error('Error adding message:', err);
-      setError('Failed to add message');
-    }
-  }
+    const cleanup = window.chat.onMessage(handleMessage);
+    return cleanup;
+  }, []);
 
-  const onUpdateTitle = async (conversationId: string, title: string) => {
-    try {
-      // Update current conversation title
+  // Listen for conversation updates
+  useEffect(() => {
+    const handleUpdate = (conversation: Conversation) => {
       setCurrentConversation(prev => {
-        if (!prev || prev.id !== conversationId) return prev;
-        const updatedConversation = {
-          ...prev,
-          title,
-          updatedAt: Date.now()
-        };
-        // Update in DB
-        window.conversations.update(updatedConversation)
-          .catch(err => console.error('Error saving conversation:', err));
-        return updatedConversation;
+        if (!prev || prev.id !== conversation.id) return prev;
+        return conversation;
       });
 
-      // Update conversations list
-      const conversations = await window.conversations.getAll(selectedProject?.id);
-      setConversations(conversations);
-    } catch (err) {
-      console.error('Error updating title:', err);
-      setError('Failed to update title');
-    }
-  }
+      setConversations(prev => prev.map(c => c.id === conversation.id ? conversation : c).sort((a, b) => b.updatedAt - a.updatedAt));
+    };
 
-  const onNewConversation = async (c: Conversation) => {
-    try {
-      const conversation = await window.conversations.create(c);
-      setCurrentConversation(conversation);
+    const cleanup = window.chat.onUpdate(handleUpdate);
+    return cleanup;
+  }, []);
 
-      if (selectedProject) {
-        const conversations = await window.conversations.getAll(selectedProject.id);
-        setConversations(conversations);
-      }
-    } catch (err) {
-      console.error('Error creating new conversation:', err);
-      setError('Failed to create new conversation');
-    }
+  const handleNewConversation = async (message: string): Promise<void> => {
+    if (!selectedProject) return;
+
+    const newConv = newConversation(selectedProject.id);
+    newConv.messages.push({
+      role: 'user',
+      content: message
+    });
+    await window.conversations.create(newConv);
+    setCurrentConversation(newConv);
+    setConversations(await window.conversations.getAll(selectedProject.id));
+
+    window.chat.generateTitle(newConv.id, message)
+      .catch(err => console.error('Error generating title:', err));
+
+    window.chat.start(newConv.id, systemPrompt(selectedProject))
+      .catch(err => console.error('Error starting chat:', err));
+  };
+
+  const handleNewMessage = async (conversationId: string, message: string): Promise<void> => {
+    setCurrentConversation(prev => {
+      if (!prev || prev.id !== conversationId) return prev;
+      const updatedConversation = {
+        ...prev,
+        messages: [
+          ...prev.messages,
+          { role: 'user', content: message } as CoreMessage,
+        ],
+        updatedAt: Date.now()
+      };
+      // Update in DB
+      window.conversations.update(updatedConversation)
+        .catch(err => console.error('Error saving conversation:', err));
+      return updatedConversation;
+    });
+
+    setConversations(await window.conversations.getAll(selectedProject?.id));
+
+    // Start chat processing
+    window.chat.start(
+      conversationId,
+      systemPrompt(selectedProject)
+    ).catch(err => console.error('Error starting chat:', err));
   }
 
   const onSaveProject = async (project: Project) => {
@@ -180,13 +209,8 @@ export const Chat = () => {
   };
 
   const onSelectProject = (project: Project | null) => {
-    console.log('Selected project:', project);
     setSelectedProject(project);
     // Reset chat area by creating a new conversation
-    if (!project) {
-      setCurrentConversation(null);
-      return;
-    }
     setCurrentConversation(null);
   };
 
@@ -208,12 +232,11 @@ export const Chat = () => {
         {selectedProject ? (
           <ChatArea
             conversation={currentConversation}
-            onNewConversation={onNewConversation}
-            onAddMessage={onAddMessage}
-            onUpdateTitle={onUpdateTitle}
+            onNewConversation={handleNewConversation}
+            onNewMessage={handleNewMessage}
+            isLoading={currentConversation?.status === 'active'}
             project={selectedProject}
             error={error}
-            onError={setError}
           />
         ) : (
           <div className="flex-1 flex flex-col justify-center items-center text-center px-4">

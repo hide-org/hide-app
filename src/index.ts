@@ -4,7 +4,8 @@ import * as fs from 'fs';
 
 import { initializeDatabase, setupDbHandlers } from './main/db';
 import { initializeMCP } from './main/mcp';
-import { initializeLLMService } from './main/llm';
+import { initializeLLMService, LLMService } from './main/llm';
+import { ChatService, setupChatHandlers } from './main/services/chat';
 
 // Set up logging
 const setupLogging = () => {
@@ -200,8 +201,15 @@ app.whenReady().then(async () => {
     console.log('MCP initialized successfully');
 
     // Now that MCP is ready, initialize LLM service
-    await initializeLLMService();
-    console.log('LLM service initialized successfully');
+    const llmService = new LLMService();
+    await llmService.initialize();
+
+    // Create chat service
+    const chatService = new ChatService(llmService);
+    setupChatHandlers(chatService);
+
+    // await initializeLLMService();
+    console.log('chat service initialized successfully');
   } catch (err) {
     console.error('Failed to initialize MCP:', err);
     // Show an error dialog to the user

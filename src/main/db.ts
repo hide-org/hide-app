@@ -31,6 +31,7 @@ export const initializeDatabase = () => {
             title TEXT NOT NULL,
             messages TEXT NOT NULL,
             projectId TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'inactive' CHECK (status IN ('active', 'inactive')),
             createdAt INTEGER NOT NULL,
             updatedAt INTEGER NOT NULL,
             FOREIGN KEY (projectId) REFERENCES projects(id)
@@ -129,22 +130,24 @@ export const getConversationById = (id: string): Conversation | undefined => {
 };
 
 export const createConversation = (conversation: Conversation): void => {
-  const stmt = db.prepare('INSERT INTO conversations (id, title, messages, projectId, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)');
+  const stmt = db.prepare('INSERT INTO conversations (id, title, messages, projectId, status, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)');
   stmt.run(
     conversation.id,
     conversation.title,
     JSON.stringify(conversation.messages),
     conversation.projectId,
+    conversation.status,
     conversation.createdAt,
     conversation.updatedAt
   );
 };
 
 export const updateConversation = (conversation: Conversation): void => {
-  const stmt = db.prepare('UPDATE conversations SET title = ?, messages = ?, updatedAt = ? WHERE id = ?');
+  const stmt = db.prepare('UPDATE conversations SET title = ?, messages = ?, status = ?, updatedAt = ? WHERE id = ?');
   stmt.run(
     conversation.title,
     JSON.stringify(conversation.messages),
+    conversation.status,
     conversation.updatedAt,
     conversation.id
   );

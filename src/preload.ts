@@ -26,25 +26,41 @@ contextBridge.exposeInMainWorld('conversations', {
 // Expose LLM API
 contextBridge.exposeInMainWorld('llm', {
     checkApiKey: () => ipcRenderer.invoke('llm:checkApiKey'),
-    sendMessage: (messages: CoreMessage[], systemPrompt?: string) => {
-        const promise = ipcRenderer.invoke('llm:sendMessage', { messages, systemPrompt });
-        const onUpdate = (callback: (message: CoreMessage) => void) => {
-            // Create the handler function that we can reference later for removal
-            const handler = (_event: any, message: CoreMessage) => callback(message);
-            ipcRenderer.on('llm:messageUpdate', handler);
-            // Return a cleanup function
-            return () => {
-                ipcRenderer.removeListener('llm:messageUpdate', handler);
-            };
-        };
-        return { promise, onUpdate };
-    },
-    generateTitle: (message: string) => ipcRenderer.invoke('llm:generateTitle', message)
 });
 
 // Expose settings API
 contextBridge.exposeInMainWorld('settings', {
     get: () => ipcRenderer.invoke('settings:get'),
-    update: (settings: Omit<UserSettings, 'created_at' | 'updated_at'>) => 
+    update: (settings: Omit<UserSettings, 'created_at' | 'updated_at'>) =>
         ipcRenderer.invoke('settings:update', settings)
+});
+
+// Expose chat API
+contextBridge.exposeInMainWorld('chat', {
+    start: (conversationId: string, systemPrompt?: string) =>
+        ipcRenderer.invoke('chat:start', { conversationId, systemPrompt }),
+
+    stop: (conversationId: string) =>
+        ipcRenderer.invoke('chat:stop', { conversationId }),
+
+    generateTitle: (conversationId: string, message: string) =>
+        ipcRenderer.invoke('chat:generateTitle', { conversationId, message }),
+
+    onMessage: (callback: (conversationId: string, message: CoreMessage) => void) => {
+        const handler = (_event: any, { conversationId, message }: { conversationId: string, message: CoreMessage }) => {
+            callback(conversationId, message)
+        };
+        ipcRenderer.on('chat:messageUpdate', handler);
+        return () => {
+            ipcRenderer.off('chat:messageUpdate', handler);
+        };
+    },
+
+    onUpdate: (callback: (conversation: Conversation) => void) => {
+        const handler = (_event: any, conversation: Conversation) => callback(conversation);
+        ipcRenderer.on('chat:update', handler);
+        return () => {
+            ipcRenderer.off('chat:update', handler);
+        };
+    }
 });

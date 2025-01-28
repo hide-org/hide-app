@@ -1,5 +1,5 @@
-import { useRef, useEffect, useState } from 'react';
-import { Conversation, DEFAULT_CONVERSATION_TITLE, newConversation, Project } from '../types';
+import { useRef, useEffect } from 'react';
+import { Conversation, Project } from '../types';
 import { Bot } from 'lucide-react';
 import { ChatInput } from '@/components/ChatInput';
 import { ChatMessage } from './ChatMessage';
@@ -10,28 +10,24 @@ import { H2 } from '@/components/ui/typography';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage, BreadcrumbSeparator } from './ui/breadcrumb';
 import { useMessageConversion } from '@/hooks/useMessageConversion';
-import { systemPrompt } from '@/lib/prompts';
-import { CoreMessage } from 'ai';
 
 
 interface ChatAreaProps {
   conversation: Conversation | null;
-  onNewConversation: (conversation: Conversation) => void;
-  onAddMessage: (conversationId: string, message: CoreMessage) => void;
-  onUpdateTitle: (conversationId: string, title: string) => void;
+  onNewConversation: (message: string) => Promise<void>;
+  onNewMessage: (conversationId: string, message: string) => Promise<void>;
+  isLoading: boolean;
   project: Project | null;
   error: string | null;
-  onError: (error: string | null) => void;
 }
 
 export const ChatArea = ({
   conversation,
   onNewConversation,
-  onAddMessage,
-  onUpdateTitle,
+  onNewMessage,
+  isLoading,
   project,
   error,
-  onError,
 }: ChatAreaProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -42,8 +38,6 @@ export const ChatArea = ({
       messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
     }
   }, [conversation?.messages]);
-
-  const [isLoading, setIsLoading] = useState(false);
 
   const title = () => {
     const hour = new Date().getHours();
@@ -66,71 +60,15 @@ export const ChatArea = ({
 
   const currentMessages = useMessageConversion(conversation?.messages);
 
-  const onSendMessage = (async (input: string) => {
-
-    if (!input.trim() || isLoading) return;
-
-    setIsLoading(true);
-
-    let c = conversation;
-    let shouldGenerateTitle = false;
-
-    const message: CoreMessage = {
-      role: 'user',
-      content: input.trim(),
-    };
-
-    let messages: CoreMessage[];
+  const handleMessage = (async (input: string) => {
+    if (!input.trim()) return;
 
     if (!conversation) {
-      // Create new conversation with the first message
-      c = newConversation(project?.id);
-      messages = [message];
-      c.messages = messages;
-      onNewConversation(c);
-      shouldGenerateTitle = true;
-    } else {
-      if (c.title === DEFAULT_CONVERSATION_TITLE) {
-        shouldGenerateTitle = true;
-      }
-      // For existing conversations, add message and build complete array
-      onAddMessage(c.id, message);
-      messages = [...c.messages, message];
+      await onNewConversation(input);
+      return;
     }
 
-    try {
-      const { promise, onUpdate } = window.llm.sendMessage(messages, systemPrompt(project));
-
-      // Set up update handler for streaming responses and get cleanup function
-      const cleanup = onUpdate((message) => {
-        onAddMessage(c.id, message);
-      });
-
-      try {
-        // Wait for all messages
-        await promise;
-      } finally {
-        // Always clean up the handler to prevent memory leaks and duplicates
-        cleanup();
-      }
-
-      if (shouldGenerateTitle) {
-        try {
-
-          const title = await window.llm.generateTitle(messages[0]?.content as string || input.trim());
-          onUpdateTitle(c.id, title);
-        } catch (error) {
-          console.error('Error generating title:', error);
-        }
-      }
-
-      onError(null); // Clear any previous errors
-    } catch (err) {
-      console.error('Error sending message:', err);
-      onError(err instanceof Error ? err.message : 'Failed to send message');
-    } finally {
-      setIsLoading(false);
-    }
+    await onNewMessage(conversation.id, input);
   })
 
   return (
@@ -186,14 +124,14 @@ export const ChatArea = ({
               <div ref={messagesEndRef} className="h-0" />
             </div>
           </ScrollArea>
-          <ChatInput onSendMessage={onSendMessage} disabled={isLoading} className="py-4 max-w-3xl mt-auto" />
+          <ChatInput onSendMessage={handleMessage} disabled={isLoading} className="py-4 max-w-3xl mt-auto" />
         </>
       ) : (
         <div className="flex h-full flex-col justify-center">
           <H2 className="w-full max-w-2xl mx-auto border-0">
             {title()}
           </H2>
-          <ChatInput onSendMessage={onSendMessage} disabled={isLoading} />
+          <ChatInput onSendMessage={handleMessage} disabled={isLoading} />
         </div>
       )}
     </div>

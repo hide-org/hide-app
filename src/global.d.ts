@@ -21,15 +21,17 @@ declare global {
     };
     llm: {
       checkApiKey: () => Promise<boolean>;
-      sendMessage: (messages: CoreMessage[], systemPrompt?: string) => {
-        promise: Promise<CoreMessage[]>;
-        onUpdate: (callback: (message: CoreMessage) => void) => () => void;
-      };
-      generateTitle: (message: string) => Promise<string>;
     };
     settings: {
       get: () => Promise<UserSettings | null>;
       update: (settings: Omit<UserSettings, 'created_at' | 'updated_at'>) => Promise<UserSettings>;
+    };
+    chat: {
+      start: (conversationId: string, systemPrompt?: string) => Promise<void>;
+      stop: (conversationId: string) => Promise<void>;
+      generateTitle: (conversationId: string, message: string) => Promise<void>;
+      onMessage: (callback: (conversationId: string, message: CoreMessage) => void) => () => void;
+      onUpdate: (callback: (conversation: Conversation) => void) => () => void;
     };
   }
 }
