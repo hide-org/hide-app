@@ -17,20 +17,22 @@ export interface Conversation {
   // NOTE: using vercel ai message type here; later we can create our own type to support different providers
   messages: CoreMessage[];
   projectId: string;
+  status: 'active' | 'inactive'
   createdAt: number;
   updatedAt: number;
 }
 
-export const newConversation = (projectId: string) => {
+export const newConversation = (projectId: string): Conversation => {
   const timestamp = Date.now();
   return {
     id: uuidv4(),
     title: DEFAULT_CONVERSATION_TITLE,
     messages: [],
     projectId: projectId,
+    status: 'inactive',
     createdAt: timestamp,
     updatedAt: timestamp,
-  } as Conversation;
+  };
 }
 
 export interface Project {

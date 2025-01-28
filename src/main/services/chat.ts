@@ -2,11 +2,11 @@ import { CoreMessage } from 'ai';
 import { BrowserWindow, ipcMain } from 'electron';
 import { LLMService } from '@/main/llm';
 import { getConversationById, updateConversation } from '@/main/db';
+import { Conversation } from '@/types';
 
 export class ChatService {
   private activeChats: Map<string, {
     abortController: AbortController;
-    // status: ConversationStatus;
   }>;
   private llmService: LLMService;
 
@@ -27,10 +27,16 @@ export class ChatService {
     const abortController = new AbortController();
     this.activeChats.set(conversationId, {
       abortController,
-      // status: 'running'
     });
 
-    // await this.updateChatStatus(conversationId, 'running');
+    // Update status to active
+    const updatedConversation = {
+      ...conversation,
+      status: 'active' as const,
+      updatedAt: Date.now()
+    };
+    updateConversation(updatedConversation);
+    this.broadcastUpdate(updatedConversation);
 
     try {
       const onMessage = (message: CoreMessage) => {
@@ -43,20 +49,33 @@ export class ChatService {
         conversation.messages,
         systemPrompt,
         onMessage,
-        // TODO: update sendMessage to accept AbortSignal
-        // abortController.signal
       );
 
-      // await this.updateChatStatus(conversationId, 'completed');
+      // Update status to inactive when done
+      const finalConversation = getConversationById(conversationId);
+      if (finalConversation) {
+        const inactiveConversation = {
+          ...finalConversation,
+          status: 'inactive' as const,
+          updatedAt: Date.now()
+        };
+        updateConversation(inactiveConversation);
+        this.broadcastUpdate(inactiveConversation);
+      }
     } catch (error) {
-      // TODO: read about AbortError (or AbortController in general)
-      // if (error instanceof AbortError) {
-      //   await this.updateChatStatus(conversationId, 'paused');
-      // } else {
-      //   console.error(`Chat ${conversationId} error:`, error);
-      //   await this.updateChatStatus(conversationId, 'idle');
-      // }
       console.error(`Chat ${conversationId} error:`, error);
+      
+      // Update status to inactive on error
+      const errorConversation = getConversationById(conversationId);
+      if (errorConversation) {
+        const inactiveConversation = {
+          ...errorConversation,
+          status: 'inactive' as const,
+          updatedAt: Date.now()
+        };
+        updateConversation(inactiveConversation);
+        this.broadcastUpdate(inactiveConversation);
+      }
     } finally {
       this.activeChats.delete(conversationId);
     }
@@ -68,7 +87,37 @@ export class ChatService {
 
     chat.abortController.abort();
     this.activeChats.delete(conversationId);
-    // await this.updateChatStatus(conversationId, 'paused');
+
+    // Update status to inactive when stopped
+    const conversation = getConversationById(conversationId);
+    if (conversation) {
+      const inactiveConversation = {
+        ...conversation,
+        status: 'inactive' as const,
+        updatedAt: Date.now()
+      };
+      updateConversation(inactiveConversation);
+      this.broadcastUpdate(inactiveConversation);
+    }
+  }
+
+  async generateTitle(conversationId: string, message: string): Promise<void> {
+    const conversation = getConversationById(conversationId);
+    if (!conversation) throw new Error('Conversation not found');
+
+    try {
+      const title = await this.llmService.generateTitle(message);
+      const updatedConversation = {
+        ...conversation,
+        title,
+        updatedAt: Date.now()
+      };
+      updateConversation(updatedConversation);
+      this.broadcastUpdate(updatedConversation);
+    } catch (error) {
+      console.error(`Error generating title for conversation ${conversationId}:`, error);
+      // Don't throw - title generation is not critical
+    }
   }
 
   // async resumeChat(conversationId: string): Promise<void> {
@@ -149,6 +198,15 @@ export class ChatService {
       window.webContents.send('chat:messageUpdate', { conversationId, message });
     });
   }
+
+  // TODO: here we broadcast the entire conversation including messages which is expensive but
+  // but creating a separate broadcast method for each conversation field is not ideal either
+  // what can we do?
+  private broadcastUpdate(conversation: Conversation): void {
+    BrowserWindow.getAllWindows().forEach(window => {
+      window.webContents.send('chat:update', conversation);
+    });
+  }
 }
 
 export const setupChatHandlers = (chatManager: ChatService) => {
@@ -169,6 +227,15 @@ export const setupChatHandlers = (chatManager: ChatService) => {
       return await chatManager.stopChat(conversationId);
     } catch (error) {
       console.error('Error stopping chat:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('chat:generateTitle', async (_, { conversationId, message }) => {
+    try {
+      return await chatManager.generateTitle(conversationId, message);
+    } catch (error) {
+      console.error('Error generating title:', error);
       throw error;
     }
   });

@@ -34,7 +34,9 @@ declare global {
     chat: {
       start: (conversationId: string, systemPrompt?: string) => Promise<void>;
       stop: (conversationId: string) => Promise<void>;
+      generateTitle: (conversationId: string, message: string) => Promise<void>;
       onMessage: (callback: (conversationId: string, message: CoreMessage) => void) => () => void;
+      onUpdate: (callback: (conversation: Conversation) => void) => () => void;
     };
   }
 }

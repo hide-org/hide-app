@@ -55,7 +55,10 @@ contextBridge.exposeInMainWorld('chat', {
         ipcRenderer.invoke('chat:start', { conversationId, systemPrompt }),
 
     stop: (conversationId: string) =>
-        ipcRenderer.invoke('chat:pause', { conversationId }),
+        ipcRenderer.invoke('chat:stop', { conversationId }),
+
+    generateTitle: (conversationId: string, message: string) =>
+        ipcRenderer.invoke('chat:generateTitle', { conversationId, message }),
 
     onMessage: (callback: (conversationId: string, message: CoreMessage) => void) => {
         const handler = (_event: any, { conversationId, message }: { conversationId: string, message: CoreMessage }) => {
@@ -66,6 +69,14 @@ contextBridge.exposeInMainWorld('chat', {
         ipcRenderer.on('chat:messageUpdate', handler);
         return () => {
             ipcRenderer.off('chat:messageUpdate', handler);
+        };
+    },
+
+    onUpdate: (callback: (conversation: Conversation) => void) => {
+        const handler = (_event: any, conversation: Conversation) => callback(conversation);
+        ipcRenderer.on('chat:update', handler);
+        return () => {
+            ipcRenderer.off('chat:update', handler);
         };
     }
 });
