@@ -4,8 +4,12 @@ import * as fs from 'fs';
 
 import { initializeDatabase, setupDbHandlers } from './main/db';
 import { initializeMCP } from './main/mcp';
-import { initializeLLMService, LLMService } from './main/llm';
+import { LLMService } from './main/llm';
 import { ChatService, setupChatHandlers } from './main/services/chat';
+
+
+// Store chat service reference for cleanup
+let chatService: ChatService | null = null;
 
 // Set up logging
 const setupLogging = () => {
@@ -129,6 +133,18 @@ app.on('window-all-closed', () => {
   }
 });
 
+app.on('will-quit', async () => {
+  if (chatService) {
+    console.log('Stopping all active chats before quit...');
+    try {
+      await chatService.stopAllChats();
+      console.log('All chats stopped successfully');
+    } catch (error) {
+      console.error('Error stopping chats:', error);
+    }
+  }
+});
+
 app.on('activate', () => {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
@@ -205,7 +221,7 @@ app.whenReady().then(async () => {
     await llmService.initialize();
 
     // Create chat service
-    const chatService = new ChatService(llmService);
+    chatService = new ChatService(llmService);
     setupChatHandlers(chatService);
 
     // await initializeLLMService();

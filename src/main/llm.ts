@@ -7,6 +7,7 @@ import { AnthropicProvider, createAnthropic } from '@ai-sdk/anthropic';
 import { OpenAIProvider, createOpenAI } from '@ai-sdk/openai';
 import { getUserSettings } from './db';
 import { UserSettings } from '../types/settings';
+import { isAbortError } from '@/main/errors';
 
 type SupportedProvider = AnthropicProvider | OpenAIProvider;
 
@@ -148,7 +149,9 @@ export class LLMService {
 
             return result.text;
         } catch (error) {
-            console.error('Error sending message to Claude:', error);
+            if (!isAbortError(error)) {
+                console.error('Error sending message to LLM:', error);
+            }
             throw error;
         }
     }
@@ -170,7 +173,7 @@ export class LLMService {
                 return text.trim();
             }
 
-            throw new Error('Unexpected response type from Claude');
+            throw new Error('Unexpected response type from LLM');
         } catch (error) {
             console.error('Error generating title:', error);
             return 'New Chat'; // Fallback title
