@@ -46,6 +46,7 @@ export class ChatService {
         conversation.messages,
         systemPrompt,
         onMessage,
+        abortController.signal,
       );
 
       // Update status to inactive when done

@@ -72,7 +72,7 @@ export class LLMService {
         }
     }
 
-    async sendMessage(messages: CoreMessage[], systemPrompt: string = '', onMessage: (message: CoreMessage) => void): Promise<string> {
+    async sendMessage(messages: CoreMessage[], systemPrompt: string = '', onMessage: (message: CoreMessage) => void, abortSignal: AbortSignal): Promise<string> {
         if (!this.provider || !this.settings) {
             throw new Error('LLM service not initialized. Please check your API key and provider settings.');
         }
@@ -97,6 +97,7 @@ export class LLMService {
                 maxRetries: 16,
                 maxSteps: 1024,
                 maxTokens: 4096,
+                abortSignal,
             })
 
             for await (const part of result.fullStream) {
