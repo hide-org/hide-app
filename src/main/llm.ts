@@ -7,6 +7,7 @@ import { AnthropicProvider, createAnthropic } from '@ai-sdk/anthropic';
 import { OpenAIProvider, createOpenAI } from '@ai-sdk/openai';
 import { getUserSettings } from './db';
 import { UserSettings } from '../types/settings';
+import { isAbortError } from '@/main/errors';
 
 type SupportedProvider = AnthropicProvider | OpenAIProvider;
 
@@ -72,7 +73,7 @@ export class LLMService {
         }
     }
 
-    async sendMessage(messages: CoreMessage[], systemPrompt: string = '', onMessage: (message: CoreMessage) => void): Promise<string> {
+    async sendMessage(messages: CoreMessage[], systemPrompt: string = '', onMessage: (message: CoreMessage) => void, abortSignal: AbortSignal): Promise<string> {
         if (!this.provider || !this.settings) {
             throw new Error('LLM service not initialized. Please check your API key and provider settings.');
         }
@@ -97,6 +98,7 @@ export class LLMService {
                 maxRetries: 16,
                 maxSteps: 1024,
                 maxTokens: 4096,
+                abortSignal,
             })
 
             for await (const part of result.fullStream) {
@@ -147,7 +149,9 @@ export class LLMService {
 
             return result.text;
         } catch (error) {
-            console.error('Error sending message to Claude:', error);
+            if (!isAbortError(error)) {
+                console.error('Error sending message to LLM:', error);
+            }
             throw error;
         }
     }
@@ -169,7 +173,7 @@ export class LLMService {
                 return text.trim();
             }
 
-            throw new Error('Unexpected response type from Claude');
+            throw new Error('Unexpected response type from LLM');
         } catch (error) {
             console.error('Error generating title:', error);
             return 'New Chat'; // Fallback title

@@ -3,6 +3,7 @@ import { BrowserWindow, ipcMain } from 'electron';
 import { LLMService } from '@/main/llm';
 import { getConversationById, updateConversation } from '@/main/db';
 import { Conversation } from '@/types';
+import { isAbortError } from '@/main/errors';
 
 export class ChatService {
   private activeChats: Map<string, {
@@ -46,6 +47,7 @@ export class ChatService {
         conversation.messages,
         systemPrompt,
         onMessage,
+        abortController.signal,
       );
 
       // Update status to inactive when done
@@ -60,21 +62,23 @@ export class ChatService {
         this.broadcastUpdate(inactiveConversation);
       }
     } catch (error) {
-      console.error(`Chat ${conversationId} error:`, error);
-
-      // Update status to inactive on error
-      const errorConversation = getConversationById(conversationId);
-      if (errorConversation) {
-        const inactiveConversation = {
-          ...errorConversation,
+      if (!isAbortError(error)) {
+        console.error(`Chat ${conversationId} error:`, error);
+      }
+    } finally {
+      console.log(`Chat ${conversationId} stopped. Cleaning up...`);
+      const conversation = getConversationById(conversationId);
+      if (conversation) {
+        const c = {
+          ...conversation,
           status: 'inactive' as const,
           updatedAt: Date.now()
         };
-        updateConversation(inactiveConversation);
-        this.broadcastUpdate(inactiveConversation);
+        updateConversation(c);
+        this.broadcastUpdate(c);
       }
-    } finally {
       this.activeChats.delete(conversationId);
+      console.log(`Chat ${conversationId} cleaned up successfully`);
     }
   }
 
@@ -83,19 +87,7 @@ export class ChatService {
     if (!chat) throw new Error('Chat not found or not running');
 
     chat.abortController.abort();
-    this.activeChats.delete(conversationId);
-
-    // Update status to inactive when stopped
-    const conversation = getConversationById(conversationId);
-    if (conversation) {
-      const inactiveConversation = {
-        ...conversation,
-        status: 'inactive' as const,
-        updatedAt: Date.now()
-      };
-      updateConversation(inactiveConversation);
-      this.broadcastUpdate(inactiveConversation);
-    }
+    // the cleanup should be handled by the finally block in sendMessage
   }
 
   async generateTitle(conversationId: string, message: string): Promise<void> {
@@ -146,6 +138,16 @@ export class ChatService {
     BrowserWindow.getAllWindows().forEach(window => {
       window.webContents.send('chat:update', conversation);
     });
+  }
+
+  async stopAllChats(): Promise<void> {
+    await Promise.all(
+      Array.from(this.activeChats.keys()).map(conversationId =>
+        this.stopChat(conversationId).catch(error => {
+          console.error(`Error stopping chat ${conversationId}:`, error);
+        })
+      )
+    );
   }
 }
 
