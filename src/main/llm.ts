@@ -25,7 +25,7 @@ export class LLMService {
     async initializeTools() {
         try {
             const mcpTools = await listTools();
-            console.log('Loaded tools from MCP:', mcpTools);
+            console.debug(`Loaded ${mcpTools.length} tools from MCP`);
             this.tools = mcpTools
                 .map(tool => mcpToAiSdkTool(tool, callTool))
                 .reduce((acc, tool) => ({ ...acc, ...tool }), {});
@@ -64,7 +64,7 @@ export class LLMService {
             }
 
             await this.initializeTools();
-            console.log('LLM service initialized successfully with provider:', this.settings.model_provider);
+            console.debug('LLM service initialized successfully with provider:', this.settings.model_provider);
         } catch (error) {
             console.error('Error initializing LLM service:', error);
             this.provider = null;

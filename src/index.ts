@@ -12,7 +12,7 @@ import { ChatService, setupChatHandlers } from './main/services/chat';
 let chatService: ChatService | null = null;
 
 // Set up logging
-const setupLogging = () => {
+const setupLogging = (debug: boolean = false) => {
   const logPath = path.join(app.getPath('userData'), 'logs');
   if (!fs.existsSync(logPath)) {
     fs.mkdirSync(logPath, { recursive: true });
@@ -24,6 +24,7 @@ const setupLogging = () => {
   // Redirect console.log and console.error to file
   const originalLog = console.log;
   const originalError = console.error;
+  const originalDebug = console.debug;
 
   console.log = (...args) => {
     const message = args.map(arg =>
@@ -41,8 +42,18 @@ const setupLogging = () => {
     originalError.apply(console, args);
   };
 
+  if (debug) {
+    console.debug = (...args) => {
+      const message = args.map(arg =>
+        typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg
+      ).join(' ');
+      logStream.write(`[DEBUG ${new Date().toISOString()}] ${message}\n`);
+      originalDebug.apply(console, args);
+    };
+  }
+
   // Log startup info
-  console.log('App starting...', {
+  console.debug('App starting...', {
     version: app.getVersion(),
     electron: process.versions.electron,
     chrome: process.versions.chrome,
@@ -62,7 +73,7 @@ declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
 // Set up logging as early as possible
-setupLogging();
+setupLogging(false);
 
 // Catch any uncaught errors
 process.on('uncaughtException', (error) => {
@@ -135,10 +146,10 @@ app.on('window-all-closed', () => {
 
 app.on('will-quit', async () => {
   if (chatService) {
-    console.log('Stopping all active chats before quit...');
+    console.debug('Stopping all active chats before quit...');
     try {
       await chatService.stopAllChats();
-      console.log('All chats stopped successfully');
+      console.debug('All chats stopped successfully');
     } catch (error) {
       console.error('Error stopping chats:', error);
     }
@@ -159,7 +170,7 @@ const getMCPConfig = async () => {
     : path.join(process.resourcesPath, 'hide-mcp');  // Production (binary)
 
   // Log some diagnostic information
-  console.log('MCP configuration:', {
+  console.debug('MCP configuration:', {
     production: app.isPackaged,
     resourcesPath: process.resourcesPath,
     mcpPath,
@@ -203,7 +214,7 @@ app.whenReady().then(async () => {
   setupDbHandlers();
 
   const { cmd, args } = await getMCPConfig();
-  console.log('Initializing MCP...', { cmd, args });
+  console.debug('Initializing MCP...', { cmd, args });
 
   try {
     // Initialize MCP first
@@ -214,7 +225,7 @@ app.whenReady().then(async () => {
 
     // Wait for MCP initialization
     await initPromise;
-    console.log('MCP initialized successfully');
+    console.debug('MCP initialized successfully');
 
     // Now that MCP is ready, initialize LLM service
     const llmService = new LLMService();
@@ -225,7 +236,7 @@ app.whenReady().then(async () => {
     setupChatHandlers(chatService);
 
     // await initializeLLMService();
-    console.log('chat service initialized successfully');
+    console.debug('chat service initialized successfully');
   } catch (err) {
     console.error('Failed to initialize MCP:', err);
     // Show an error dialog to the user

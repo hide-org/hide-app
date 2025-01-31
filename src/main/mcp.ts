@@ -10,11 +10,11 @@ let mcpClient: Client | null = null;
 export async function initializeMCP(command: string, args: string[] = []) {
     mcpReadyPromise = (async () => {
         try {
-            console.log('Creating MCP StdioClientTransport...', { command, args });
-            console.log(`Checking ${command} installation...`);
+            console.debug('Creating MCP StdioClientTransport...', { command, args });
+            console.debug(`Checking ${command} installation...`);
             try {
                 const { stdout: usage } = await shellExec(`${escapeShellArg(command)} --help`);
-                console.log(`${command} usage:`, usage.trim());
+                console.debug(`${command} usage:`, usage.trim());
             } catch (err) {
                 console.error(`Error checking ${command}:`, err);
                 throw new Error(`${command} check failed: ${err.message}`);
@@ -33,15 +33,15 @@ export async function initializeMCP(command: string, args: string[] = []) {
             });
 
             // Add logging for process events
-            transport.onmessage = (message: JSONRPCMessage) => console.log('MCP transport message:', message);
+            transport.onmessage = (message: JSONRPCMessage) => console.debug('MCP transport message:', message);
             transport.onerror = (error: Error) => console.error('MCP transport error:', error);
             transport.onclose = () => {
-                console.log('MCP transport closed');
+                console.debug('MCP transport closed');
                 mcpClient = null;
                 mcpReadyPromise = null;
             };
 
-            console.log('Creating MCP client...');
+            console.debug('Creating MCP client...');
             mcpClient = new Client({
                 name: "hide-app",
                 version: "1.0.0",
@@ -50,7 +50,7 @@ export async function initializeMCP(command: string, args: string[] = []) {
                 capabilities: {}
             });
 
-            console.log('Connecting to MCP...');
+            console.debug('Connecting to MCP...');
             // Add a timeout to the connection attempt
             const connectPromise = mcpClient.connect(transport);
             const timeoutPromise = new Promise((_, reject) => {
@@ -58,12 +58,12 @@ export async function initializeMCP(command: string, args: string[] = []) {
             });
 
             await Promise.race([connectPromise, timeoutPromise]);
-            console.log('Connected to MCP successfully');
+            console.debug('Connected to MCP successfully');
 
             // Test the connection
-            console.log('Testing connection with listTools...');
+            console.debug('Testing connection with listTools...');
             const tools = await mcpClient.listTools();
-            console.log('MCP tools list received:', tools);
+            console.debug('MCP tools list received:', tools);
         } catch (error) {
             console.error('Detailed MCP initialization error:', error);
             if (error.cause) console.error('Error cause:', error.cause);
