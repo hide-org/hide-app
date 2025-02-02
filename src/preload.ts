@@ -4,9 +4,16 @@ import { Project, Conversation } from '@/types';
 import { Message } from '@/types/message';
 import { UserSettings } from '@/types/settings';
 
-// Expose file dialog API
+// Expose file dialog API and other electron features
 contextBridge.exposeInMainWorld('electron', {
     showDirectoryPicker: () => ipcRenderer.invoke('dialog:showDirectoryPicker'),
+    onCredentialsRequired: (callback: (error: string) => void) => {
+        const handler = (_event: any, error: string) => callback(error);
+        ipcRenderer.on('credentials:required', handler);
+        return () => {
+            ipcRenderer.off('credentials:required', handler);
+        };
+    },
 });
 
 contextBridge.exposeInMainWorld('projects', {

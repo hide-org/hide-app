@@ -100,14 +100,20 @@ export class AnthropicService {
     }
   }
 
-  loadSettings(): void {
-    this.settings = this.getProviderSettings();
-    this.chatModel = this.settings.models.chat;
-    this.titleModel = this.settings.models.title;
-    this.client = new Anthropic({
-      apiKey: this.settings.apiKey,
-      maxRetries: 16,
-    });
+  loadSettings(): { success: boolean; error?: string } {
+    try {
+      const settings = this.getProviderSettings();
+      this.settings = settings;
+      this.chatModel = this.settings.models.chat;
+      this.titleModel = this.settings.models.title;
+      this.client = new Anthropic({
+        apiKey: this.settings.apiKey,
+        maxRetries: 16,
+      });
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
   }
 
   private makeToolResultBlock(

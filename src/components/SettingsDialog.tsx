@@ -23,6 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 interface SettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  error?: string | null;
 }
 
 interface ProviderSettingsProps {
@@ -159,7 +160,7 @@ function OpenAISettings({ settings, onChange }: ProviderSettingsProps) {
   );
 }
 
-export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
+export function SettingsDialog({ open, onOpenChange, error: externalError }: SettingsDialogProps) {
   const [settings, setSettings] = React.useState<UserSettings | null>(null);
   const [draftSettings, setDraftSettings] = React.useState<UserSettings | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
@@ -288,9 +289,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               />
             </TabsContent>
           </Tabs>
-          {error && (
+          {(error || externalError) && (
             <div className="mt-4 text-sm text-red-500">
-              {error}
+              {error || externalError}
             </div>
           )}
           <DialogFooter className="mt-4">
