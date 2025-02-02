@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Conversation, newConversation, Project } from '../types';
-import { ChatArea } from './ChatArea';
-import { AppSidebar } from './AppSidebar';
+import { Conversation, newConversation, Project } from '@/types';
+import { Message, newUserMessage } from '@/types/message';
+import { ChatArea } from '@/components/ChatArea';
+import { AppSidebar } from '@/components/AppSidebar';
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { H2 } from '@/components/ui/typography';
-import { CoreMessage } from 'ai';
 import { systemPrompt } from '@/lib/prompts';
 
 
@@ -14,17 +14,6 @@ export const Chat = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  // Check API key status
-  useEffect(() => {
-    const checkApiKey = async () => {
-      const isConfigured = await window.llm.checkApiKey();
-      if (!isConfigured) {
-        setError('API key not configured. Please configure your API key in settings.');
-      }
-    };
-    checkApiKey();
-  }, []);
 
   // Load projects from the database
   useEffect(() => {
@@ -62,7 +51,7 @@ export const Chat = () => {
   useEffect(() => {
     const handleMessage = (
       conversationId: string,
-      message: CoreMessage
+      message: Message
     ) => {
       // Update conversation in our list
       setConversations(prev =>
@@ -111,10 +100,7 @@ export const Chat = () => {
     if (!selectedProject) return;
 
     const newConv = newConversation(selectedProject.id);
-    newConv.messages.push({
-      role: 'user',
-      content: message
-    });
+    newConv.messages.push(newUserMessage(message));
     await window.conversations.create(newConv);
     setCurrentConversation(newConv);
     setConversations(await window.conversations.getAll(selectedProject.id));
@@ -133,7 +119,7 @@ export const Chat = () => {
         ...prev,
         messages: [
           ...prev.messages,
-          { role: 'user', content: message } as CoreMessage,
+          newUserMessage(message),
         ],
         updatedAt: Date.now()
       };

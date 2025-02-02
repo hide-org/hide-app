@@ -1,14 +1,14 @@
 import { useRef, useEffect } from 'react';
-import { Conversation, Project } from '../types';
+import { Conversation, Project } from '@/types';
 import { Bot } from 'lucide-react';
 import { ChatInput } from '@/components/ChatInput';
-import { ChatMessage } from './ChatMessage';
-import { ScrollArea } from './ui/scroll-area';
+import { ChatMessage } from '@/components/ChatMessage';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { H2 } from '@/components/ui/typography';
-import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
-import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage, BreadcrumbSeparator } from './ui/breadcrumb';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useMessageConversion } from '@/hooks/useMessageConversion';
 
 

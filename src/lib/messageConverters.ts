@@ -1,103 +1,89 @@
-import {
-  CoreMessage,
-  CoreSystemMessage,
-  CoreUserMessage,
-  CoreAssistantMessage,
-  CoreToolMessage,
-} from 'ai';
-import { Message } from '../types';
-import { simpleHash } from './utils';
+import { AssistantMessage, Message, UserMessage } from '@/types/message';
+import { UIMessage } from '@/types';
 
-function convertSystemMessage(message: CoreSystemMessage): Message[] {
-  return [{
-    id: simpleHash(message.content).toString(),
-    role: message.role,
-    content: message.content,
-  }];
-}
 
-function convertUserMessage(message: CoreUserMessage): Message[] {
-  if (typeof message.content === 'string') {
-    return [{
-      id: simpleHash(message.content).toString(),
-      role: message.role,
-      content: message.content,
-    }];
-  }
-
-  return message.content.map(part => {
-    if (part.type === 'text') {
-      return {
-        id: simpleHash(part.text).toString(),
-        role: message.role,
-        content: part.text,
-      };
-    }
-
-    // Handle image and file attachments
-    const content = `Attachments (${part.type}) are not supported yet`;
-    return {
-      id: simpleHash(content).toString(),
-      role: message.role,
-      content: content,
-    };
-  });
-}
-
-function convertAssistantMessage(message: CoreAssistantMessage): Message[] {
-  if (typeof message.content === 'string') {
-    return [{
-      id: simpleHash(message.content).toString(),
-      role: message.role,
-      content: message.content,
-    }];
-  }
-
-  return message.content.map(part => {
-    if (part.type === 'text') {
-      return {
-        id: simpleHash(part.text).toString(),
-        role: message.role,
-        content: part.text,
-      };
-    }
-
-    if (part.type === 'tool-call') {
-      const content = `Tool: \`${part.toolName}\`\n\nInput:\n\`\`\`json\n${JSON.stringify(part.args, null, 2)}\n\`\`\``;
-      return {
-        id: simpleHash(content).toString(),
-        role: 'tool_use',
-        content: content,
-      };
-    }
-  });
-}
-
-function convertToolMessage(message: CoreToolMessage): Message[] {
-  return message.content.map(part => {
-    const content = `Tool Result:\n\`\`\`text\n${part.result as string}\n\`\`\``;
-    return {
-      id: simpleHash(content).toString(),
-      role: 'tool_result',
-      content: content,
-      isError: part.isError,
-    };
-  });
-}
-
-export function convertClaudeMessages(messages: CoreMessage[]): Message[] {
+export function convertClaudeMessages(messages: Message[]): UIMessage[] {
   return messages.flatMap(message => {
     switch (message.role) {
-      case 'system':
-        return convertSystemMessage(message);
       case 'user':
         return convertUserMessage(message);
       case 'assistant':
         return convertAssistantMessage(message);
-      case 'tool':
-        return convertToolMessage(message);
-      default:
-        throw new Error(`Unexpected message role: ${(message as any).role}`);
+    }
+  });
+}
+
+function convertUserMessage(message: UserMessage): UIMessage[] {
+  if (typeof message.content === 'string') {
+    return [{
+      id: message.id,
+      role: message.role,
+      content: message.content,
+    }];
+  }
+
+  return message.content.flatMap((part, partIdx) => {
+    switch (part.type) {
+      case 'text':
+        return {
+          id: message.id,
+          role: message.role,
+          content: part.text,
+        };
+      case 'image':
+        return {
+          id: message.id,
+          role: message.role,
+          content: 'Image Attachments are not supported yet',
+        };
+      case 'tool_result':
+        return part.content.map((block, blockIdx) => {
+          switch (block.type) {
+            case 'text':
+              const content = `Tool Result:\n\`\`\`text\n${block.text}\n\`\`\``;
+              return {
+                id: `${message.id}-${partIdx}-${blockIdx}`,
+                role: message.role,
+                content: content,
+                isError: part.isError,
+              }
+            case 'image':
+              return {
+                id: `${message.id}-${partIdx}-${blockIdx}`,
+                role: message.role,
+                content: 'Tool Result: Image Attachments are not supported yet',
+                isError: part.isError,
+              };
+          }
+        })
+    }
+  });
+}
+
+function convertAssistantMessage(message: AssistantMessage): UIMessage[] {
+  if (typeof message.content === 'string') {
+    return [{
+      id: message.id,
+      role: message.role,
+      content: message.content,
+    }];
+  }
+
+  return message.content.map((block, idx) => {
+    switch (block.type) {
+      case 'text':
+        return {
+          id: `${message.id}-${idx}`,
+          role: message.role,
+          content: block.text,
+        };
+      case 'tool_use':
+        const content = `Tool: \`${block.name}\`\n\nInput:\n\`\`\`json\n${JSON.stringify(block.args, null, 2)}\n\`\`\``;
+        return {
+          id: `${message.id}-${idx}`,
+          role: message.role,
+          content: content,
+        };
     }
   });
 }

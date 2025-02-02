@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import { Message } from '../types';
-import { convertClaudeMessages } from '../lib/messageConverters';
-import { CoreMessage } from 'ai';
+import { UIMessage } from '@/types';
+import { convertClaudeMessages } from '@/lib/messageConverters';
+import { Message } from '@/types/message';
 
-export function useMessageConversion(messages: CoreMessage[] | undefined): Message[] {
+export function useMessageConversion(messages: Message[] | undefined): UIMessage[] {
   return useMemo(() => {
     if (!messages) return [];
     return convertClaudeMessages(messages);

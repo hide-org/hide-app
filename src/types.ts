@@ -1,10 +1,10 @@
-import { CoreMessage } from 'ai';
 import { v4 as uuidv4 } from 'uuid';
+import { Message } from '@/types/message';
 
 export const DEFAULT_CONVERSATION_TITLE = 'Untitled Chat';
 //
 // internal representation of a message for the UI
-export interface Message {
+export interface UIMessage {
   id: string;
   role: 'system' | 'user' | 'assistant' | 'tool' | 'tool_use' | 'tool_result';
   content: string;
@@ -14,8 +14,7 @@ export interface Message {
 export interface Conversation {
   id: string;
   title: string;
-  // NOTE: using vercel ai message type here; later we can create our own type to support different providers
-  messages: CoreMessage[];
+  messages: Message[];
   projectId: string;
   status: 'active' | 'inactive'
   createdAt: number;
