@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { UserSettings } from "@/types/settings"
+import { newUserSettings, Provider, UserSettings } from "@/types/settings"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface SettingsDialogProps {
@@ -33,14 +33,7 @@ interface ProviderSettingsProps {
 }
 
 function AnthropicSettings({ settings, onChange }: ProviderSettingsProps) {
-  const providerSettings = settings.provider_settings.anthropic || {
-    apiKey: "",
-    models: {
-      chat: "claude-3-5-sonnet-20241022",
-      title: "claude-3-5-haiku-20241022"
-    }
-  };
-
+  const providerSettings = settings?.provider_settings.anthropic
   return (
     <div className="space-y-4 py-2">
       <div className="grid grid-cols-4 items-center gap-4">
@@ -50,7 +43,7 @@ function AnthropicSettings({ settings, onChange }: ProviderSettingsProps) {
         <Input
           id="anthropic-api-key"
           type="password"
-          value={providerSettings.apiKey}
+          value={providerSettings?.apiKey || ''}
           onChange={(e) => onChange("anthropic.apiKey", e.target.value)}
           placeholder="sk-ant-..."
           className="col-span-3"
@@ -61,7 +54,7 @@ function AnthropicSettings({ settings, onChange }: ProviderSettingsProps) {
           Chat Model
         </Label>
         <Select
-          value={providerSettings.models.chat}
+          value={providerSettings?.models.chat || 'claude-3-5-sonnet-20241022'}
           onValueChange={(value) => onChange("anthropic.models.chat", value)}
         >
           <SelectTrigger id="anthropic-chat-model" className="col-span-3">
@@ -78,7 +71,7 @@ function AnthropicSettings({ settings, onChange }: ProviderSettingsProps) {
           Title Model
         </Label>
         <Select
-          value={providerSettings.models.title}
+          value={providerSettings?.models.title || 'claude-3-5-haiku-20241022'}
           onValueChange={(value) => onChange("anthropic.models.title", value)}
         >
           <SelectTrigger id="anthropic-title-model" className="col-span-3">
@@ -95,13 +88,7 @@ function AnthropicSettings({ settings, onChange }: ProviderSettingsProps) {
 }
 
 function OpenAISettings({ settings, onChange }: ProviderSettingsProps) {
-  const providerSettings = settings.provider_settings.openai || {
-    apiKey: "",
-    models: {
-      chat: "gpt-4o",
-      title: "gpt-4o-mini"
-    }
-  };
+  const providerSettings = settings?.provider_settings.openai;
 
   return (
     <div className="space-y-4 py-2">
@@ -112,7 +99,7 @@ function OpenAISettings({ settings, onChange }: ProviderSettingsProps) {
         <Input
           id="openai-api-key"
           type="password"
-          value={providerSettings.apiKey}
+          value={providerSettings?.apiKey || ''}
           onChange={(e) => onChange("openai.apiKey", e.target.value)}
           placeholder="sk-..."
           className="col-span-3"
@@ -123,7 +110,7 @@ function OpenAISettings({ settings, onChange }: ProviderSettingsProps) {
           Chat Model
         </Label>
         <Select
-          value={providerSettings.models.chat}
+          value={providerSettings?.models.chat || 'gpt-4o'}
           onValueChange={(value) => onChange("openai.models.chat", value)}
         >
           <SelectTrigger id="openai-chat-model" className="col-span-3">
@@ -142,7 +129,7 @@ function OpenAISettings({ settings, onChange }: ProviderSettingsProps) {
           Title Model
         </Label>
         <Select
-          value={providerSettings.models.title}
+          value={providerSettings?.models.title || 'gpt-4o-mini'}
           onValueChange={(value) => onChange("openai.models.title", value)}
         >
           <SelectTrigger id="openai-title-model" className="col-span-3">
@@ -177,18 +164,16 @@ export function SettingsDialog({ open, onOpenChange, error: externalError }: Set
   }, [open]);
 
   const handleProviderChange = (provider: string) => {
-    if (!draftSettings) return;
-    setDraftSettings({
-      ...draftSettings,
-      model_provider: provider as UserSettings['model_provider']
-    });
+    const newSettings = draftSettings ?
+      { ...draftSettings, model_provider: provider as UserSettings['model_provider'] } :
+      newUserSettings(provider as Provider);
+
+    setDraftSettings(newSettings);
   };
 
   const handleSettingChange = (path: string, value: string) => {
-    if (!draftSettings) return;
-
     const [provider, ...rest] = path.split('.');
-    const newSettings = { ...draftSettings };
+    const newSettings = draftSettings ? { ...draftSettings } : newUserSettings(provider as Provider);
 
     // Ensure provider settings exist
     if (!newSettings.provider_settings[provider]) {
@@ -254,7 +239,7 @@ export function SettingsDialog({ open, onOpenChange, error: externalError }: Set
     onOpenChange(open);
   };
 
-  if (!settings || !draftSettings) return null;
+  // if (!settings || !draftSettings) return null;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -266,7 +251,7 @@ export function SettingsDialog({ open, onOpenChange, error: externalError }: Set
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <Tabs value={draftSettings.model_provider} onValueChange={handleProviderChange}>
+          <Tabs value={draftSettings?.model_provider || 'anthropic'} onValueChange={handleProviderChange}>
             <div className="flex items-center justify-between">
               <Label>Model Provider</Label>
               <TabsList>

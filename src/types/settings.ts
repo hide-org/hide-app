@@ -10,14 +10,33 @@ export interface ProviderSettings {
     [key: string]: string | ModelSettings;  // Allow string indexing
 }
 
+export type Provider = 'anthropic' | 'openai' | 'google';
+
 export interface UserSettings {
-    model_provider: 'anthropic' | 'openai' | 'google';
+    model_provider: Provider;
     provider_settings: {
         [key: string]: ProviderSettings;
     };
     created_at: number;
     updated_at: number;
 }
+
+export const newUserSettings = (provider: Provider): UserSettings => {
+    return {
+        model_provider: provider,
+        provider_settings: {
+            [provider]: {
+                apiKey: "",
+                models: {
+                    chat: "",
+                    title: ""
+                }
+            }
+        },
+        created_at: Date.now(),
+        updated_at: Date.now()
+    };
+};
 
 export const getCurrentProviderSettings = (settings: UserSettings): ProviderSettings | undefined => {
     if (!settings.provider_settings[settings.model_provider]) {
