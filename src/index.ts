@@ -3,9 +3,9 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 import { initializeDatabase, setupDbHandlers } from './main/db';
-import { initializeMCP } from './main/mcp';
-import { LLMService } from './main/llm';
+import { initializeMCP, listTools } from './main/mcp';
 import { ChatService, setupChatHandlers } from './main/services/chat';
+import { AnthropicService } from './main/services/anthropic';
 
 
 // Store chat service reference for cleanup
@@ -42,8 +42,8 @@ const setupLogging = (debug: boolean = false) => {
     originalError.apply(console, args);
   };
 
-  if (debug) {
-    console.debug = (...args) => {
+  console.debug = (...args) => {
+    if (debug) {
       const message = args.map(arg =>
         typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg
       ).join(' ');
@@ -73,7 +73,8 @@ declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
 // Set up logging as early as possible
-setupLogging(false);
+const DEBUG = false;
+setupLogging(DEBUG);
 
 // Catch any uncaught errors
 process.on('uncaughtException', (error) => {
@@ -84,7 +85,7 @@ process.on('uncaughtException', (error) => {
   });
 });
 
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason, _promise) => {
   const error = reason instanceof Error ? reason : new Error(String(reason));
   console.error('Unhandled rejection:', {
     error: error.toString(),
@@ -227,18 +228,18 @@ app.whenReady().then(async () => {
     await initPromise;
     console.debug('MCP initialized successfully');
 
-    // Now that MCP is ready, initialize LLM service
-    const llmService = new LLMService();
-    await llmService.initialize();
+    // Now that MCP is ready, initialize Anthropic service
+    const tools = await listTools();
+    const anthropicService = new AnthropicService(tools);
 
     // Create chat service
-    chatService = new ChatService(llmService);
+    chatService = new ChatService(anthropicService);
     setupChatHandlers(chatService);
 
-    // await initializeLLMService();
+    anthropicService.loadSettings();
     console.debug('chat service initialized successfully');
   } catch (err) {
-    console.error('Failed to initialize MCP:', err);
+    console.error('Failed to initialize application:', err);
     // Show an error dialog to the user
     dialog.showErrorBox(
       'Error Starting Application',

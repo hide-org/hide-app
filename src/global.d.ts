@@ -1,6 +1,6 @@
-import { CoreMessage } from 'ai';
-import { Project, Conversation } from './types';
-import { UserSettings } from './types/settings';
+import { Project, Conversation } from '@/types';
+import { Message } from '@/types/message';
+import { UserSettings } from '@/types/settings';
 
 declare global {
   interface Window {
@@ -19,9 +19,6 @@ declare global {
       update: (conversation: Conversation) => Promise<Conversation>;
       delete: (id: string) => Promise<void>;
     };
-    llm: {
-      checkApiKey: () => Promise<boolean>;
-    };
     settings: {
       get: () => Promise<UserSettings | null>;
       update: (settings: Omit<UserSettings, 'created_at' | 'updated_at'>) => Promise<UserSettings>;
@@ -30,8 +27,9 @@ declare global {
       start: (conversationId: string, systemPrompt?: string) => Promise<void>;
       stop: (conversationId: string) => Promise<void>;
       generateTitle: (conversationId: string, message: string) => Promise<void>;
-      onMessage: (callback: (conversationId: string, message: CoreMessage) => void) => () => void;
+      onMessage: (callback: (conversationId: string, message: Message) => void) => () => void;
       onUpdate: (callback: (conversation: Conversation) => void) => () => void;
+      reloadSettings: () => Promise<void>;
     };
   }
 }
