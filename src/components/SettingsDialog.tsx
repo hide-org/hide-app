@@ -231,6 +231,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         model_provider: draftSettings.model_provider,
         provider_settings: draftSettings.provider_settings
       });
+
+      await window.chat.reloadSettings();
+
       setSettings(draftSettings); // Update actual settings after successful save
       onOpenChange(false);
     } catch (error) {

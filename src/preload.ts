@@ -1,7 +1,7 @@
-import { CoreMessage } from 'ai';
 import { contextBridge, ipcRenderer } from 'electron';
 
 import { Project, Conversation } from '@/types';
+import { Message } from '@/types/message';
 import { UserSettings } from '@/types/settings';
 
 // Expose file dialog API
@@ -23,11 +23,6 @@ contextBridge.exposeInMainWorld('conversations', {
     delete: (id: string) => ipcRenderer.invoke('conversations:delete', { id })
 });
 
-// Expose LLM API
-contextBridge.exposeInMainWorld('llm', {
-    checkApiKey: () => ipcRenderer.invoke('llm:checkApiKey'),
-});
-
 // Expose settings API
 contextBridge.exposeInMainWorld('settings', {
     get: () => ipcRenderer.invoke('settings:get'),
@@ -46,8 +41,8 @@ contextBridge.exposeInMainWorld('chat', {
     generateTitle: (conversationId: string, message: string) =>
         ipcRenderer.invoke('chat:generateTitle', { conversationId, message }),
 
-    onMessage: (callback: (conversationId: string, message: CoreMessage) => void) => {
-        const handler = (_event: any, { conversationId, message }: { conversationId: string, message: CoreMessage }) => {
+    onMessage: (callback: (conversationId: string, message: Message) => void) => {
+        const handler = (_event: any, { conversationId, message }: { conversationId: string, message: Message }) => {
             callback(conversationId, message)
         };
         ipcRenderer.on('chat:messageUpdate', handler);
@@ -62,5 +57,7 @@ contextBridge.exposeInMainWorld('chat', {
         return () => {
             ipcRenderer.off('chat:update', handler);
         };
-    }
+    },
+
+    reloadSettings: () => ipcRenderer.invoke('chat:reloadSettings'),
 });

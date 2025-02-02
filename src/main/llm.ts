@@ -1,5 +1,4 @@
 import { CoreMessage, CoreTool, generateText, streamText, ToolResultPart, CoreToolResultUnion } from 'ai';
-import { ipcMain } from 'electron';
 import type { CallToolResult as ToolResult } from '@modelcontextprotocol/sdk/types';
 import { callTool, listTools } from './mcp';
 import { mcpToAiSdkTool } from '../lib/mcp/adapters';
@@ -219,30 +218,3 @@ export class LLMService {
             });
     }
 }
-
-let llmService: LLMService | null = null;
-
-export const initializeLLMService = async () => {
-    try {
-        llmService = new LLMService();
-        await llmService.initialize();
-    } catch (error) {
-        console.error('Error initializing LLM service:', error);
-        throw error;
-    }
-};
-
-// IPC handlers
-ipcMain.handle('llm:checkApiKey', async () => {
-    try {
-        const settings = getUserSettings();
-        if (!settings) return false;
-
-        const provider = settings.model_provider;
-        return !!settings.provider_settings[provider]?.apiKey;
-    } catch (error) {
-        console.error('Error checking API key:', error);
-        return false;
-    }
-});
-

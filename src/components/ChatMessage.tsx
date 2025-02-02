@@ -2,12 +2,12 @@ import { Baby, Bot, Wrench } from 'lucide-react';
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import 'highlight.js/styles/atom-one-dark.css';
-import { Message } from '../types';
+import { UIMessage } from '@/types';
 
 interface ChatMessageProps {
-  message: Message;
+  message: UIMessage;
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
