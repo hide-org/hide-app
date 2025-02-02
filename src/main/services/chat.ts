@@ -1,19 +1,19 @@
-import { CoreMessage } from 'ai';
 import { BrowserWindow, ipcMain } from 'electron';
-import { LLMService } from '@/main/llm';
+import { AnthropicService } from '@/main/services/anthropic';
 import { getConversationById, updateConversation } from '@/main/db';
 import { Conversation } from '@/types';
 import { isAbortError } from '@/main/errors';
+import { Message } from '@/types/message';
 
 export class ChatService {
   private activeChats: Map<string, {
     abortController: AbortController;
   }>;
-  private llmService: LLMService;
+  private anthropicService: AnthropicService;
 
-  constructor(llmService: LLMService) {
+  constructor(llmService: AnthropicService) {
     this.activeChats = new Map();
-    this.llmService = llmService;
+    this.anthropicService = llmService;
   }
 
   async startChat(conversationId: string, systemPrompt?: string): Promise<void> {
@@ -39,16 +39,9 @@ export class ChatService {
     this.broadcastUpdate(updatedConversation);
 
     try {
-      const onMessage = (message: CoreMessage) => {
+      for await (const message of this.anthropicService.sendMessage(conversation.messages, systemPrompt)) {
         this.handleNewMessage(conversationId, message);
-      };
-
-      await this.llmService.sendMessage(
-        conversation.messages,
-        systemPrompt,
-        onMessage,
-        abortController.signal,
-      );
+      }
 
       // Update status to inactive when done
       const finalConversation = getConversationById(conversationId);
@@ -95,7 +88,7 @@ export class ChatService {
     if (!conversation) throw new Error('Conversation not found');
 
     try {
-      const title = await this.llmService.generateTitle(message);
+      const title = await this.anthropicService.generateTitle(message);
       // fetching the conversation again in case it was updated by another process
       // TODO: use transactions
       const conversation = getConversationById(conversationId);
@@ -112,7 +105,12 @@ export class ChatService {
     }
   }
 
-  private async handleNewMessage(conversationId: string, message: CoreMessage): Promise<void> {
+  reloadSettings(): void {
+    console.info('Reloading settings');
+    this.anthropicService.loadSettings();
+  }
+
+  private async handleNewMessage(conversationId: string, message: Message): Promise<void> {
     const conversation = getConversationById(conversationId);
     if (!conversation) return;
 
@@ -125,7 +123,7 @@ export class ChatService {
     this.broadcastMessage(conversationId, message);
   }
 
-  private broadcastMessage(conversationId: string, message: CoreMessage): void {
+  private broadcastMessage(conversationId: string, message: Message): void {
     BrowserWindow.getAllWindows().forEach(window => {
       window.webContents.send('chat:messageUpdate', { conversationId, message });
     });
@@ -178,6 +176,15 @@ export const setupChatHandlers = (chatManager: ChatService) => {
       return await chatManager.generateTitle(conversationId, message);
     } catch (error) {
       console.error('Error generating title:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('chat:reloadSettings', async () => {
+    try {
+      return chatManager.reloadSettings();
+    } catch (error) {
+      console.error('Error reloading settings:', error);
       throw error;
     }
   });
