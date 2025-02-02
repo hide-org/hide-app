@@ -99,7 +99,7 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
-const createWindow = (): void => {
+const createWindow = (): BrowserWindow => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     height: 900,
@@ -131,6 +131,8 @@ const createWindow = (): void => {
 
   // and load the index.html of the app.
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
+  
+  return mainWindow;
 };
 
 // This method will be called when Electron has finished
@@ -222,7 +224,7 @@ app.whenReady().then(async () => {
     const initPromise = initializeMCP(cmd, args);
 
     // Create window immediately but don't wait for services
-    createWindow();
+    const mainWindow = createWindow();
 
     // Wait for MCP initialization
     await initPromise;
@@ -236,7 +238,11 @@ app.whenReady().then(async () => {
     chatService = new ChatService(anthropicService);
     setupChatHandlers(chatService);
 
-    anthropicService.loadSettings();
+    const settingsStatus = anthropicService.loadSettings();
+    if (!settingsStatus.success) {
+      console.debug('Credentials missing, notifying renderer process:', settingsStatus.error);
+      mainWindow.webContents.send('credentials:required', settingsStatus.error);
+    }
     console.debug('chat service initialized successfully');
   } catch (err) {
     console.error('Failed to initialize application:', err);

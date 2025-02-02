@@ -21,7 +21,6 @@ import { ProjectDialog } from "./ProjectDialog"
 import { DeleteProjectDialog } from "./DeleteProjectDialog"
 import { ChatDialog } from "./ChatDialog"
 import { DeleteChatDialog } from "./DeleteChatDialog"
-import { SettingsDialog } from "./SettingsDialog"
 
 
 interface AppSidebarProps {
@@ -35,6 +34,7 @@ interface AppSidebarProps {
   onDeleteProject?: (p: Project) => void;
   onDeleteConversation?: (id: string) => void;
   onRenameChat?: (chat: Conversation) => void;
+  onSettingsClick: () => void;
 }
 
 export function AppSidebar({
@@ -48,12 +48,12 @@ export function AppSidebar({
   onDeleteProject,
   onDeleteConversation,
   onRenameChat,
+  onSettingsClick,
 }: AppSidebarProps) {
   const [projectToEdit, setProjectToEdit] = React.useState<Project | null>(null);
   const [projectToDelete, setProjectToDelete] = React.useState<Project | null>(null);
   const [chatToEdit, setChatToEdit] = React.useState<Conversation | null>(null);
   const [chatToDelete, setChatToDelete] = React.useState<Conversation | null>(null);
-  const [showSettings, setShowSettings] = React.useState(false);
 
   return (
     <Sidebar>
@@ -93,12 +93,9 @@ export function AppSidebar({
         }}
         onDelete={onDeleteConversation}
       />
-      <SettingsDialog
-        open={showSettings}
-        onOpenChange={setShowSettings}
-      />
+
       <SidebarHeader className="space-y-4 p-4">
-        <UserSwitcher onSettingsClick={() => setShowSettings(true)} />
+        <UserSwitcher onSettingsClick={onSettingsClick} />
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>

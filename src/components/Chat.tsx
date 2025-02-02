@@ -6,6 +6,7 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { H2 } from '@/components/ui/typography';
 import { systemPrompt } from '@/lib/prompts';
+import { SettingsDialog } from '@/components/SettingsDialog';
 
 
 export const Chat = () => {
@@ -14,6 +15,8 @@ export const Chat = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
 
   // Load projects from the database
   useEffect(() => {
@@ -27,6 +30,16 @@ export const Chat = () => {
       }
     };
     loadProjects();
+  }, []);
+
+  // Listen for credentials required events
+  useEffect(() => {
+    const cleanup = window.electron.onCredentialsRequired((error: string) => {
+      console.debug('Credentials required:', error);
+      setSettingsError(error);
+      setShowSettings(true);
+    });
+    return cleanup;
   }, []);
 
   // Load conversations when project changes
@@ -214,6 +227,7 @@ export const Chat = () => {
           onDeleteProject={onDeleteProject}
           onDeleteConversation={onDeleteConversation}
           onRenameChat={onRenameChat}
+          onSettingsClick={() => setShowSettings(true)}
         />
         {selectedProject ? (
           <ChatArea
@@ -234,6 +248,16 @@ export const Chat = () => {
         )}
 
       </SidebarProvider>
+      <SettingsDialog
+        open={showSettings}
+        onOpenChange={(open) => {
+          setShowSettings(open);
+          if (!open) {
+            setSettingsError(null);
+          }
+        }}
+        error={settingsError}
+      />
     </div>
   );
 };

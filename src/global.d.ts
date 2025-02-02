@@ -6,6 +6,7 @@ declare global {
   interface Window {
     electron: {
       showDirectoryPicker: () => Promise<{ canceled: boolean; filePaths: string[] }>;
+      onCredentialsRequired: (callback: (error: string) => void) => () => void;
     };
     projects: {
       getAll: () => Promise<Project[]>;
