@@ -227,6 +227,7 @@ export const Chat = () => {
           onDeleteProject={onDeleteProject}
           onDeleteConversation={onDeleteConversation}
           onRenameChat={onRenameChat}
+          onSettingsClick={() => setShowSettings(true)}
         />
         {selectedProject ? (
           <ChatArea
