@@ -73,7 +73,7 @@ declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
 // Set up logging as early as possible
-const DEBUG = false;
+const DEBUG = process.env.HIDE_APP_DEBUG === 'true';
 setupLogging(DEBUG);
 
 // Catch any uncaught errors
