@@ -311,11 +311,6 @@ export const setupDbHandlers = () => {
   ipcMain.handle('settings:update', async (_, settings: Omit<UserSettings, 'created_at' | 'updated_at'>) => {
     try {
       await updateUserSettings(settings);
-
-      // Reinitialize LLM service with new settings
-      const { initializeLLMService } = await import('./llm');
-      await initializeLLMService();
-
       return getUserSettings();
     } catch (err) {
       console.error('Error updating user settings:', err);
