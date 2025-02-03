@@ -20,13 +20,17 @@ const config: ForgeConfig = {
     ],
     icon: './public/Icon', // no file extension required
     name: 'Hide',
-    // osxSign: {},
-    // osxNotarize: {
-    //   keychainProfile: 'HideApp-ASP',
-    // },
-  },
-  rebuildConfig: {
-    onlyModules: ['@modelcontextprotocol/sdk']
+    osxSign: {
+      optionsForFile: (_filePath) => {
+        // Here, we keep it simple and return a single entitlements.plist file.
+        // You can use this callback to map different sets of entitlements
+        // to specific files in your packaged app.
+        return { entitlements: './entitlements.plist' };
+      }
+    },
+    osxNotarize: {
+      keychainProfile: 'HideApp-ASP',
+    },
   },
   makers: [new MakerSquirrel({}), new MakerZIP({}, ['darwin']), new MakerRpm({}), new MakerDeb({})],
   plugins: [
