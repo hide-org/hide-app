@@ -95,6 +95,11 @@ export const getProjectById = (id: string): Project | undefined => {
   return stmt.get(id) as Project | undefined;
 };
 
+export const getProjectByName = (name: string): Project | undefined => {
+  const stmt = db.prepare('SELECT * FROM projects WHERE name = ?');
+  return stmt.get(name) as Project | undefined;
+};
+
 export const createProject = (project: Project): void => {
   const stmt = db.prepare('INSERT INTO projects (id, name, path, description) VALUES (?, ?, ?, ?)');
   stmt.run(project.id, project.name, project.path, project.description);
