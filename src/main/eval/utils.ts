@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as readline from 'readline';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { asyncBufferFromFile, parquetRead } from 'hyparquet';
 
 const execAsync = promisify(exec);
 
@@ -30,7 +31,7 @@ export async function writeJsonl(filePath: string, data: any[]): Promise<void> {
   await new Promise(resolve => stream.end(resolve));
 }
 
-export async function bash(command: string, options?: { cwd?: string }): Promise<{stdout: string, stderr: string}> {
+export async function bash(command: string, options?: { cwd?: string }): Promise<{ stdout: string, stderr: string }> {
   try {
     const result = await execAsync(command, options);
     return result;
@@ -38,4 +39,16 @@ export async function bash(command: string, options?: { cwd?: string }): Promise
     // Include the error details in the thrown error
     throw new Error(`Command failed: ${command}\n${error.message}`);
   }
+}
+
+export async function readParquet<T>(filePath: string): Promise<T[]> {
+  const results: T[] = [];
+
+  await parquetRead({
+    file: await asyncBufferFromFile(filePath),
+    rowFormat: 'object',
+    onComplete: data => results.push(...data as T[]),
+  })
+
+  return results;
 }
