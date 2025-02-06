@@ -10,13 +10,14 @@ import { initializeMCP, listTools } from '../mcp';
 
 export async function runEvalCLI(args: string[]) {
   program
-    .name('hide-eval')
+    .name('eval')
     .description('Evaluation tool for Hide')
-    .requiredOption('-d, --dataset <path>', 'Path to dataset JSONL file')
+    .requiredOption('-d, --dataset <path>', 'Path to dataset JSONL file (required)')
     .option('-c, --config <path>', 'Path to config JSON file')
     .option('-o, --output <path>', 'Path to output JSONL file')
     .option('-b, --batch-size <number>', 'Batch size', '4')
-    .parse(args);
+
+  program.parse(args);
 
   const opts = program.opts();
 
