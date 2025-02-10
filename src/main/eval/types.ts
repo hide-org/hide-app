@@ -22,6 +22,7 @@ export interface EvalResult {
 export interface EvalConfig {
   projectName: string;       // Project name for evaluation runs
   batchSize: number;        // How many instances to run concurrently
+  limit: number;            // How many instances to run
   workDir: string;         // Where to clone repositories
   modelName: string;      // Model identifier 
   promptTemplate: string; // Template for constructing prompts

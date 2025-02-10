@@ -124,6 +124,10 @@ export class ChatService {
   }
 
   private broadcastMessage(conversationId: string, message: Message): void {
+    if (!BrowserWindow) {
+      return;
+    }
+
     BrowserWindow.getAllWindows().forEach(window => {
       window.webContents.send('chat:messageUpdate', { conversationId, message });
     });
@@ -133,6 +137,10 @@ export class ChatService {
   // but creating a separate broadcast method for each conversation field is not ideal either
   // what can we do?
   private broadcastUpdate(conversation: Conversation): void {
+    if (!BrowserWindow) {
+      return;
+    }
+
     BrowserWindow.getAllWindows().forEach(window => {
       window.webContents.send('chat:update', conversation);
     });

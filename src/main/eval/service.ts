@@ -22,10 +22,15 @@ export class EvalService {
     // Create eval project if doesn't exist
     const project = await this.ensureEvalProject();
 
+    // Clean up work dir
+    await bash(`rm -rf ${this.config.workDir}`);
+
+    const numInstances = Math.min(instances.length, this.config.limit);
+
     // Process instances in batches
-    for (let i = 0; i < instances.length; i += this.config.batchSize) {
+    for (let i = 0; i < numInstances; i += this.config.batchSize) {
       const batch = instances.slice(i, i + this.config.batchSize);
-      console.log(`Processing batch ${i / this.config.batchSize + 1}/${Math.ceil(instances.length / this.config.batchSize)}`);
+      console.log(`Processing batch ${i / this.config.batchSize + 1}/${Math.ceil(numInstances / this.config.batchSize)}`);
       await Promise.all(batch.map(instance => this.processInstance(instance, project)));
     }
 
@@ -48,13 +53,13 @@ export class EvalService {
 
   private async processInstance(instance: SWEBenchInstance, project: Project): Promise<void> {
     console.log(`Processing instance ${instance.instance_id}...`);
+    const workDir = path.join(this.config.workDir, instance.instance_id);
     try {
       // Setup dev environment
-      const workDir = path.join(this.config.workDir, instance.instance_id);
       await this.setupDevEnv(instance, workDir);
 
       // Prepare prompt
-      const prompt = this.preparePrompt(instance);
+      const prompt = this.preparePrompt(instance, workDir);
 
       // Create conversation
       const conversation = {
@@ -90,6 +95,9 @@ export class EvalService {
         model_patch: '',
         model_name_or_path: this.config.modelName
       });
+    } finally {
+      // Clean up work dir
+      await bash(`rm -rf ${workDir}`);
     }
   }
 
@@ -98,16 +106,16 @@ export class EvalService {
     await bash(`mkdir -p ${workDir}`);
 
     // Clone repo
-    await bash(`git clone ${instance.repo} ${workDir}`);
+    await bash(`git clone https://github.com/${instance.repo} ${workDir}`);
 
     // Checkout base commit
     await bash(`cd ${workDir} && git checkout ${instance.base_commit}`);
   }
 
-  private preparePrompt(instance: SWEBenchInstance): string {
+  private preparePrompt(instance: SWEBenchInstance, workDir: string): string {
     return this.config.promptTemplate
-      .replace('{{problem_statement}}', instance.problem_statement)
-      .replace('{{hints_text}}', instance.hints_text);
+      .replace('{location}', workDir)
+      .replace('{pr_description}', instance.problem_statement)
   }
 
   private async generatePatch(workDir: string): Promise<string> {

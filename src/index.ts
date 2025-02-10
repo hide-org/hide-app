@@ -131,7 +131,7 @@ const createWindow = (): BrowserWindow => {
 
   // and load the index.html of the app.
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
-  
+
   return mainWindow;
 };
 
@@ -213,7 +213,8 @@ ipcMain.handle('dialog:showDirectoryPicker', async () => {
 
 app.whenReady().then(async () => {
   // Initialize the database and set up IPC handlers
-  initializeDatabase();
+  const dbPath = path.join(app.getPath('userData'), 'database.sqlite');
+  initializeDatabase(dbPath);
   setupDbHandlers();
 
   const { cmd, args } = await getMCPConfig();
