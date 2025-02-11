@@ -22,15 +22,27 @@ export interface UserSettings {
 }
 
 export const newUserSettings = (provider: Provider): UserSettings => {
+    const defaultModels = {
+        anthropic: {
+            chat: 'claude-3-5-sonnet-20241022',
+            title: 'claude-3-5-haiku-20241022'
+        },
+        openai: {
+            chat: 'gpt-4o',
+            title: 'gpt-4o-mini'
+        },
+        google: {
+            chat: '',
+            title: ''
+        }
+    };
+
     return {
         model_provider: provider,
         provider_settings: {
             [provider]: {
                 apiKey: "",
-                models: {
-                    chat: "",
-                    title: ""
-                }
+                models: defaultModels[provider]
             }
         },
         created_at: Date.now(),
