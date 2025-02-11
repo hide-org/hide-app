@@ -169,7 +169,7 @@ app.on('activate', () => {
 
 const getMCPConfig = async () => {
   const mcpPath = !app.isPackaged
-    ? '/Users/artemm/Code/hide-mcp'  // Development TODO: Make this configurable
+    ? process.env.LOCAL_MCP_PATH  // Development TODO: Make this configurable
     : path.join(process.resourcesPath, 'hide-mcp');  // Production (binary)
 
   // Log some diagnostic information

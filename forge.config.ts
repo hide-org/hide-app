@@ -16,7 +16,7 @@ const config: ForgeConfig = {
     asar: true,
     extraResource: [
       // Copy the entire MCP project
-      '/Users/artemm/Code/hide-mcp/dist/hide-mcp'
+      `${process.env.LOCAL_MCP_PATH}/dist/hide-mcp`   
     ],
     icon: './public/Icon', // no file extension required
     name: 'Hide',
