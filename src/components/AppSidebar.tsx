@@ -6,6 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupAction,
   SidebarGroupContent,
@@ -21,6 +22,8 @@ import { ProjectDialog } from "./ProjectDialog"
 import { DeleteProjectDialog } from "./DeleteProjectDialog"
 import { ChatDialog } from "./ChatDialog"
 import { DeleteChatDialog } from "./DeleteChatDialog"
+import { ModeToggle } from "./ModeToggle"
+import { useTheme } from "./ThemeProvider"
 
 
 interface AppSidebarProps {
@@ -176,6 +179,9 @@ export function AppSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter>
+        <ModeToggle  />
+      </SidebarFooter>
     </Sidebar>
   )
 }
