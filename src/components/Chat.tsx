@@ -119,10 +119,16 @@ export const Chat = () => {
     setConversations(await window.conversations.getAll(selectedProject.id));
 
     window.chat.generateTitle(newConv.id, message)
-      .catch(err => console.error('Error generating title:', err));
+      .catch(err => {
+        console.error('Error generating title:', err)
+        setError(err instanceof Error ? err.message : 'Title generation failed. See logs or console for details.')
+      });
 
     window.chat.start(newConv.id, systemPrompt(selectedProject))
-      .catch(err => console.error('Error starting chat:', err));
+      .catch(err => {
+        console.error('Error starting chat:', err)
+        setError(err instanceof Error ? err.message : 'Chat failed. See logs or console for details.')
+      });
   };
 
   const handleNewMessage = async (conversationId: string, message: string): Promise<void> => {
@@ -138,7 +144,10 @@ export const Chat = () => {
       };
       // Update in DB
       window.conversations.update(updatedConversation)
-        .catch(err => console.error('Error saving conversation:', err));
+        .catch(err => {
+          console.error('Error saving conversation:', err)
+          setError(err instanceof Error ? err.message : 'Error saving conversation. See logs or console for details.')
+        });
       return updatedConversation;
     });
 
@@ -148,7 +157,10 @@ export const Chat = () => {
     window.chat.start(
       conversationId,
       systemPrompt(selectedProject)
-    ).catch(err => console.error('Error starting chat:', err));
+    ).catch(err => {
+      console.error('Error starting chat:', err)
+      setError(err instanceof Error ? err.message : 'Chat failed. See logs or console for details.')
+    });
   }
 
   const onSaveProject = async (project: Project) => {

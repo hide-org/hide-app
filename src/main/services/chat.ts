@@ -57,6 +57,7 @@ export class ChatService {
     } catch (error) {
       if (!isAbortError(error)) {
         console.error(`Chat ${conversationId} error:`, error);
+        throw error
       }
     } finally {
       console.log(`Chat ${conversationId} stopped. Cleaning up...`);
