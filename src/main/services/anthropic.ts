@@ -14,7 +14,6 @@ export class AnthropicService {
   private chatModel: string;
   private titleModel: string;
   private tools: AnthropicTool[];
-  private settings: ProviderSettings;
 
   constructor(tools: Tool[]) {
     this.tools = tools.map(mcpToAnthropicTool);
@@ -103,11 +102,17 @@ export class AnthropicService {
   loadSettings(): { success: boolean; error?: string } {
     try {
       const settings = this.getProviderSettings();
-      this.settings = settings;
-      this.chatModel = this.settings.models.chat;
-      this.titleModel = this.settings.models.title;
+      if (!settings.models.chat) {
+        throw new Error('Chat model is not set. Please select a model in Settings.');
+      }
+      if (!settings.models.title) {
+        throw new Error('Title model is not set. Please select a model in Settings.');
+      }
+
+      this.chatModel = settings.models.chat;
+      this.titleModel = settings.models.title;
       this.client = new Anthropic({
-        apiKey: this.settings.apiKey,
+        apiKey: settings.apiKey,
         maxRetries: 16,
       });
       return { success: true };
