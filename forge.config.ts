@@ -50,11 +50,6 @@ const config: ForgeConfig = {
           },
         ],
       },
-      // Disable HMR to develop hide with hide
-      devServer: {
-        hot: false,
-        liveReload: false,
-      }
     }),
     // Fuses are used to enable/disable various Electron functionality
     // at package time, before code signing the application
