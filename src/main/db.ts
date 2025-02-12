@@ -1,6 +1,5 @@
 import Database from 'better-sqlite3';
-import { app, ipcMain } from 'electron';
-import path from 'path';
+import { ipcMain } from 'electron';
 import { homedir } from 'os';
 import { v4 as uuidv4 } from 'uuid';
 import { Conversation, Project, Task } from '../types';
@@ -8,10 +7,9 @@ import { UserSettings } from '../types/settings';
 
 let db: Database.Database;
 
-export const initializeDatabase = () => {
+export const initializeDatabase = (dbPath: string) => {
   if (db) return;
 
-  const dbPath = path.join(app.getPath('userData'), 'database.sqlite');
   db = new Database(dbPath);
 
   // Create projects table if it doesn't exist
@@ -93,6 +91,11 @@ export const getAllProjects = (): Project[] => {
 export const getProjectById = (id: string): Project | undefined => {
   const stmt = db.prepare('SELECT * FROM projects WHERE id = ?');
   return stmt.get(id) as Project | undefined;
+};
+
+export const getProjectByName = (name: string): Project | undefined => {
+  const stmt = db.prepare('SELECT * FROM projects WHERE name = ?');
+  return stmt.get(name) as Project | undefined;
 };
 
 export const createProject = (project: Project): void => {
