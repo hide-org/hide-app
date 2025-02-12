@@ -3,6 +3,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 import { Project, Conversation } from '@/types';
 import { Message } from '@/types/message';
 import { UserSettings } from '@/types/settings';
+import { AccountSettings } from '@/types/account';
 
 // Expose file dialog API and other electron features
 contextBridge.exposeInMainWorld('electron', {
@@ -28,6 +29,13 @@ contextBridge.exposeInMainWorld('conversations', {
     create: (conversation: Conversation) => ipcRenderer.invoke('conversations:create', conversation),
     update: (conversation: Conversation) => ipcRenderer.invoke('conversations:update', conversation),
     delete: (id: string) => ipcRenderer.invoke('conversations:delete', { id })
+});
+
+// Expose account API
+contextBridge.exposeInMainWorld('account', {
+    get: () => ipcRenderer.invoke('account:get'),
+    update: (settings: Omit<AccountSettings, 'created_at' | 'updated_at'>) =>
+        ipcRenderer.invoke('account:update', settings)
 });
 
 // Expose settings API

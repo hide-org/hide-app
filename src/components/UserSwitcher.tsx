@@ -1,3 +1,4 @@
+import * as React from "react"
 import { ChevronsUpDown } from "lucide-react"
 import {
   DropdownMenu,
@@ -17,15 +18,28 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 
 interface UserSwitcherProps {
   onSettingsClick: () => void;
+  onAccountClick: () => void;
+  version?: number; // Changes to trigger a refresh
 }
 
-export function UserSwitcher({ onSettingsClick }: UserSwitcherProps) {
+export function UserSwitcher({ onSettingsClick, onAccountClick, version }: UserSwitcherProps) {
   const { isMobile } = useSidebar()
-  const user = {
-    name: "artm",
-    email: "art@hide.sh",
-    avatar: "/user-avatar.png",
-  }
+  const [accountSettings, setAccountSettings] = React.useState({
+    username: "",
+    email: "",
+  })
+
+  // Load account settings when component mounts
+  React.useEffect(() => {
+    window.account.get().then(settings => {
+      if (settings) {
+        setAccountSettings({
+          username: settings.username,
+          email: settings.email,
+        });
+      }
+    });
+  }, [version]) // Reload when version changes
 
   return (
     <SidebarMenu>
@@ -37,12 +51,14 @@ export function UserSwitcher({ onSettingsClick }: UserSwitcherProps) {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">AM</AvatarFallback>
+                <AvatarImage src="/user-avatar.png" alt={accountSettings.username} />
+                <AvatarFallback className="rounded-lg">
+                  {accountSettings.username.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
+                <span className="truncate font-semibold">{accountSettings.username}</span>
+                <span className="truncate text-xs">{accountSettings.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
@@ -56,17 +72,19 @@ export function UserSwitcher({ onSettingsClick }: UserSwitcherProps) {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">AM</AvatarFallback>
+                  <AvatarImage src="/user-avatar.png" alt={accountSettings.username} />
+                  <AvatarFallback className="rounded-lg">
+                    {accountSettings.username.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate font-semibold">{accountSettings.username}</span>
+                  <span className="truncate text-xs">{accountSettings.email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuItem
-              onClick={() => console.log("Account clicked")}
+              onClick={onAccountClick}
               className="gap-2 p-2"
             >
               Account

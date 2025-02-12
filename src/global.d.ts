@@ -1,6 +1,7 @@
 import { Project, Conversation } from '@/types';
 import { Message } from '@/types/message';
 import { UserSettings } from '@/types/settings';
+import { AccountSettings } from '@/types/account';
 
 declare global {
   interface Window {
@@ -19,6 +20,10 @@ declare global {
       create: (conversation: Conversation) => Promise<Conversation>;
       update: (conversation: Conversation) => Promise<Conversation>;
       delete: (id: string) => Promise<void>;
+    };
+    account: {
+      get: () => Promise<AccountSettings | null>;
+      update: (settings: Omit<AccountSettings, 'created_at' | 'updated_at'>) => Promise<AccountSettings>;
     };
     settings: {
       get: () => Promise<UserSettings | null>;

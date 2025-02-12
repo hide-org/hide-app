@@ -5,6 +5,7 @@ import { homedir } from 'os';
 import { v4 as uuidv4 } from 'uuid';
 import { Conversation, Project, Task } from '../types';
 import { UserSettings } from '../types/settings';
+import { AccountSettings } from '../types/account';
 
 let db: Database.Database;
 
@@ -44,6 +45,17 @@ export const initializeDatabase = () => {
             id INTEGER PRIMARY KEY CHECK (id = 1),
             model_provider TEXT NOT NULL,
             provider_settings TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+        )
+    `);
+
+  // Create account_settings table if it doesn't exist
+  db.exec(`
+        CREATE TABLE IF NOT EXISTS account_settings (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            email TEXT NOT NULL,
+            username TEXT NOT NULL,
             created_at INTEGER NOT NULL,
             updated_at INTEGER NOT NULL
         )
@@ -297,6 +309,59 @@ export const deleteConversationTasks = (conversationId: string): void => {
   stmt.run(conversationId);
 };
 
+export const getAccountSettings = (): AccountSettings | null => {
+  const stmt = db.prepare('SELECT * FROM account_settings WHERE id = 1');
+  const row = stmt.get();
+
+  if (!row) return null;
+
+  return {
+    email: row.email,
+    username: row.username,
+    created_at: row.created_at,
+    updated_at: row.updated_at
+  };
+};
+
+export const updateAccountSettings = async (settings: Omit<AccountSettings, 'created_at' | 'updated_at'>): Promise<void> => {
+  const currentSettings = db.prepare('SELECT created_at FROM account_settings WHERE id = 1').get();
+
+  if (currentSettings) {
+    // Update existing settings
+    const stmt = db.prepare(`
+      UPDATE account_settings 
+      SET email = ?,
+          username = ?,
+          updated_at = ?
+      WHERE id = 1
+    `);
+    stmt.run(
+      settings.email,
+      settings.username,
+      Date.now()
+    );
+  } else {
+    // Insert new settings
+    const stmt = db.prepare(`
+      INSERT INTO account_settings (
+        id,
+        email,
+        username,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?)
+    `);
+    const now = Date.now();
+    stmt.run(
+      1,
+      settings.email,
+      settings.username,
+      now,
+      now
+    );
+  }
+};
+
 export const setupDbHandlers = () => {
   // Settings handlers
   ipcMain.handle('settings:get', async () => {
@@ -314,6 +379,26 @@ export const setupDbHandlers = () => {
       return getUserSettings();
     } catch (err) {
       console.error('Error updating user settings:', err);
+      throw err;
+    }
+  });
+
+  // Account handlers
+  ipcMain.handle('account:get', async () => {
+    try {
+      return getAccountSettings();
+    } catch (err) {
+      console.error('Error getting account settings:', err);
+      throw err;
+    }
+  });
+
+  ipcMain.handle('account:update', async (_, settings: Omit<AccountSettings, 'created_at' | 'updated_at'>) => {
+    try {
+      await updateAccountSettings(settings);
+      return getAccountSettings();
+    } catch (err) {
+      console.error('Error updating account settings:', err);
       throw err;
     }
   });

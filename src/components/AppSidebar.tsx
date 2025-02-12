@@ -21,6 +21,7 @@ import { ProjectDialog } from "./ProjectDialog"
 import { DeleteProjectDialog } from "./DeleteProjectDialog"
 import { ChatDialog } from "./ChatDialog"
 import { DeleteChatDialog } from "./DeleteChatDialog"
+import { AccountDialog } from "./AccountDialog"
 
 
 interface AppSidebarProps {
@@ -54,6 +55,8 @@ export function AppSidebar({
   const [projectToDelete, setProjectToDelete] = React.useState<Project | null>(null);
   const [chatToEdit, setChatToEdit] = React.useState<Conversation | null>(null);
   const [chatToDelete, setChatToDelete] = React.useState<Conversation | null>(null);
+  const [isAccountOpen, setIsAccountOpen] = React.useState(false);
+  const [accountVersion, setAccountVersion] = React.useState(0);
 
   return (
     <Sidebar>
@@ -93,9 +96,23 @@ export function AppSidebar({
         }}
         onDelete={onDeleteConversation}
       />
+      <AccountDialog
+        open={isAccountOpen}
+        onOpenChange={(open) => {
+          setIsAccountOpen(open);
+          if (!open) {
+            // Increment version to trigger UserSwitcher refresh
+            setAccountVersion(v => v + 1);
+          }
+        }}
+      />
 
       <SidebarHeader className="space-y-4 p-4">
-        <UserSwitcher onSettingsClick={onSettingsClick} />
+        <UserSwitcher 
+          onSettingsClick={onSettingsClick}
+          onAccountClick={() => setIsAccountOpen(true)}
+          version={accountVersion}
+        />
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
