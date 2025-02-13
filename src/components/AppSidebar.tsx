@@ -1,5 +1,5 @@
 import * as React from "react"
-import { MoreHorizontal, Plus } from "lucide-react"
+import { Folder, MessageSquare, MoreHorizontal, Plus } from "lucide-react"
 import { Conversation, Project } from '../types'
 import { UserSwitcher } from "./UserSwitcher"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
@@ -59,7 +59,7 @@ export function AppSidebar({
   const [chatToDelete, setChatToDelete] = React.useState<Conversation | null>(null);
 
   return (
-    <Sidebar>
+    <Sidebar variant="sidebar" collapsible="icon">
       <ProjectDialog
         project={projectToEdit}
         open={projectToEdit !== null}
@@ -102,7 +102,9 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Projects</SidebarGroupLabel>
+          <SidebarGroupLabel>
+            Projects
+          </SidebarGroupLabel>
           <SidebarGroupAction title="Add Project" onClick={() => setProjectToEdit({} as Project)}>
             <Plus /> <span className="sr-only">Add Project</span>
           </SidebarGroupAction>
@@ -118,15 +120,17 @@ export function AppSidebar({
                 >
                   <SidebarMenuButton
                     onClick={() => onSelectProject(project)}
+                    tooltip={project.name}
                     asChild
                   >
                     <a href="#">
+                      <Folder className="shrink-0" />
                       <span>{project.name}</span>
                     </a>
                   </SidebarMenuButton>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <SidebarMenuAction>
+                      <SidebarMenuAction showOnHover>
                         <MoreHorizontal />
                       </SidebarMenuAction>
                     </DropdownMenuTrigger>
@@ -145,7 +149,9 @@ export function AppSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup>
-          <SidebarGroupLabel>Chats</SidebarGroupLabel>
+          <SidebarGroupLabel>
+            Chats
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {conversations.map((conversation) => (
@@ -158,15 +164,17 @@ export function AppSidebar({
                 >
                   <SidebarMenuButton
                     onClick={() => onSelectConversation(conversation)}
+                    tooltip={conversation.title}
                     asChild
                   >
                     <a title={formatTimestamp(conversation.updatedAt)} href="#">
+                      <MessageSquare className="shrink-0" />
                       <span>{conversation.title}</span>
                     </a>
                   </SidebarMenuButton>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <SidebarMenuAction>
+                      <SidebarMenuAction showOnHover>
                         <MoreHorizontal />
                       </SidebarMenuAction>
                     </DropdownMenuTrigger>
@@ -186,7 +194,7 @@ export function AppSidebar({
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <ModeToggle  />
+        <ModeToggle />
       </SidebarFooter>
     </Sidebar>
   )
