@@ -75,22 +75,6 @@
     padding: 0;
     height: 100vh;
   }
-
-  /* Title bar draggable area */
-  .titlebar-region {
-    -webkit-app-region: drag;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 40px;
-    z-index: 9999;
-    /* Prevent content from showing through */
-    background-color: inherit;
-    /* Add a subtle gradient to ensure content doesn't show through */
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-  }
 }
 
 ::-webkit-scrollbar {
@@ -109,4 +93,18 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #999;
+}
+
+/* Title bar draggable area */
+.titlebar-region {
+  -webkit-app-region: drag;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  z-index: 9999;
+  background-color: var(--sidebar-background); /* Use the sidebar background color variable */
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }

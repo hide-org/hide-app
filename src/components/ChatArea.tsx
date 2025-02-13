@@ -72,7 +72,7 @@ export const ChatArea = ({
   })
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col pt-6">
       {error && (
         <div className="bg-destructive/15 border border-destructive text-destructive px-4 py-3 rounded relative" role="alert">
           <span className="block sm:inline">{error}</span>

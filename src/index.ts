@@ -104,12 +104,13 @@ const createWindow = (): BrowserWindow => {
   const mainWindow = new BrowserWindow({
     height: 900,
     width: 1440,
-    // titleBarStyle: 'hiddenInset',  // Makes title bar blend with the app
-    // backgroundColor: '#ffffff',     // Match your app's background
-    // trafficLightPosition: { x: 20, y: 20 },
+    titleBarStyle: 'hidden',
+    backgroundColor: 'rgb(2 6 23)', // This should match your sidebar dark background
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       webSecurity: true,
+      nodeIntegration: false,
+      contextIsolation: true
     },
   });
 

@@ -97,7 +97,7 @@ export function AppSidebar({
         onDelete={onDeleteConversation}
       />
 
-      <SidebarHeader className="space-y-4 p-4">
+      <SidebarHeader className="space-y-4 mt-8">
         <UserSwitcher onSettingsClick={onSettingsClick} />
       </SidebarHeader>
       <SidebarContent>
