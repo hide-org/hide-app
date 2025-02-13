@@ -24,12 +24,6 @@ export async function initializeMCP(command: string, args: string[] = []) {
             const transport = new StdioClientTransport({
                 command,
                 args,
-                env: {
-                    ...process.env,  // Preserve user's environment
-                    PYTHONUNBUFFERED: '1',  // Ensure Python output isn't buffered
-                    // TODO: this is probably not necessary
-                    PATH: process.env.PATH  // Ensure PATH is preserved
-                }
             });
 
             // Add logging for process events
