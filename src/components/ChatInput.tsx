@@ -54,32 +54,33 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <>
-      <form
-        onSubmit={handleSubmit}
-        className={`w-full max-w-2xl mx-auto ${className}`.trim()}
-      >
-        <div className="flex items-end gap-2 p-2 bg-background border rounded-lg shadow-sm">
-          <Textarea
-            ref={textareaRef}
-            value={message}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-            className="flex-1 resize-none overflow-y-auto min-h-9 border-0 shadow-none focus:outline-none focus-visible:ring-0 bg-background disabled:bg-muted"
-            style={{ maxHeight: `${maxHeight}px` }}
-            rows={1}
-          />
+    <form
+      onSubmit={handleSubmit}
+      className={`w-full max-w-2xl mx-auto ${className}`.trim()}
+    >
+      <div className="flex items-end gap-2 p-4 bg-background border rounded-lg shadow-sm">
+        <Textarea
+          ref={textareaRef}
+          value={message}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          className="flex-1 resize-none overflow-y-auto min-h-[56px] max-h-[200px] border-0 shadow-none focus:outline-none focus-visible:ring-0 bg-background disabled:bg-muted p-0 m-0"
+          style={{ maxHeight: `${maxHeight}px` }}
+          rows={1}
+        />
+        {message.trim() && (
           <Button
             type="submit"
             disabled={!message.trim() || disabled}
             size="icon"
+            className="h-8 w-8 mb-[3px]"
             aria-label="Send message"
           >
             <Send className="h-4 w-4" />
           </Button>
-        </div>
-      </form>
-    </>
+        )}
+      </div>
+    </form>
   );
 };

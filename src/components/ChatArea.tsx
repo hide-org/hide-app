@@ -128,10 +128,14 @@ export const ChatArea = ({
         </>
       ) : (
         <div className="flex h-full flex-col justify-center">
-          <H2 className="w-full max-w-2xl mx-auto border-0">
+          <H2 className="w-full max-w-2xl mx-auto border-0 mb-6">
             {title()}
           </H2>
-          <ChatInput onSendMessage={handleMessage} disabled={isLoading} />
+          <ChatInput 
+            onSendMessage={handleMessage} 
+            disabled={isLoading} 
+            className="max-w-2xl mx-auto w-full px-4"
+          />
         </div>
       )}
     </div>
