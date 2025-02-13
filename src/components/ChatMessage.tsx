@@ -15,15 +15,17 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   const getMessageStyle = () => {
     switch (message.role) {
       case 'user':
-        return 'bg-gray-50';
+        return 'bg-muted/50';
       case 'assistant':
-        return 'bg-white';
+        return 'bg-background';
       case 'tool_use':
-        return 'bg-blue-50';
+        return 'bg-blue-500/10 dark:bg-blue-900/20';
       case 'tool_result':
-        return (message.isError ?? false) ? 'bg-red-50' : 'bg-green-50';
+        return (message.isError ?? false) 
+          ? 'bg-destructive/10 dark:bg-destructive/20' 
+          : 'bg-green-500/10 dark:bg-green-900/20';
       default:
-        return 'bg-white';
+        return 'bg-background';
     }
   };
 
@@ -63,7 +65,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   return (
     <div className={`flex items-start space-x-4 p-4`}>
       {getAvatar()}
-      <div className={`flex-1 border p-4 rounded-lg text-gray-900 dark:text-gray-100 leading-relaxed w-full max-w-2xl mx-auto ${getMessageStyle()}`}>
+      <div className={`flex-1 border p-4 rounded-lg text-foreground leading-relaxed w-full max-w-2xl mx-auto ${getMessageStyle()}`}>
         <ReactMarkdown
           rehypePlugins={[rehypeHighlight]}
           components={{
@@ -81,19 +83,19 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
               const isInline = inline || !className?.includes('language-');
               return (
                 <code className={`font-mono ${isInline
-                  ? 'text-sm bg-gray-100 dark:bg-gray-800 rounded px-1.5 py-0.5 max-w-3xl break-words'
-                  : 'block text-sm text-gray-100 bg-gray-800 p-4 rounded-lg mb-4 overflow-x-auto max-w-3xl whitespace-pre'}`} {...props}>
+                  ? 'text-sm bg-muted rounded px-1.5 py-0.5 max-w-3xl break-words'
+                  : 'block text-sm bg-zinc-950 dark:bg-zinc-900 text-zinc-50 p-4 rounded-lg mb-4 overflow-x-auto max-w-3xl whitespace-pre'}`} {...props}>
                   {children}
                 </code>
               );
             },
             // Blockquotes
             blockquote: ({ node, ...props }) => (
-              <blockquote className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 my-4 italic" {...props} />
+              <blockquote className="border-l-4 border-muted pl-4 my-4 italic" {...props} />
             ),
             // Links
             a: ({ node, ...props }) => (
-              <a className="text-blue-600 dark:text-blue-400 hover:underline" {...props} />
+              <a className="text-primary hover:underline" {...props} />
             ),
           }}
         >

@@ -59,17 +59,16 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         onSubmit={handleSubmit}
         className={`w-full max-w-2xl mx-auto ${className}`.trim()}
       >
-        <div className="flex items-end gap-2 p-2 bg-white border rounded-lg shadow-sm">
+        <div className="flex items-end gap-2 p-2 bg-background border rounded-lg shadow-sm">
           <Textarea
             ref={textareaRef}
             value={message}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            className="flex-1 resize-none overflow-y-auto min-h-9 border-0 shadow-none focus:outline-none focus-visible:ring-0 disabled:bg-gray-100"
+            className="flex-1 resize-none overflow-y-auto min-h-9 border-0 shadow-none focus:outline-none focus-visible:ring-0 bg-background disabled:bg-muted"
             style={{ maxHeight: `${maxHeight}px` }}
             rows={1}
-
           />
           <Button
             type="submit"
@@ -77,7 +76,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             size="icon"
             aria-label="Send message"
           >
-            <Send />
+            <Send className="h-4 w-4" />
           </Button>
         </div>
       </form>
