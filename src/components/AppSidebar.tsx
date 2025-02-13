@@ -23,7 +23,7 @@ import { DeleteProjectDialog } from "./DeleteProjectDialog"
 import { ChatDialog } from "./ChatDialog"
 import { DeleteChatDialog } from "./DeleteChatDialog"
 import { ModeToggle } from "./ModeToggle"
-import { useTheme } from "./ThemeProvider"
+import { cn } from "@/lib/utils"
 
 
 interface AppSidebarProps {
@@ -111,7 +111,10 @@ export function AppSidebar({
               {projects.map((project) => (
                 <SidebarMenuItem
                   key={project.name}
-                  className={selectedProject?.name === project.name ? 'bg-accent' : ''}
+                  className={cn(
+                    selectedProject?.name === project.name ? 'bg-accent rounded-md' : '',
+                    'group/menu-item relative'
+                  )}
                 >
                   <SidebarMenuButton
                     onClick={() => onSelectProject(project)}
@@ -148,7 +151,10 @@ export function AppSidebar({
               {conversations.map((conversation) => (
                 <SidebarMenuItem
                   key={conversation.id}
-                  className={selectedConversation?.id === conversation.id ? 'bg-accent' : ''}
+                  className={cn(
+                    selectedConversation?.id === conversation.id ? 'bg-accent rounded-[var(--radius)]' : '',
+                    'group/menu-item relative'
+                  )}
                 >
                   <SidebarMenuButton
                     onClick={() => onSelectConversation(conversation)}
