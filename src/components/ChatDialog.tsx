@@ -44,7 +44,7 @@ export function ChatDialog({ chat, open, onOpenChange, onSave }: ChatDialogProps
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Rename Chat</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-muted-foreground">
             Edit your chat title below.
           </DialogDescription>
         </DialogHeader>

@@ -1,11 +1,12 @@
 import * as React from "react"
-import { MoreHorizontal, Plus } from "lucide-react"
+import { Folder, MessageSquare, MoreHorizontal, Plus } from "lucide-react"
 import { Conversation, Project } from '../types'
 import { UserSwitcher } from "./UserSwitcher"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupAction,
   SidebarGroupContent,
@@ -21,6 +22,8 @@ import { ProjectDialog } from "./ProjectDialog"
 import { DeleteProjectDialog } from "./DeleteProjectDialog"
 import { ChatDialog } from "./ChatDialog"
 import { DeleteChatDialog } from "./DeleteChatDialog"
+import { ModeToggle } from "./ModeToggle"
+import { cn } from "@/lib/utils"
 
 
 interface AppSidebarProps {
@@ -56,7 +59,7 @@ export function AppSidebar({
   const [chatToDelete, setChatToDelete] = React.useState<Conversation | null>(null);
 
   return (
-    <Sidebar>
+    <Sidebar variant="sidebar" collapsible="icon">
       <ProjectDialog
         project={projectToEdit}
         open={projectToEdit !== null}
@@ -94,12 +97,14 @@ export function AppSidebar({
         onDelete={onDeleteConversation}
       />
 
-      <SidebarHeader className="space-y-4 p-4">
+      <SidebarHeader className="space-y-4 mt-8">
         <UserSwitcher onSettingsClick={onSettingsClick} />
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Projects</SidebarGroupLabel>
+          <SidebarGroupLabel>
+            Projects
+          </SidebarGroupLabel>
           <SidebarGroupAction title="Add Project" onClick={() => setProjectToEdit({} as Project)}>
             <Plus /> <span className="sr-only">Add Project</span>
           </SidebarGroupAction>
@@ -108,19 +113,24 @@ export function AppSidebar({
               {projects.map((project) => (
                 <SidebarMenuItem
                   key={project.name}
-                  className={selectedProject?.name === project.name ? 'bg-accent' : ''}
+                  className={cn(
+                    selectedProject?.name === project.name ? 'bg-accent rounded-md' : '',
+                    'group/menu-item relative'
+                  )}
                 >
                   <SidebarMenuButton
                     onClick={() => onSelectProject(project)}
+                    tooltip={project.name}
                     asChild
                   >
                     <a href="#">
+                      <Folder className="shrink-0" />
                       <span>{project.name}</span>
                     </a>
                   </SidebarMenuButton>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <SidebarMenuAction>
+                      <SidebarMenuAction showOnHover>
                         <MoreHorizontal />
                       </SidebarMenuAction>
                     </DropdownMenuTrigger>
@@ -139,25 +149,32 @@ export function AppSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup>
-          <SidebarGroupLabel>Chats</SidebarGroupLabel>
+          <SidebarGroupLabel>
+            Chats
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {conversations.map((conversation) => (
                 <SidebarMenuItem
                   key={conversation.id}
-                  className={selectedConversation?.id === conversation.id ? 'bg-accent' : ''}
+                  className={cn(
+                    selectedConversation?.id === conversation.id ? 'bg-accent rounded-[var(--radius)]' : '',
+                    'group/menu-item relative'
+                  )}
                 >
                   <SidebarMenuButton
                     onClick={() => onSelectConversation(conversation)}
+                    tooltip={conversation.title}
                     asChild
                   >
                     <a title={formatTimestamp(conversation.updatedAt)} href="#">
+                      <MessageSquare className="shrink-0" />
                       <span>{conversation.title}</span>
                     </a>
                   </SidebarMenuButton>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <SidebarMenuAction>
+                      <SidebarMenuAction showOnHover>
                         <MoreHorizontal />
                       </SidebarMenuAction>
                     </DropdownMenuTrigger>
@@ -176,6 +193,9 @@ export function AppSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter>
+        <ModeToggle />
+      </SidebarFooter>
     </Sidebar>
   )
 }

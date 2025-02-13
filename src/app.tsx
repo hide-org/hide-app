@@ -1,11 +1,22 @@
 import { createRoot } from 'react-dom/client';
+
 import { Chat } from './components/Chat';
+import { ThemeProvider } from './components/ThemeProvider';
 
 const App = () => {
   return (
+    <ThemeProvider defaultTheme="system" storageKey="app-theme">
       <Chat />
+    </ThemeProvider>
   );
 };
 
-const root = createRoot(document.body);
-root.render(<App />);
+// Wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', () => {
+  const container = document.getElementById('root');
+  if (!container) {
+    throw new Error('Root element not found');
+  }
+  const root = createRoot(container);
+  root.render(<App />);
+});

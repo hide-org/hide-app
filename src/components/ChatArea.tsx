@@ -72,9 +72,9 @@ export const ChatArea = ({
   })
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col pt-6">
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <div className="bg-destructive/15 border border-destructive text-destructive px-4 py-3 rounded relative" role="alert">
           <span className="block sm:inline">{error}</span>
         </div>
       )}
@@ -116,8 +116,8 @@ export const ChatArea = ({
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-200 border-t-gray-900 mr-2" />
-                    <span className="text-gray-500">Thinking...</span>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-muted border-t-foreground mr-2" />
+                    <span className="text-muted-foreground">Thinking...</span>
                   </div>
                 </div>
               )}
@@ -128,10 +128,14 @@ export const ChatArea = ({
         </>
       ) : (
         <div className="flex h-full flex-col justify-center">
-          <H2 className="w-full max-w-2xl mx-auto border-0">
+          <H2 className="w-full max-w-2xl mx-auto border-0 mb-6">
             {title()}
           </H2>
-          <ChatInput onSendMessage={handleMessage} disabled={isLoading} />
+          <ChatInput 
+            onSendMessage={handleMessage} 
+            disabled={isLoading} 
+            className="max-w-2xl mx-auto w-full px-4"
+          />
         </div>
       )}
     </div>

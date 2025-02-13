@@ -18,7 +18,7 @@ export const ChatHistory = ({
   onNewChat,
 }: ChatHistoryProps) => {
   return (
-    <div className="w-80 border-r p-4">
+    <div className="w-80 border-r border-border p-4">
       <Card className="h-full">
         <CardHeader>
           <CardTitle className="text-xl">Chat History</CardTitle>

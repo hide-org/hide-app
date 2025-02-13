@@ -14,7 +14,6 @@ export const plugins = [
         { file: '**/node_modules/**' }
       ]
     },
-    devServer: false
   }),
   new CopyWebpackPlugin({
     patterns: [

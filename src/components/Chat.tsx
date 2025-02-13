@@ -8,8 +8,7 @@ import { H2 } from '@/components/ui/typography';
 import { systemPrompt } from '@/lib/prompts';
 import { SettingsDialog } from '@/components/SettingsDialog';
 
-
-export const Chat = () => {
+export function Chat() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -20,6 +19,11 @@ export const Chat = () => {
 
   // Load projects from the database
   useEffect(() => {
+    if (!window.projects?.getAll) {
+      console.warn('Projects API is not available');
+      return;
+    }
+
     const loadProjects = async () => {
       try {
         const loadedProjects = await window.projects.getAll();
@@ -34,16 +38,31 @@ export const Chat = () => {
 
   // Listen for credentials required events
   useEffect(() => {
+    if (!window.electron?.onCredentialsRequired) {
+      console.warn('onCredentialsRequired is not available');
+      return;
+    }
+
     const cleanup = window.electron.onCredentialsRequired((error: string) => {
       console.debug('Credentials required:', error);
       setSettingsError(error);
       setShowSettings(true);
     });
-    return cleanup;
+
+    return () => {
+      if (cleanup && typeof cleanup === 'function') {
+        cleanup();
+      }
+    };
   }, []);
 
   // Load conversations when project changes
   useEffect(() => {
+    if (!window.conversations?.getAll) {
+      console.warn('Conversations API is not available');
+      return;
+    }
+
     if (selectedProject) {
       const loadConversationsForProject = async () => {
         try {
@@ -62,6 +81,11 @@ export const Chat = () => {
 
   // Listen for chat messages
   useEffect(() => {
+    if (!window.chat?.onMessage) {
+      console.warn('Chat message handler is not available');
+      return;
+    }
+
     const handleMessage = (
       conversationId: string,
       message: Message
@@ -91,26 +115,45 @@ export const Chat = () => {
     };
 
     const cleanup = window.chat.onMessage(handleMessage);
-    return cleanup;
+    return () => {
+      if (cleanup && typeof cleanup === 'function') {
+        cleanup();
+      }
+    };
   }, []);
 
   // Listen for conversation updates
   useEffect(() => {
+    if (!window.chat?.onUpdate) {
+      console.warn('Chat update handler is not available');
+      return;
+    }
+
     const handleUpdate = (conversation: Conversation) => {
       setCurrentConversation(prev => {
         if (!prev || prev.id !== conversation.id) return prev;
         return conversation;
       });
 
-      setConversations(prev => prev.map(c => c.id === conversation.id ? conversation : c).sort((a, b) => b.updatedAt - a.updatedAt));
+      setConversations(prev => 
+        prev.map(c => c.id === conversation.id ? conversation : c)
+          .sort((a, b) => b.updatedAt - a.updatedAt)
+      );
     };
 
     const cleanup = window.chat.onUpdate(handleUpdate);
-    return cleanup;
+    return () => {
+      if (cleanup && typeof cleanup === 'function') {
+        cleanup();
+      }
+    };
   }, []);
 
   const handleNewConversation = async (message: string): Promise<void> => {
-    if (!selectedProject) return;
+    if (!selectedProject || !window.conversations?.create || !window.chat?.generateTitle || !window.chat?.start) {
+      console.warn('Required APIs are not available');
+      return;
+    }
 
     const newConv = newConversation(selectedProject.id);
     newConv.messages.push(newUserMessage(message));
@@ -132,6 +175,11 @@ export const Chat = () => {
   };
 
   const handleNewMessage = async (conversationId: string, message: string): Promise<void> => {
+    if (!window.conversations?.update || !window.chat?.start) {
+      console.warn('Required APIs are not available');
+      return;
+    }
+
     setCurrentConversation(prev => {
       if (!prev || prev.id !== conversationId) return prev;
       const updatedConversation = {
@@ -164,6 +212,11 @@ export const Chat = () => {
   }
 
   const onSaveProject = async (project: Project) => {
+    if (!window.projects?.update && !window.projects?.create) {
+      console.warn('Projects API is not available');
+      return;
+    }
+
     try {
       const updatedProjects = projects.some(p => p.id === project.id)
         ? await window.projects.update(project)
@@ -176,6 +229,11 @@ export const Chat = () => {
   };
 
   const onDeleteProject = async (project: Project) => {
+    if (!window.projects?.delete) {
+      console.warn('Projects API is not available');
+      return;
+    }
+
     try {
       const updatedProjects = await window.projects.delete(project.id);
       setProjects(updatedProjects);
@@ -186,6 +244,11 @@ export const Chat = () => {
   };
 
   const onDeleteConversation = async (id: string) => {
+    if (!window.conversations?.delete || !window.conversations?.getAll) {
+      console.warn('Conversations API is not available');
+      return;
+    }
+
     try {
       await window.conversations.delete(id);
       if (currentConversation?.id === id) {
@@ -203,6 +266,11 @@ export const Chat = () => {
   };
 
   const onRenameChat = async (chat: Conversation) => {
+    if (!window.conversations?.update || !window.conversations?.getAll) {
+      console.warn('Conversations API is not available');
+      return;
+    }
+
     try {
       await window.conversations.update(chat);
       if (currentConversation?.id === chat.id) {
@@ -272,4 +340,4 @@ export const Chat = () => {
       />
     </div>
   );
-};
+}
