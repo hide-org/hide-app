@@ -1,6 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { getDefaultEnvironment, StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { CallToolResultSchema, JSONRPCMessage, CallToolResult, Tool } from "@modelcontextprotocol/sdk/types";
+import { env } from "process";
 import { shellExec, escapeShellArg } from './shell';
 
 // 5-minute timeout
@@ -24,6 +25,11 @@ export async function initializeMCP(command: string, args: string[] = []) {
             const transport = new StdioClientTransport({
                 command,
                 args,
+                env: {
+                    ...getDefaultEnvironment(),
+                    HIDE_MCP_LOG_LEVEL: env.HIDE_MCP_LOG_LEVEL || 'INFO',
+                    HIDE_SHELL: env.HIDE_SHELL || '/bin/zsh',
+                }
             });
 
             // Add logging for process events
