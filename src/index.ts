@@ -122,7 +122,7 @@ const createWindow = (): BrowserWindow => {
         ...details.responseHeaders,
         'Content-Security-Policy': [
           "default-src 'self';",
-          "script-src 'self' 'unsafe-eval' 'unsafe-inline';",
+          "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://eu-assets.i.posthog.com;",
           "style-src 'self' 'unsafe-inline' data:;",
           "connect-src 'self' https://eu.i.posthog.com https://eu-assets.i.posthog.com https://api.anthropic.com;",
           "img-src 'self' data: https:;",
