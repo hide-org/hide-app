@@ -1,9 +1,24 @@
 import { createRoot } from 'react-dom/client';
+import { useEffect } from 'react';
 
 import { Chat } from './components/Chat';
 import { ThemeProvider } from './components/ThemeProvider';
+import { initAnalytics, captureEvent } from '@/lib/analytics/renderer';
 
 const App = () => {
+  useEffect(() => {
+    // Initialize analytics
+    initAnalytics();
+
+    // Listen for analytics events from main process
+    window.electron.on('analytics:event', (event: { name: string, properties: any }) => {
+      captureEvent(event.name, event.properties);
+    });
+
+    // Track app launch
+    captureEvent('app_launched');
+  }, []);
+
   return (
     <ThemeProvider defaultTheme="system" storageKey="app-theme">
       <Chat />

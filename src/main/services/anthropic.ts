@@ -8,6 +8,7 @@ import { Message } from '@/types/message';
 import { ProviderSettings } from '@/types/settings';
 import { getUserSettings } from '@/main/db';
 import { convertToAnthropic, convertFromAnthropic } from '@/lib/converters/anthropic';
+import { captureEvent } from '@/lib/analytics/main';
 
 export class AnthropicService {
   private client: Anthropic;
@@ -115,8 +116,19 @@ export class AnthropicService {
         apiKey: settings.apiKey,
         maxRetries: 16,
       });
+      
+      captureEvent('anthropic_settings_updated', {
+        chat_model: this.chatModel,
+        title_model: this.titleModel,
+        // Not capturing API key for security
+      });
+      
       return { success: true };
     } catch (error) {
+      captureEvent('anthropic_settings_error', {
+        error_type: error.name,
+        error_message: error.message
+      });
       return { success: false, error: error.message };
     }
   }

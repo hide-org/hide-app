@@ -4,6 +4,7 @@ import { getConversationById, updateConversation } from '@/main/db';
 import { Conversation } from '@/types';
 import { isAbortError } from '@/main/errors';
 import { Message } from '@/types/message';
+import { captureEvent } from '@/lib/analytics/main';
 
 export class ChatService {
   private activeChats: Map<string, {
@@ -20,6 +21,11 @@ export class ChatService {
     if (this.activeChats.has(conversationId)) {
       throw new Error('Chat is already running');
     }
+
+    captureEvent('chat_started', {
+      conversation_id: conversationId,
+      has_system_prompt: !!systemPrompt
+    });
 
     const conversation = getConversationById(conversationId);
     if (!conversation) throw new Error('Conversation not found');

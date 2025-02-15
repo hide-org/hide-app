@@ -7,6 +7,7 @@ declare global {
     electron: {
       showDirectoryPicker: () => Promise<{ canceled: boolean; filePaths: string[] }>;
       onCredentialsRequired: (callback: (error: string) => void) => () => void;
+      on: (channel: string, callback: (data: any) => void) => void;
     };
     projects: {
       getAll: () => Promise<Project[]>;

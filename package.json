@@ -2,7 +2,7 @@
   "name": "hide-app",
   "productName": "hide-app",
   "version": "1.0.0",
-  "description": "My Electron application description",
+  "description": "AI-powered dev tool for your projects",
   "main": ".webpack/main",
   "scripts": {
     "start": "electron-forge start",
@@ -76,6 +76,7 @@
     "electron-squirrel-startup": "^1.0.1",
     "highlight.js": "^11.11.0",
     "lucide-react": "^0.468.0",
+    "posthog-js": "^1.116.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^9.0.1",

@@ -6,6 +6,7 @@ import { initializeDatabase, setupDbHandlers } from './main/db';
 import { initializeMCP, listTools } from './main/mcp';
 import { ChatService, setupChatHandlers } from './main/services/chat';
 import { AnthropicService } from './main/services/anthropic';
+import { captureEvent } from './lib/analytics/main';
 
 
 // Store chat service reference for cleanup
@@ -114,18 +115,18 @@ const createWindow = (): BrowserWindow => {
     },
   });
 
-  // Set up CSP
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+  // Set CSP headers
+  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
         'Content-Security-Policy': [
-          "default-src 'self' 'unsafe-inline' data:;" +
-          "connect-src 'self' https://api.anthropic.com data:;" +
-          "script-src 'self' 'unsafe-eval' 'unsafe-inline' data:;" +
-          "style-src 'self' 'unsafe-inline' data:;" +
-          "img-src 'self' data: https://github.com https://*.githubusercontent.com;"
-        ]
+          "default-src 'self';",
+          "script-src 'self' 'unsafe-eval' 'unsafe-inline';",
+          "style-src 'self' 'unsafe-inline' data:;",
+          "connect-src 'self' https://eu.i.posthog.com https://eu-assets.i.posthog.com https://api.anthropic.com;",
+          "img-src 'self' data: https:;",
+        ].join(' ')
       }
     });
   });
@@ -158,6 +159,7 @@ app.on('will-quit', async () => {
       console.error('Error stopping chats:', error);
     }
   }
+  captureEvent('app_quit');
 });
 
 app.on('activate', () => {
@@ -213,6 +215,12 @@ ipcMain.handle('dialog:showDirectoryPicker', async () => {
 });
 
 app.whenReady().then(async () => {
+  // Track app initialization
+  captureEvent('app_initialized', {
+    is_packaged: app.isPackaged,
+    debug_mode: DEBUG
+  });
+
   // Initialize the database and set up IPC handlers
   initializeDatabase();
   setupDbHandlers();
@@ -231,8 +239,12 @@ app.whenReady().then(async () => {
     await initPromise;
     console.debug('MCP initialized successfully');
 
+    // Track when services are ready
+    captureEvent('mcp_initialized');
+
     // Now that MCP is ready, initialize Anthropic service
     const tools = await listTools();
+    captureEvent('tools_loaded', { tool_count: tools.length });
     const anthropicService = new AnthropicService(tools);
 
     // Create chat service
@@ -245,7 +257,13 @@ app.whenReady().then(async () => {
       mainWindow.webContents.send('credentials:required', settingsStatus.error);
     }
     console.debug('chat service initialized successfully');
+
+    captureEvent('services_ready');
   } catch (err) {
+    captureEvent('initialization_error', {
+      error_type: err.name,
+      error_message: err.message
+    });
     console.error('Failed to initialize application:', err);
     // Show an error dialog to the user
     dialog.showErrorBox(

@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { captureEvent } from "@/lib/analytics/renderer"
 
 import { Project } from '../types'
 
@@ -44,6 +45,11 @@ export function ProjectDialog({ project, open, onOpenChange, onSave }: ProjectDi
     e.preventDefault();
     if (onSave) {
       onSave(formData as Project);
+      
+      captureEvent('project_created', {
+        is_edit: !!project?.id,
+        has_description: !!formData.description
+      });
     }
     onOpenChange(false);
   };
