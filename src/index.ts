@@ -186,7 +186,7 @@ const getMCPConfig = async () => {
 
   // Verify that MCP exists
   if (!fs.existsSync(mcpPath)) {
-    throw new Error(`MCP not found at ${mcpPath}`);;
+    throw new Error(`MCP not found at ${mcpPath}`);
   }
 
   // In development, use system's uv
