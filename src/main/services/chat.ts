@@ -62,6 +62,10 @@ export class ChatService {
       }
     } catch (error) {
       if (!isAbortError(error)) {
+        captureEvent('chat_error', {
+          conversation_id: conversationId,
+          error: error.toString()
+        });
         console.error(`Chat ${conversationId} error:`, error);
         throw error
       }
@@ -164,6 +168,10 @@ export const setupChatHandlers = (chatManager: ChatService) => {
     try {
       return await chatManager.startChat(conversationId, systemPrompt);
     } catch (error) {
+      captureEvent('Error starting chat', {
+        conversation_id: conversationId,
+        error: error.toString()
+      });
       console.error('Error starting chat:', error);
       throw error;
     }
@@ -173,6 +181,10 @@ export const setupChatHandlers = (chatManager: ChatService) => {
     try {
       return await chatManager.stopChat(conversationId);
     } catch (error) {
+      captureEvent('Error stopping chat', {
+        conversation_id: conversationId,
+        error: error.toString()
+      });
       console.error('Error stopping chat:', error);
       throw error;
     }

@@ -46,9 +46,11 @@ export function ProjectDialog({ project, open, onOpenChange, onSave }: ProjectDi
     if (onSave) {
       onSave(formData as Project);
       
-      captureEvent('project_created', {
-        is_edit: !!project?.id,
-        has_description: !!formData.description
+      // Track project event with more meaningful data
+      captureEvent(project?.id ? 'project_updated' : 'project_created', {
+        has_description: !!formData.description,
+        has_custom_path: !!formData.path && formData.path !== project?.path,
+        project_name_length: formData.name.length
       });
     }
     onOpenChange(false);

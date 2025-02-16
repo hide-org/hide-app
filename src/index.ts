@@ -79,6 +79,11 @@ setupLogging(DEBUG);
 
 // Catch any uncaught errors
 process.on('uncaughtException', (error) => {
+  captureEvent('uncaught_exception', {
+    error: error.toString(),
+    stack: error.stack,
+    details: error
+  });
   console.error('Uncaught exception:', {
     error: error.toString(),
     stack: error.stack,
@@ -88,6 +93,11 @@ process.on('uncaughtException', (error) => {
 
 process.on('unhandledRejection', (reason, _promise) => {
   const error = reason instanceof Error ? reason : new Error(String(reason));
+  captureEvent('unhandled_rejection', {
+    error: error.toString(),
+    stack: error.stack,
+    details: reason
+  });
   console.error('Unhandled rejection:', {
     error: error.toString(),
     stack: error.stack,
@@ -156,6 +166,9 @@ app.on('will-quit', async () => {
       await chatService.stopAllChats();
       console.debug('All chats stopped successfully');
     } catch (error) {
+      captureEvent('error_stopping_chats', {
+        error: error.toString()
+      });
       console.error('Error stopping chats:', error);
     }
   }
@@ -185,7 +198,10 @@ const getMCPConfig = async () => {
 
   // Verify that MCP exists
   if (!fs.existsSync(mcpPath)) {
-    throw new Error(`MCP not found at ${mcpPath}`);
+    captureEvent('mcp_not_found', {
+      error: `MCP not found at ${mcpPath}`
+    });
+    throw new Error(`MCP not found at ${mcpPath}`);;
   }
 
   // In development, use system's uv
@@ -239,12 +255,8 @@ app.whenReady().then(async () => {
     await initPromise;
     console.debug('MCP initialized successfully');
 
-    // Track when services are ready
-    captureEvent('mcp_initialized');
-
     // Now that MCP is ready, initialize Anthropic service
     const tools = await listTools();
-    captureEvent('tools_loaded', { tool_count: tools.length });
     const anthropicService = new AnthropicService(tools);
 
     // Create chat service
@@ -254,11 +266,12 @@ app.whenReady().then(async () => {
     const settingsStatus = anthropicService.loadSettings();
     if (!settingsStatus.success) {
       console.debug('Credentials missing, notifying renderer process:', settingsStatus.error);
+      captureEvent('credentials_missing', {
+        error: settingsStatus.error
+      });
       mainWindow.webContents.send('credentials:required', settingsStatus.error);
     }
     console.debug('chat service initialized successfully');
-
-    captureEvent('services_ready');
   } catch (err) {
     captureEvent('initialization_error', {
       error_type: err.name,
