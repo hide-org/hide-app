@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, session, dialog } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -118,7 +118,7 @@ const createWindow = (): BrowserWindow => {
   });
 
   // Set CSP headers
-  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
