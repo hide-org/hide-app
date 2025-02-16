@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/select"
 import { newUserSettings, Provider, UserSettings } from "@/types/settings"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { captureEvent } from "@/lib/analytics/renderer"
 
 interface SettingsDialogProps {
   open: boolean;
@@ -220,21 +219,9 @@ export function SettingsDialog({ open, onOpenChange, error: externalError }: Set
       });
 
       await window.chat.reloadSettings();
-
-      captureEvent('settings_updated', {
-        provider: draftSettings.model_provider,
-        chat_model: draftSettings.provider_settings[draftSettings.model_provider]?.models.chat,
-        title_model: draftSettings.provider_settings[draftSettings.model_provider]?.models.title
-      });
-
       setSettings(draftSettings);
       onOpenChange(false);
     } catch (error) {
-      captureEvent('settings_update_error', {
-        error_type: error.name,
-        error_message: error instanceof Error ? error.message : 'Unknown error'
-      });
-      
       console.error('Error saving settings:', error);
       setError(error instanceof Error ? error.message : 'Failed to save settings');
     } finally {

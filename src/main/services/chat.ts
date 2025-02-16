@@ -4,17 +4,20 @@ import { getConversationById, updateConversation } from '@/main/db';
 import { Conversation } from '@/types';
 import { isAbortError } from '@/main/errors';
 import { Message } from '@/types/message';
-import { captureEvent } from '@/lib/analytics/main';
+import { AnalyticsService } from './analytics';
+import { getOrCreateUserId } from '@/lib/account';
 
 export class ChatService {
   private activeChats: Map<string, {
     abortController: AbortController;
   }>;
   private anthropicService: AnthropicService;
+  private analyticsService: AnalyticsService;
 
-  constructor(llmService: AnthropicService) {
+  constructor(llmService: AnthropicService, analyticsService: AnalyticsService) {
     this.activeChats = new Map();
     this.anthropicService = llmService;
+    this.analyticsService = analyticsService;
   }
 
   async startChat(conversationId: string, systemPrompt?: string): Promise<void> {
@@ -22,7 +25,9 @@ export class ChatService {
       throw new Error('Chat is already running');
     }
 
-    captureEvent('chat_started', {
+    const userId = getOrCreateUserId();
+
+    this.analyticsService.capture(userId, 'chat_started', {
       conversation_id: conversationId,
       has_system_prompt: !!systemPrompt
     });
@@ -62,7 +67,7 @@ export class ChatService {
       }
     } catch (error) {
       if (!isAbortError(error)) {
-        captureEvent('chat_error', {
+        this.analyticsService.capture(userId, 'chat_error', {
           conversation_id: conversationId,
           error: error.toString()
         });
@@ -168,10 +173,6 @@ export const setupChatHandlers = (chatManager: ChatService) => {
     try {
       return await chatManager.startChat(conversationId, systemPrompt);
     } catch (error) {
-      captureEvent('Error starting chat', {
-        conversation_id: conversationId,
-        error: error.toString()
-      });
       console.error('Error starting chat:', error);
       throw error;
     }
@@ -181,10 +182,6 @@ export const setupChatHandlers = (chatManager: ChatService) => {
     try {
       return await chatManager.stopChat(conversationId);
     } catch (error) {
-      captureEvent('Error stopping chat', {
-        conversation_id: conversationId,
-        error: error.toString()
-      });
       console.error('Error stopping chat:', error);
       throw error;
     }

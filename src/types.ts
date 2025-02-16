@@ -67,3 +67,7 @@ export const newTask = (projectId: string, title: string, conversationId?: strin
     updatedAt: timestamp,
   } as Task;
 }
+
+export interface UserAccount {
+  user_id: string;
+}
