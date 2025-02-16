@@ -4,9 +4,6 @@ import { Project, Conversation } from '@/types';
 import { Message } from '@/types/message';
 import { UserSettings } from '@/types/settings';
 
-// At the top with other type declarations
-type AnalyticsEvent = { name: string, properties: any };
-
 // Expose file dialog API and other electron features
 contextBridge.exposeInMainWorld('electron', {
     showDirectoryPicker: () => ipcRenderer.invoke('dialog:showDirectoryPicker'),
@@ -16,11 +13,6 @@ contextBridge.exposeInMainWorld('electron', {
         return () => {
             ipcRenderer.off('credentials:required', handler);
         };
-    },
-    on: (channel: string, callback: (data: any) => void) => {
-        if (channel === 'analytics:event') {
-            ipcRenderer.on(channel, (_, data: AnalyticsEvent) => callback(data));
-        }
     },
 });
 
