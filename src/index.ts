@@ -4,8 +4,11 @@ import * as fs from 'fs';
 
 import { initializeDatabase, setupDbHandlers } from './main/db';
 import { initializeMCP, listTools } from './main/mcp';
+import { AnalyticsService } from '@/main/services/analytics';
 import { ChatService, setupChatHandlers } from './main/services/chat';
 import { AnthropicService } from './main/services/anthropic';
+import { PostHog } from 'posthog-node';
+import { getOrCreateUserId } from './lib/account';
 
 
 // Store chat service reference for cleanup
@@ -114,25 +117,25 @@ const createWindow = (): BrowserWindow => {
     },
   });
 
-  // Set up CSP
+  // Set CSP headers
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
         'Content-Security-Policy': [
-          "default-src 'self' 'unsafe-inline' data:;" +
-          "connect-src 'self' https://api.anthropic.com data:;" +
-          "script-src 'self' 'unsafe-eval' 'unsafe-inline' data:;" +
-          "style-src 'self' 'unsafe-inline' data:;" +
-          "img-src 'self' data: https://github.com https://*.githubusercontent.com;"
-        ]
+          "default-src 'self';",
+          "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://eu-assets.i.posthog.com;",
+          "style-src 'self' 'unsafe-inline' data:;",
+          "connect-src 'self' https://eu.i.posthog.com https://eu-assets.i.posthog.com https://api.anthropic.com;",
+          "img-src 'self' data: https:;",
+        ].join(' ')
       }
     });
   });
 
   // and load the index.html of the app.
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
-  
+
   return mainWindow;
 };
 
@@ -221,6 +224,16 @@ app.whenReady().then(async () => {
   console.debug('Initializing MCP...', { cmd, args });
 
   try {
+    // Initialize analytics
+    const posthog = new PostHog(
+      process.env.POSTHOG_API_KEY,
+      { host: 'https://eu.i.posthog.com' }
+    );
+
+    const isProd = process.env.NODE_ENV === 'production';
+    const enableAnalytics = process.env.ENABLE_ANALYTICS.toLowerCase() === 'true';
+    const analytics = new AnalyticsService(posthog, isProd || enableAnalytics);
+
     // Initialize MCP first
     const initPromise = initializeMCP(cmd, args);
 
@@ -233,10 +246,10 @@ app.whenReady().then(async () => {
 
     // Now that MCP is ready, initialize Anthropic service
     const tools = await listTools();
-    const anthropicService = new AnthropicService(tools);
+    const anthropicService = new AnthropicService(tools, analytics);
 
     // Create chat service
-    chatService = new ChatService(anthropicService);
+    chatService = new ChatService(anthropicService, analytics);
     setupChatHandlers(chatService);
 
     const settingsStatus = anthropicService.loadSettings();
@@ -245,6 +258,7 @@ app.whenReady().then(async () => {
       mainWindow.webContents.send('credentials:required', settingsStatus.error);
     }
     console.debug('chat service initialized successfully');
+    analytics.capture(getOrCreateUserId(), 'app_launched');
   } catch (err) {
     console.error('Failed to initialize application:', err);
     // Show an error dialog to the user

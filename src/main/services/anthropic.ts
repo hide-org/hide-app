@@ -8,19 +8,28 @@ import { Message } from '@/types/message';
 import { ProviderSettings } from '@/types/settings';
 import { getUserSettings } from '@/main/db';
 import { convertToAnthropic, convertFromAnthropic } from '@/lib/converters/anthropic';
+import { AnalyticsService } from './analytics';
+import { getOrCreateUserId } from '@/lib/account';
 
 export class AnthropicService {
   private client: Anthropic;
   private chatModel: string;
   private titleModel: string;
   private tools: AnthropicTool[];
+  private analytics: AnalyticsService;
 
-  constructor(tools: Tool[]) {
+  constructor(tools: Tool[], analytics: AnalyticsService) {
     this.tools = tools.map(mcpToAnthropicTool);
+    this.analytics = analytics;
   }
 
   // TODO: add abort signal
   async *sendMessage(messages: Message[], systemPrompt: string = ''): AsyncGenerator<Message> {
+    this.analytics.capture(getOrCreateUserId(), 'anthropic.send_message.start', {
+      message_count: messages.length,
+      model: this.chatModel,
+    });
+
     try {
       const loopMessages = messages.map(m => convertToAnthropic(m));
       while (true) {
@@ -70,8 +79,16 @@ export class AnthropicService {
           loopMessages.push(toolResultMessage);
         }
       }
+      this.analytics.capture(getOrCreateUserId(), 'anthropic.send_message.success', {
+        message_count: messages.length,
+        model: this.chatModel,
+      });
     } catch (error) {
       console.error('Error sending message to Claude:', error);
+      this.analytics.capture(getOrCreateUserId(), 'anthropic.send_message.error', {
+        message_count: messages.length,
+        model: this.chatModel,
+      });
       throw error;
     }
   }
@@ -115,8 +132,18 @@ export class AnthropicService {
         apiKey: settings.apiKey,
         maxRetries: 16,
       });
+
+      this.analytics.capture(getOrCreateUserId(), 'anthropic_settings_updated', {
+        chat_model: this.chatModel,
+        title_model: this.titleModel,
+      });
+
       return { success: true };
     } catch (error) {
+      this.analytics.capture(getOrCreateUserId(), 'anthropic_settings_error', {
+        error_type: error.name,
+        error_message: error.message
+      });
       return { success: false, error: error.message };
     }
   }

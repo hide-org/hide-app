@@ -219,8 +219,7 @@ export function SettingsDialog({ open, onOpenChange, error: externalError }: Set
       });
 
       await window.chat.reloadSettings();
-
-      setSettings(draftSettings); // Update actual settings after successful save
+      setSettings(draftSettings);
       onOpenChange(false);
     } catch (error) {
       console.error('Error saving settings:', error);

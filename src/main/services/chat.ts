@@ -4,22 +4,33 @@ import { getConversationById, updateConversation } from '@/main/db';
 import { Conversation } from '@/types';
 import { isAbortError } from '@/main/errors';
 import { Message } from '@/types/message';
+import { AnalyticsService } from './analytics';
+import { getOrCreateUserId } from '@/lib/account';
 
 export class ChatService {
   private activeChats: Map<string, {
     abortController: AbortController;
   }>;
   private anthropicService: AnthropicService;
+  private analyticsService: AnalyticsService;
 
-  constructor(llmService: AnthropicService) {
+  constructor(llmService: AnthropicService, analyticsService: AnalyticsService) {
     this.activeChats = new Map();
     this.anthropicService = llmService;
+    this.analyticsService = analyticsService;
   }
 
   async startChat(conversationId: string, systemPrompt?: string): Promise<void> {
     if (this.activeChats.has(conversationId)) {
       throw new Error('Chat is already running');
     }
+
+    const userId = getOrCreateUserId();
+
+    this.analyticsService.capture(userId, 'chat_started', {
+      conversation_id: conversationId,
+      has_system_prompt: !!systemPrompt
+    });
 
     const conversation = getConversationById(conversationId);
     if (!conversation) throw new Error('Conversation not found');
@@ -56,6 +67,10 @@ export class ChatService {
       }
     } catch (error) {
       if (!isAbortError(error)) {
+        this.analyticsService.capture(userId, 'chat_error', {
+          conversation_id: conversationId,
+          error: error.toString()
+        });
         console.error(`Chat ${conversationId} error:`, error);
         throw error
       }

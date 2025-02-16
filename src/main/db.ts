@@ -3,7 +3,7 @@ import { app, ipcMain } from 'electron';
 import path from 'path';
 import { homedir } from 'os';
 import { v4 as uuidv4 } from 'uuid';
-import { Conversation, Project, Task } from '../types';
+import { Conversation, Project, Task, UserAccount } from '../types';
 import { UserSettings } from '../types/settings';
 
 let db: Database.Database;
@@ -63,6 +63,14 @@ export const initializeDatabase = () => {
             updatedAt INTEGER NOT NULL,
             FOREIGN KEY (projectId) REFERENCES projects(id),
             FOREIGN KEY (conversationId) REFERENCES conversations(id)
+        )
+    `);
+
+  // Create user_account table if it doesn't exist
+  db.exec(`
+        CREATE TABLE IF NOT EXISTS user_account (
+             id INTEGER PRIMARY KEY CHECK (id = 1),
+             user_id TEXT NOT NULL
         )
     `);
 
@@ -295,6 +303,30 @@ export const deleteProjectTasks = (projectId: string): void => {
 export const deleteConversationTasks = (conversationId: string): void => {
   const stmt = db.prepare('DELETE FROM tasks WHERE conversationId = ?');
   stmt.run(conversationId);
+};
+
+export const createUserAccount = (userId: string): void => {
+  const stmt = db.prepare('INSERT INTO user_account (id, user_id) VALUES (?, ?)');
+  stmt.run(1, userId);
+};
+
+export const getUserAccount = (): UserAccount | null => {
+  const stmt = db.prepare('SELECT * FROM user_account WHERE id = 1');
+  const row = stmt.get() as UserAccount | undefined;
+  if (!row) return null;
+  return {
+    user_id: row.user_id,
+  };
+};
+
+export const updateUserAccount = (userId: string): void => {
+  const stmt = db.prepare('UPDATE user_account SET user_id = ? WHERE id = 1');
+  stmt.run(userId);
+};
+
+export const deleteUserAccount = (): void => {
+  const stmt = db.prepare('DELETE FROM user_account WHERE id = 1');
+  stmt.run();
 };
 
 export const setupDbHandlers = () => {
