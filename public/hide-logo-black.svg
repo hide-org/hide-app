@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="208" height="352" class="svgbob">
+    <style>
+        .svgbob line, .svgbob path, .svgbob circle, .svgbob rect, .svgbob polygon { 
+            stroke: black; 
+            stroke-width: 8; 
+            stroke-opacity: 1; 
+            fill-opacity: 1; 
+            stroke-linecap: round;
+            stroke-linejoin: miter; 
+        } 
+        
+        .svgbob text { 
+            white-space: pre; 
+            fill: white; 
+            font-family: Iosevka Fixed, monospace; 
+            font-size: 14px; 
+        } 
+        
+        .svgbob rect.backdrop { 
+            stroke: none; 
+            fill: none; 
+        }
+        
+        .svgbob .broken { 
+            stroke-dasharray: 8; 
+        } 
+        
+        .svgbob .filled { 
+            fill: black; 
+        } 
+        
+        .svgbob .bg_filled { 
+            fill: none; 
+            stroke-width: 1; 
+        } 
+        
+        .svgbob .nofill { 
+            fill: none; 
+        }
+    </style>
+    <path d="M0 0h120v40H0z" fill="#000"/>
+    <path d="M0 0h120v40H0z" fill="#000"/>
+</svg> 
