@@ -23,7 +23,6 @@ import { ProjectDialog } from "./ProjectDialog"
 import { DeleteProjectDialog } from "./DeleteProjectDialog"
 import { ChatDialog } from "./ChatDialog"
 import { DeleteChatDialog } from "./DeleteChatDialog"
-import { ModeToggle } from "./ModeToggle"
 import { cn } from "@/lib/utils"
 import { Logo } from "./ui/logo"
 
@@ -213,7 +212,7 @@ export function AppSidebar({
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 border-t">
+      <SidebarFooter className="border-t">
         <UserSwitcher onSettingsClick={onSettingsClick} />
       </SidebarFooter>
     </Sidebar>

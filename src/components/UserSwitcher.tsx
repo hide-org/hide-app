@@ -11,10 +11,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
-import { ModeToggle } from "./ModeToggle";
+import { ModeToggle } from "./ModeToggle"
 
 interface UserSwitcherProps {
   onSettingsClick: () => void;
@@ -38,7 +37,7 @@ export function UserSwitcher({ onSettingsClick }: UserSwitcherProps) {
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">AM</AvatarFallback>
+                <AvatarFallback className="rounded-lg text-xs">AM</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">{user.name}</span>
