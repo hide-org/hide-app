@@ -213,8 +213,7 @@ export function AppSidebar({
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="space-y-1 p-4 border-t">
-        <ModeToggle />
+      <SidebarFooter className="p-4 border-t">
         <UserSwitcher onSettingsClick={onSettingsClick} />
       </SidebarFooter>
     </Sidebar>
