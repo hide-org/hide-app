@@ -78,7 +78,7 @@ export function UserSwitcher({ onSettingsClick }: UserSwitcherProps) {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="hover:bg-transparent focus:bg-transparent">
-              Theme
+              <span className="text-muted-foreground">Theme</span>
               <ModeToggle /> 
             </DropdownMenuItem>
             <DropdownMenuSeparator />
