@@ -24,7 +24,7 @@ export class AnthropicService {
   }
 
   // TODO: add abort signal
-  async *sendMessage(messages: Message[], systemPrompt: string = ''): AsyncGenerator<Message> {
+  async *sendMessage(messages: Message[], systemPrompt?: string, abortSignal?: AbortSignal): AsyncGenerator<Message> {
     this.analytics.capture(getOrCreateUserId(), 'anthropic.send_message.start', {
       message_count: messages.length,
       model: this.chatModel,
@@ -39,7 +39,7 @@ export class AnthropicService {
           system: systemPrompt,
           messages: loopMessages,
           tools: this.tools,
-        });
+        }, { signal: abortSignal });
 
         const responseMessage = {
           role: response.role, // always 'assistant'
