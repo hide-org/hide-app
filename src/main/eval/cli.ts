@@ -1,13 +1,10 @@
 import * as fs from 'fs';
 import { program } from 'commander';
-import { AnthropicService } from '../services/anthropic';
-import { ChatService } from '../services/chat';
 import { EvalService } from './service';
 import { defaultEvalConfig } from './config';
 import { readJsonl, readParquet, writeJsonl } from './utils';
 import { SWEBenchInstance } from './types';
 import * as path from 'path';
-import { initializeMCP, listTools } from '../mcp';
 import { initializeDatabase } from '../db';
 
 export async function runEvalCLI(args: string[]) {
@@ -19,6 +16,7 @@ export async function runEvalCLI(args: string[]) {
     .option('-o, --output <path>', 'Path to output JSONL file')
     .option('-b, --batch-size <number>', 'Batch size', '4')
     .option('-l, --limit <number>', 'Limit', '4')
+    .option('-i, --instance-ids <string>', 'Comma-separated list of instance IDs to run')
 
   program.parse(args);
 
@@ -48,16 +46,15 @@ export async function runEvalCLI(args: string[]) {
     config.batchSize = parseInt(opts.batchSize);
   }
 
+  if (opts.instanceIds) {
+    config.instanceIDs = opts.instanceIds.split(',');
+  }
+
   // Initialize services
   console.log('Initializing services...');
   // TODO: avoid hardcoding path
   initializeDatabase("/Users/artemm/Library/Application Support/hide-app/database.sqlite");
-  await initializeMCP('uv', ['--directory', '/Users/artemm/Code/hide-mcp', 'run', 'hide-mcp', 'server'])
-  const tools = await listTools();
-  const anthropicService = new AnthropicService(tools);
-  anthropicService.loadSettings();
-  const chatService = new ChatService(anthropicService);
-  const evalService = new EvalService(chatService, config);
+  const evalService = new EvalService(config);
 
   // Run eval
   console.log(`Starting evaluation of ${Math.min(instances.length, config.limit)} instances...`);
@@ -68,8 +65,3 @@ export async function runEvalCLI(args: string[]) {
   await writeJsonl(outputPath, results);
   console.log(`Evaluation complete. Results saved to ${outputPath}`);
 }
-
-// Export everything needed for both CLI and programmatic usage
-export { EvalService } from './service';
-export { defaultEvalConfig } from './config';
-export * from './types';

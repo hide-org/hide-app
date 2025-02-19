@@ -26,4 +26,5 @@ export interface EvalConfig {
   workDir: string;         // Where to clone repositories
   modelName: string;      // Model identifier 
   promptTemplate: string; // Template for constructing prompts
+  instanceIDs?: string[]; // List of instance IDs to run 
 }

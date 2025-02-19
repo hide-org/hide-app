@@ -1,8 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ImageBlockParam, TextBlockParam, ToolUseBlockParam } from '@anthropic-ai/sdk/resources';
-import { MessageParam, Tool as AnthropicTool, ToolResultBlockParam } from '@anthropic-ai/sdk/resources/messages';
-import type { CallToolResult as ToolResult, Tool } from '@modelcontextprotocol/sdk/types';
-import { callTool } from '@/main/mcp';
+import { MessageParam, ToolResultBlockParam } from '@anthropic-ai/sdk/resources/messages';
+import type { CallToolResult as ToolResult } from '@modelcontextprotocol/sdk/types';
+import { MCPServer } from '@/main/mcp';
 import { mcpToAnthropicTool } from '@/lib/mcp/adapters';
 import { Message } from '@/types/message';
 import { ProviderSettings } from '@/types/settings';
@@ -13,16 +13,17 @@ export class AnthropicService {
   private client: Anthropic;
   private chatModel: string;
   private titleModel: string;
-  private tools: AnthropicTool[];
+  private mcp: MCPServer;
   private settings: ProviderSettings;
 
-  constructor(tools: Tool[]) {
-    this.tools = tools.map(mcpToAnthropicTool);
+  constructor(mcp: MCPServer) {
+    this.mcp = mcp;
   }
 
   // TODO: add abort signal
   async *sendMessage(messages: Message[], systemPrompt: string = ''): AsyncGenerator<Message> {
     try {
+      const tools = await this.mcp.listTools();
       const loopMessages = messages.map(m => convertToAnthropic(m));
       while (true) {
         const response = await this.client.messages.create({
@@ -30,7 +31,7 @@ export class AnthropicService {
           max_tokens: 4096,
           system: systemPrompt,
           messages: loopMessages,
-          tools: this.tools,
+          tools: tools.map(mcpToAnthropicTool),
         });
 
         const responseMessage = {
@@ -59,7 +60,7 @@ export class AnthropicService {
 
         for (const block of toolUseBlocks) {
           console.debug(`Calling tool ${block.name} with input ${block.input}`);
-          const result = await callTool(block.name, block.input);
+          const result = await this.mcp.callTool(block.name, block.input);
           console.debug('Got tool result:', result);
           const toolResultMessage: MessageParam = {
             role: 'user',
