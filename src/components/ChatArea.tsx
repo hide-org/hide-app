@@ -44,9 +44,7 @@ export const ChatArea = ({
 
   // Reset isStopping when loading state changes
   useEffect(() => {
-    if (!isLoading) {
-      setIsStopping(false);
-    }
+    setIsStopping(false);
   }, [isLoading]);
 
   const title = () => {

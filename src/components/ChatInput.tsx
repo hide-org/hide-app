@@ -24,6 +24,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   isLoading = false,
 }) => {
   const [isStopping, setIsStopping] = useState(false);
+
+  // Reset isStopping when isLoading changes
+  useEffect(() => {
+    setIsStopping(false);
+  }, [isLoading]);
   const [message, setMessage] = useState<string>('');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
