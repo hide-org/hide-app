@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { newUserSettings, Provider, UserSettings } from "@/types/settings"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { cn } from "@/lib/utils"
 
 interface SettingsDialogProps {
   open: boolean;
@@ -80,66 +80,6 @@ function AnthropicSettings({ settings, onChange }: ProviderSettingsProps) {
           <SelectContent>
             <SelectItem value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</SelectItem>
             <SelectItem value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-    </div>
-  );
-}
-
-function OpenAISettings({ settings, onChange }: ProviderSettingsProps) {
-  const providerSettings = settings?.provider_settings.openai;
-
-  return (
-    <div className="space-y-4 py-2">
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="openai-api-key" className="text-right">
-          API Key
-        </Label>
-        <Input
-          id="openai-api-key"
-          type="password"
-          value={providerSettings?.apiKey || ''}
-          onChange={(e) => onChange("openai.apiKey", e.target.value)}
-          placeholder="sk-..."
-          className="col-span-3"
-        />
-      </div>
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="openai-chat-model" className="text-right">
-          Chat Model
-        </Label>
-        <Select
-          value={providerSettings?.models.chat || 'gpt-4o'}
-          onValueChange={(value) => onChange("openai.models.chat", value)}
-        >
-          <SelectTrigger id="openai-chat-model" className="col-span-3">
-            <SelectValue placeholder="Select model" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-            <SelectItem value="gpt-4o-mini">GPT-4o mini</SelectItem>
-            <SelectItem value="o1">o1</SelectItem>
-            <SelectItem value="o1-mini">o1 mini</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="openai-title-model" className="text-right">
-          Title Model
-        </Label>
-        <Select
-          value={providerSettings?.models.title || 'gpt-4o-mini'}
-          onValueChange={(value) => onChange("openai.models.title", value)}
-        >
-          <SelectTrigger id="openai-title-model" className="col-span-3">
-            <SelectValue placeholder="Select model" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-            <SelectItem value="gpt-4o-mini">GPT-4o mini</SelectItem>
-            <SelectItem value="o1">o1</SelectItem>
-            <SelectItem value="o1-mini">o1 mini</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -246,33 +186,23 @@ export function SettingsDialog({ open, onOpenChange, error: externalError }: Set
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>
-            Configure your AI model providers and preferences.
+            Configure your AI model provider and preferences.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <Tabs value={draftSettings?.model_provider || 'anthropic'} onValueChange={handleProviderChange}>
-            <div className="flex items-center justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
               <Label>Model Provider</Label>
-              <TabsList>
-                <TabsTrigger value="anthropic">Anthropic</TabsTrigger>
-                <TabsTrigger value="openai">OpenAI</TabsTrigger>
-              </TabsList>
+              <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-accent text-accent-foreground">
+                Anthropic
+              </span>
             </div>
-            <TabsContent value="anthropic">
-              <AnthropicSettings
-                provider="anthropic"
-                settings={draftSettings}
-                onChange={handleSettingChange}
-              />
-            </TabsContent>
-            <TabsContent value="openai">
-              <OpenAISettings
-                provider="openai"
-                settings={draftSettings}
-                onChange={handleSettingChange}
-              />
-            </TabsContent>
-          </Tabs>
+            <AnthropicSettings
+              provider="anthropic"
+              settings={draftSettings}
+              onChange={handleSettingChange}
+            />
+          </div>
           {(error || externalError) && (
             <div className="mt-4 text-sm text-red-500">
               {error || externalError}

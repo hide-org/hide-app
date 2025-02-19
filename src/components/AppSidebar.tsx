@@ -1,8 +1,7 @@
 import * as React from "react"
-import { Folder, MessageSquare, MoreHorizontal, Plus } from "lucide-react"
+import { Folder, MessageSquare, MoreHorizontal, Plus, Settings } from "lucide-react"
 import { useTheme } from "./ThemeProvider"
 import { Conversation, Project } from '../types'
-import { UserSwitcher } from "./UserSwitcher"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import {
   Sidebar,
@@ -25,6 +24,15 @@ import { ChatDialog } from "./ChatDialog"
 import { DeleteChatDialog } from "./DeleteChatDialog"
 import { cn } from "@/lib/utils"
 import { Logo } from "./ui/logo"
+import { ModeToggle } from "./ModeToggle"
+import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 
 interface AppSidebarProps {
@@ -39,6 +47,7 @@ interface AppSidebarProps {
   onDeleteConversation?: (id: string) => void;
   onRenameChat?: (chat: Conversation) => void;
   onSettingsClick: () => void;
+  collapsed?: boolean;
 }
 
 export function AppSidebar({
@@ -53,6 +62,7 @@ export function AppSidebar({
   onDeleteConversation,
   onRenameChat,
   onSettingsClick,
+  collapsed,
 }: AppSidebarProps) {
   const { theme = 'system' } = useTheme()
   const [projectToEdit, setProjectToEdit] = React.useState<Project | null>(null);
@@ -108,7 +118,7 @@ export function AppSidebar({
       />
 
       <SidebarHeader className="p-4">
-        <div className="flex justify-start items-center h-12 mt-6">
+        <div className="flex justify-between items-center h-12 mt-6">
           <Logo 
             className={cn(
               "h-10 w-auto transition-colors duration-200",
@@ -211,9 +221,33 @@ export function AppSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-
       <SidebarFooter className="border-t">
-        <UserSwitcher onSettingsClick={onSettingsClick} />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={onSettingsClick}
+                    className="h-10 w-10 group-data-[state=collapsed]:h-8 group-data-[state=collapsed]:w-8 hover:bg-sidebar-accent text-sidebar-foreground hover:text-sidebar-foreground"
+                  >
+                    <Settings className="h-6 w-6" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p>Provider settings</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <Separator orientation="vertical" className="h-4 bg-sidebar-border group-data-[state=collapsed]:hidden" />
+          </div>
+          <div className="flex items-center gap-2 group-data-[state=collapsed]:hidden">
+            <span className="text-sidebar-foreground">Theme</span>
+            <ModeToggle className="hover:bg-sidebar-accent" />
+          </div>
+        </div>
       </SidebarFooter>
     </Sidebar>
   )
