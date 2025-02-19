@@ -11,16 +11,15 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
+import { ModeToggle } from "./ModeToggle"
 
 interface UserSwitcherProps {
   onSettingsClick: () => void;
 }
 
 export function UserSwitcher({ onSettingsClick }: UserSwitcherProps) {
-  const { isMobile } = useSidebar()
   const user = {
     name: "artm",
     email: "art@hide.sh",
@@ -38,7 +37,7 @@ export function UserSwitcher({ onSettingsClick }: UserSwitcherProps) {
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">AM</AvatarFallback>
+                <AvatarFallback className="rounded-lg text-xs">AM</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">{user.name}</span>
@@ -50,7 +49,7 @@ export function UserSwitcher({ onSettingsClick }: UserSwitcherProps) {
           <DropdownMenuContent
             className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
             align="start"
-            side={isMobile ? "bottom" : "right"}
+            side="top"
             sideOffset={4}
           >
             <DropdownMenuLabel className="p-0 font-normal">
@@ -76,6 +75,11 @@ export function UserSwitcher({ onSettingsClick }: UserSwitcherProps) {
               className="gap-2 p-2"
             >
               Settings
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="hover:bg-transparent focus:bg-transparent">
+              <span className="text-muted-foreground">Theme</span>
+              <ModeToggle /> 
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem

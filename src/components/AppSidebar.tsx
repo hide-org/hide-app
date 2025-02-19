@@ -1,5 +1,6 @@
 import * as React from "react"
 import { Folder, MessageSquare, MoreHorizontal, Plus } from "lucide-react"
+import { useTheme } from "./ThemeProvider"
 import { Conversation, Project } from '../types'
 import { UserSwitcher } from "./UserSwitcher"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
@@ -22,8 +23,8 @@ import { ProjectDialog } from "./ProjectDialog"
 import { DeleteProjectDialog } from "./DeleteProjectDialog"
 import { ChatDialog } from "./ChatDialog"
 import { DeleteChatDialog } from "./DeleteChatDialog"
-import { ModeToggle } from "./ModeToggle"
 import { cn } from "@/lib/utils"
+import { Logo } from "./ui/logo"
 
 
 interface AppSidebarProps {
@@ -53,10 +54,19 @@ export function AppSidebar({
   onRenameChat,
   onSettingsClick,
 }: AppSidebarProps) {
+  const { theme = 'system' } = useTheme()
   const [projectToEdit, setProjectToEdit] = React.useState<Project | null>(null);
   const [projectToDelete, setProjectToDelete] = React.useState<Project | null>(null);
   const [chatToEdit, setChatToEdit] = React.useState<Conversation | null>(null);
   const [chatToDelete, setChatToDelete] = React.useState<Conversation | null>(null);
+
+  // Get the system theme preference
+  const systemTheme = typeof window !== 'undefined' 
+    ? window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    : 'light'
+
+  // Determine the effective theme
+  const effectiveTheme = theme === 'system' ? systemTheme : theme
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
@@ -97,9 +107,17 @@ export function AppSidebar({
         onDelete={onDeleteConversation}
       />
 
-      <SidebarHeader className="space-y-4 mt-8">
-        <UserSwitcher onSettingsClick={onSettingsClick} />
+      <SidebarHeader className="p-4">
+        <div className="flex justify-start items-center h-12 mt-6">
+          <Logo 
+            className={cn(
+              "h-10 w-auto transition-colors duration-200",
+              effectiveTheme === 'dark' ? "stroke-white" : "stroke-black"
+            )}
+          />
+        </div>
       </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>
@@ -193,8 +211,9 @@ export function AppSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
-        <ModeToggle />
+
+      <SidebarFooter className="border-t">
+        <UserSwitcher onSettingsClick={onSettingsClick} />
       </SidebarFooter>
     </Sidebar>
   )

@@ -231,7 +231,7 @@ app.whenReady().then(async () => {
     );
 
     const isProd = process.env.NODE_ENV === 'production';
-    const enableAnalytics = process.env.ENABLE_ANALYTICS.toLowerCase() === 'true';
+    const enableAnalytics = process.env.ENABLE_ANALYTICS?.toLowerCase() === 'true' || false;
     const analytics = new AnalyticsService(posthog, isProd || enableAnalytics);
 
     // Initialize MCP first
