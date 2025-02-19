@@ -142,6 +142,7 @@ export const ChatArea = ({
             onStop={handleStop}
             disabled={isLoading}
             isLoading={isLoading}
+            isStopping={isStopping}
             className="py-4 max-w-3xl mt-auto"
           />
         </>
@@ -155,6 +156,7 @@ export const ChatArea = ({
             onStop={handleStop}
             disabled={isLoading}
             isLoading={isLoading}
+            isStopping={isStopping}
             className="max-w-2xl mx-auto w-full px-4"
           />
         </div>

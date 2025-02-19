@@ -12,6 +12,7 @@ interface ChatInputProps {
   disabled?: boolean;
   className?: string;
   isLoading?: boolean;
+  isStopping?: boolean;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
@@ -22,13 +23,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   disabled = false,
   className = '',
   isLoading = false,
+  isStopping = false,
 }) => {
-  const [isStopping, setIsStopping] = useState(false);
-
-  // Reset isStopping when isLoading changes
-  useEffect(() => {
-    setIsStopping(false);
-  }, [isLoading]);
   const [message, setMessage] = useState<string>('');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -82,10 +78,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         {isLoading ? (
           <Button
             type="button"
-            onClick={() => {
-              setIsStopping(true);
-              onStop();
-            }}
+            onClick={onStop}
             disabled={isStopping}
             size="icon"
             variant="destructive"
