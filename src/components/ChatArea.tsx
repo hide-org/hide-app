@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Conversation, Project } from '@/types';
 import { Bot } from 'lucide-react';
 import { ChatInput } from '@/components/ChatInput';
@@ -16,6 +16,7 @@ interface ChatAreaProps {
   conversation: Conversation | null;
   onNewConversation: (message: string) => Promise<void>;
   onNewMessage: (conversationId: string, message: string) => Promise<void>;
+  onStop: () => Promise<void>;
   isLoading: boolean;
   project: Project | null;
   error: string | null;
@@ -25,11 +26,13 @@ export const ChatArea = ({
   conversation,
   onNewConversation,
   onNewMessage,
+  onStop,
   isLoading,
   project,
   error,
 }: ChatAreaProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isStopping, setIsStopping] = useState(false);
 
   // Scroll to the bottom of the chat when new messages are added
   useEffect(() => {
@@ -38,6 +41,13 @@ export const ChatArea = ({
       messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
     }
   }, [conversation?.messages]);
+
+  // Reset isStopping when loading state changes
+  useEffect(() => {
+    if (!isLoading) {
+      setIsStopping(false);
+    }
+  }, [isLoading]);
 
   const title = () => {
     const hour = new Date().getHours();
@@ -59,6 +69,11 @@ export const ChatArea = ({
   }
 
   const currentMessages = useMessageConversion(conversation?.messages);
+
+  const handleStop = async () => {
+    setIsStopping(true);
+    await onStop();
+  };
 
   const handleMessage = (async (input: string) => {
     if (!input.trim()) return;
@@ -117,23 +132,31 @@ export const ChatArea = ({
                   </Avatar>
                   <div className="flex items-center">
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-muted border-t-foreground mr-2" />
-                    <span className="text-muted-foreground">Thinking...</span>
+                    <span className="text-muted-foreground">{isStopping ? "Stopping..." : "Thinking..."}</span>
                   </div>
                 </div>
               )}
               <div ref={messagesEndRef} className="h-0" />
             </div>
           </ScrollArea>
-          <ChatInput onSendMessage={handleMessage} disabled={isLoading} className="py-4 max-w-3xl mt-auto" />
+          <ChatInput
+            onSendMessage={handleMessage}
+            onStop={handleStop}
+            disabled={isLoading}
+            isLoading={isLoading}
+            className="py-4 max-w-3xl mt-auto"
+          />
         </>
       ) : (
         <div className="flex h-full flex-col justify-center">
           <H2 className="w-full max-w-2xl mx-auto border-0 mb-6">
             {title()}
           </H2>
-          <ChatInput 
-            onSendMessage={handleMessage} 
-            disabled={isLoading} 
+          <ChatInput
+            onSendMessage={handleMessage}
+            onStop={handleStop}
+            disabled={isLoading}
+            isLoading={isLoading}
             className="max-w-2xl mx-auto w-full px-4"
           />
         </div>
