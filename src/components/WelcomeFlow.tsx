@@ -13,6 +13,7 @@ import { ProjectDialog } from "./ProjectDialog"
 import { Project } from "@/types"
 import { Steps } from "@/components/Steps"
 import { useEffect } from "react"
+import { useToast } from "@/components/ui/use-toast"
 
 interface WelcomeFlowProps {
   open: boolean
@@ -27,7 +28,7 @@ type Step = {
 
 const STEPS: Step[] = [
   {
-    title: "Welcome to HIDE",
+    title: "Welcome to Hide",
     description: "Automate your coding tasks to ship faster and deliver higher quality software."
   },
   {
@@ -41,6 +42,7 @@ const STEPS: Step[] = [
 ]
 
 export function WelcomeFlow({ open, onOpenChange, onComplete }: WelcomeFlowProps) {
+  const { toast } = useToast()
   const [currentStep, setCurrentStep] = React.useState(0)
   const [showSettings, setShowSettings] = React.useState(false)
   const [showProject, setShowProject] = React.useState(false)
@@ -64,10 +66,29 @@ export function WelcomeFlow({ open, onOpenChange, onComplete }: WelcomeFlowProps
 
   const handleProjectSaved = async (project: Project) => {
     try {
+      if (!window.projects?.create) {
+        throw new Error('Projects API is not available');
+      }
+
+      await window.projects.create(project);
+      
+      toast({
+        title: "Project created",
+        description: "Your project has been created successfully.",
+        duration: 3000,
+        variant: "success"
+      });
+      
       setShowProject(false);
       onComplete();
     } catch (error) {
-      console.error('Error completing first launch:', error);
+      console.error('Error creating project:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create project. Please try again.",
+        duration: 3000,
+        variant: "destructive"
+      });
     }
   }
 

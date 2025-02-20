@@ -21,21 +21,22 @@ export function Chat() {
   const [settingsError, setSettingsError] = useState<string | null>(null);
 
   // Load projects from the database
+  const loadProjects = async () => {
+    try {
+      const loadedProjects = await window.projects.getAll();
+      setProjects(loadedProjects);
+    } catch (err) {
+      console.error('Error loading projects:', err);
+      setError('Failed to load projects');
+    }
+  };
+
+  // Use loadProjects in the existing useEffect
   useEffect(() => {
     if (!window.projects?.getAll) {
       console.warn('Projects API is not available');
       return;
     }
-
-    const loadProjects = async () => {
-      try {
-        const loadedProjects = await window.projects.getAll();
-        setProjects(loadedProjects);
-      } catch (err) {
-        console.error('Error loading projects:', err);
-        setError('Failed to load projects');
-      }
-    };
     loadProjects();
   }, []);
 
@@ -323,6 +324,7 @@ export function Chat() {
           onDeleteConversation={onDeleteConversation}
           onRenameChat={onRenameChat}
           onSettingsClick={() => setShowSettings(true)}
+          // onSettingsClick={() => setShowWelcome(true)} to test welcome flow
         />
         {selectedProject ? (
           <ChatArea
@@ -347,7 +349,10 @@ export function Chat() {
       <WelcomeFlow 
         open={showWelcome}
         onOpenChange={setShowWelcome}
-        onComplete={() => setShowWelcome(false)}
+        onComplete={() => {
+          setShowWelcome(false);
+          loadProjects();  // Add this line to refresh projects
+        }}
       />
       <SettingsDialog 
         open={showSettings}
