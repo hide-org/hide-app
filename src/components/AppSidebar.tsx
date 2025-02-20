@@ -47,7 +47,6 @@ interface AppSidebarProps {
   onDeleteConversation?: (id: string) => void;
   onRenameChat?: (chat: Conversation) => void;
   onSettingsClick: () => void;
-  collapsed?: boolean;
 }
 
 export function AppSidebar({
@@ -62,7 +61,6 @@ export function AppSidebar({
   onDeleteConversation,
   onRenameChat,
   onSettingsClick,
-  collapsed,
 }: AppSidebarProps) {
   const { theme = 'system' } = useTheme()
   const [projectToEdit, setProjectToEdit] = React.useState<Project | null>(null);
