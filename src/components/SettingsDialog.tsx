@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { newUserSettings, Provider, UserSettings } from "@/types/settings"
+import { useToast } from "@/components/ui/use-toast"
 
 interface SettingsDialogProps {
   open: boolean;
@@ -88,6 +89,7 @@ function AnthropicSettings({ settings, onChange }: ProviderSettingsProps) {
 }
 
 export function SettingsDialog({ open, onOpenChange, error: externalError, onSuccess }: SettingsDialogProps) {
+  const { toast } = useToast()
   const [settings, setSettings] = React.useState<UserSettings | null>(null);
   const [draftSettings, setDraftSettings] = React.useState<UserSettings | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
@@ -152,6 +154,14 @@ export function SettingsDialog({ open, onOpenChange, error: externalError, onSuc
 
       await window.chat.reloadSettings();
       setSettings(draftSettings);
+      
+      toast({
+        title: "Settings saved",
+        description: "Your Anthropic settings have been updated successfully.",
+        duration: 3000,
+        variant: "success"
+      })
+      
       onSuccess?.();
       onOpenChange(false);
     } catch (error) {
@@ -202,7 +212,10 @@ export function SettingsDialog({ open, onOpenChange, error: externalError, onSuc
             </div>
           )}
           <DialogFooter className="mt-4">
-            <Button type="submit" disabled={isSaving}>
+            <Button 
+              type="submit" 
+              disabled={isSaving}
+            >
               {isSaving ? "Saving..." : "Save"}
             </Button>
           </DialogFooter>

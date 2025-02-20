@@ -8,6 +8,7 @@ import { H2 } from '@/components/ui/typography';
 import { systemPrompt } from '@/lib/prompts';
 import { WelcomeFlow } from '@/components/WelcomeFlow';
 import { SettingsDialog } from '@/components/SettingsDialog';
+import { Toaster } from '@/components/ui/toaster';
 
 export function Chat() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -353,6 +354,7 @@ export function Chat() {
         onOpenChange={setShowSettings}
         error={settingsError}
       />
+      <Toaster />
     </div>
   );
 }
