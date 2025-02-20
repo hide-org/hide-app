@@ -8,7 +8,11 @@ import {
   TooltipTrigger,
 } from "./ui/tooltip"
 
-export function ModeToggle() {
+interface ModeToggleProps {
+  className?: string;
+}
+
+export function ModeToggle({ className }: ModeToggleProps) {
   const { theme, setTheme } = useTheme()
 
   return (
@@ -22,7 +26,7 @@ export function ModeToggle() {
               onClick={() => setTheme("light")}
               className={`h-6 w-6 rounded-full p-0 ${
                 theme === "light" ? "bg-background shadow-sm" : ""
-              }`}
+              } ${className}`}
             >
               <Sun className="h-4 w-4" />
               <span className="sr-only">Light mode</span>
@@ -41,7 +45,7 @@ export function ModeToggle() {
               onClick={() => setTheme("dark")}
               className={`h-6 w-6 rounded-full p-0 ${
                 theme === "dark" ? "bg-background shadow-sm" : ""
-              }`}
+              } ${className}`}
             >
               <Moon className="h-4 w-4" />
               <span className="sr-only">Dark mode</span>
@@ -60,7 +64,7 @@ export function ModeToggle() {
               onClick={() => setTheme("system")}
               className={`h-6 w-6 rounded-full p-0 ${
                 theme === "system" ? "bg-background shadow-sm" : ""
-              }`}
+              } ${className}`}
             >
               <Monitor className="h-4 w-4" />
               <span className="sr-only">System mode</span>
