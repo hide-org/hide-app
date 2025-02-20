@@ -1,23 +1,29 @@
 import React, { useState, useRef, useEffect, KeyboardEvent, ChangeEvent, FormEvent } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Square } from 'lucide-react';
 
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 
 interface ChatInputProps {
   onSendMessage?: (message: string) => void;
+  onStop?: () => void;
   placeholder?: string;
   maxHeight?: number;
   disabled?: boolean;
   className?: string;
+  isLoading?: boolean;
+  isStopping?: boolean;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
   onSendMessage = (message: string) => console.log('Sending message:', message),
+  onStop = () => console.log('Stopping chat...'),
   placeholder = 'Type a message...',
   maxHeight = 200,
   disabled = false,
   className = '',
+  isLoading = false,
+  isStopping = false,
 }) => {
   const [message, setMessage] = useState<string>('');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -69,7 +75,19 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           style={{ maxHeight: `${maxHeight}px` }}
           rows={1}
         />
-        {message.trim() && (
+        {isLoading ? (
+          <Button
+            type="button"
+            onClick={onStop}
+            disabled={isStopping}
+            size="icon"
+            variant="destructive"
+            className="h-8 w-8 mb-[3px]"
+            aria-label="Stop generation"
+          >
+            <Square className="h-4 w-4" />
+          </Button>
+        ) : message.trim() && (
           <Button
             type="submit"
             disabled={!message.trim() || disabled}

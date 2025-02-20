@@ -50,7 +50,7 @@ export class ChatService {
     this.broadcastUpdate(updatedConversation);
 
     try {
-      for await (const message of this.anthropicService.sendMessage(conversation.messages, systemPrompt)) {
+      for await (const message of this.anthropicService.sendMessage(conversation.messages, systemPrompt, abortController.signal)) {
         this.handleNewMessage(conversationId, message);
       }
 
@@ -66,6 +66,10 @@ export class ChatService {
         this.broadcastUpdate(inactiveConversation);
       }
     } catch (error) {
+      if (isAbortError(error)) {
+        console.log(`Chat ${conversationId} aborted. Cleaning up...`);
+      }
+
       if (!isAbortError(error)) {
         this.analyticsService.capture(userId, 'chat_error', {
           conversation_id: conversationId,
@@ -75,7 +79,6 @@ export class ChatService {
         throw error
       }
     } finally {
-      console.log(`Chat ${conversationId} stopped. Cleaning up...`);
       const conversation = getConversationById(conversationId);
       if (conversation) {
         const c = {
@@ -87,7 +90,6 @@ export class ChatService {
         this.broadcastUpdate(c);
       }
       this.activeChats.delete(conversationId);
-      console.log(`Chat ${conversationId} cleaned up successfully`);
     }
   }
 

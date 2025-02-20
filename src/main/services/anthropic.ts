@@ -10,6 +10,7 @@ import { getUserSettings } from '@/main/db';
 import { convertToAnthropic, convertFromAnthropic } from '@/lib/converters/anthropic';
 import { AnalyticsService } from './analytics';
 import { getOrCreateUserId } from '@/lib/account';
+import { isAbortError } from '../errors';
 
 export class AnthropicService {
   private client: Anthropic;
@@ -24,7 +25,7 @@ export class AnthropicService {
   }
 
   // TODO: add abort signal
-  async *sendMessage(messages: Message[], systemPrompt: string = ''): AsyncGenerator<Message> {
+  async *sendMessage(messages: Message[], systemPrompt?: string, abortSignal?: AbortSignal): AsyncGenerator<Message> {
     this.analytics.capture(getOrCreateUserId(), 'anthropic.send_message.start', {
       message_count: messages.length,
       model: this.chatModel,
@@ -39,7 +40,7 @@ export class AnthropicService {
           system: systemPrompt,
           messages: loopMessages,
           tools: this.tools,
-        });
+        }, { signal: abortSignal });
 
         const responseMessage = {
           role: response.role, // always 'assistant'
@@ -84,11 +85,13 @@ export class AnthropicService {
         model: this.chatModel,
       });
     } catch (error) {
-      console.error('Error sending message to Claude:', error);
-      this.analytics.capture(getOrCreateUserId(), 'anthropic.send_message.error', {
-        message_count: messages.length,
-        model: this.chatModel,
-      });
+      if (!isAbortError(error)) {
+        console.error('Error sending message to Claude:', error);
+        this.analytics.capture(getOrCreateUserId(), 'anthropic.send_message.error', {
+          message_count: messages.length,
+          model: this.chatModel,
+        });
+      }
       throw error;
     }
   }

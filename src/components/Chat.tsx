@@ -174,6 +174,22 @@ export function Chat() {
       });
   };
 
+  const handleStop = async () => {
+    if (!window.chat?.stop) {
+      console.warn('Stop API is not available');
+      return;
+    }
+
+    if (currentConversation) {
+      try {
+        await window.chat.stop(currentConversation.id);
+      } catch (err) {
+        console.error('Error stopping chat:', err);
+        setError(err instanceof Error ? err.message : 'Failed to stop chat');
+      }
+    }
+  };
+
   const handleNewMessage = async (conversationId: string, message: string): Promise<void> => {
     if (!window.conversations?.update || !window.chat?.start) {
       console.warn('Required APIs are not available');
@@ -314,6 +330,7 @@ export function Chat() {
             conversation={currentConversation}
             onNewConversation={handleNewConversation}
             onNewMessage={handleNewMessage}
+            onStop={handleStop}
             isLoading={currentConversation?.status === 'active'}
             project={selectedProject}
             error={error}
