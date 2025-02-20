@@ -6,6 +6,7 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { H2 } from '@/components/ui/typography';
 import { systemPrompt } from '@/lib/prompts';
+import { WelcomeFlow } from '@/components/WelcomeFlow';
 import { SettingsDialog } from '@/components/SettingsDialog';
 
 export function Chat() {
@@ -14,6 +15,7 @@ export function Chat() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [settingsError, setSettingsError] = useState<string | null>(null);
 
@@ -34,26 +36,6 @@ export function Chat() {
       }
     };
     loadProjects();
-  }, []);
-
-  // Listen for credentials required events
-  useEffect(() => {
-    if (!window.electron?.onCredentialsRequired) {
-      console.warn('onCredentialsRequired is not available');
-      return;
-    }
-
-    const cleanup = window.electron.onCredentialsRequired((error: string) => {
-      console.debug('Credentials required:', error);
-      setSettingsError(error);
-      setShowSettings(true);
-    });
-
-    return () => {
-      if (cleanup && typeof cleanup === 'function') {
-        cleanup();
-      }
-    };
   }, []);
 
   // Load conversations when project changes
@@ -147,6 +129,22 @@ export function Chat() {
         cleanup();
       }
     };
+  }, []);
+
+  // Modify the credentials required listener
+  useEffect(() => {
+    if (!window.electron?.onCredentialsRequired) {
+      console.warn('onCredentialsRequired is not available');
+      return;
+    }
+
+    const cleanup = window.electron.onCredentialsRequired((error: string) => {
+      console.debug('Credentials required:', error);
+      setSettingsError(error);
+      setShowWelcome(true);  // Show WelcomeFlow instead of SettingsDialog
+    });
+
+    return cleanup;
   }, []);
 
   const handleNewConversation = async (message: string): Promise<void> => {
@@ -345,14 +343,14 @@ export function Chat() {
         )}
 
       </SidebarProvider>
-      <SettingsDialog
+      <WelcomeFlow 
+        open={showWelcome}
+        onOpenChange={setShowWelcome}
+        onComplete={() => setShowWelcome(false)}
+      />
+      <SettingsDialog 
         open={showSettings}
-        onOpenChange={(open) => {
-          setShowSettings(open);
-          if (!open) {
-            setSettingsError(null);
-          }
-        }}
+        onOpenChange={setShowSettings}
         error={settingsError}
       />
     </div>

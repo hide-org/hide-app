@@ -18,12 +18,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { newUserSettings, Provider, UserSettings } from "@/types/settings"
-import { cn } from "@/lib/utils"
 
 interface SettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   error?: string | null;
+  onSuccess?: () => void;
 }
 
 interface ProviderSettingsProps {
@@ -87,7 +87,7 @@ function AnthropicSettings({ settings, onChange }: ProviderSettingsProps) {
   );
 }
 
-export function SettingsDialog({ open, onOpenChange, error: externalError }: SettingsDialogProps) {
+export function SettingsDialog({ open, onOpenChange, error: externalError, onSuccess }: SettingsDialogProps) {
   const [settings, setSettings] = React.useState<UserSettings | null>(null);
   const [draftSettings, setDraftSettings] = React.useState<UserSettings | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
@@ -102,14 +102,6 @@ export function SettingsDialog({ open, onOpenChange, error: externalError }: Set
       });
     }
   }, [open]);
-
-  const handleProviderChange = (provider: string) => {
-    const newSettings = draftSettings ?
-      { ...draftSettings, model_provider: provider as UserSettings['model_provider'] } :
-      newUserSettings(provider as Provider);
-
-    setDraftSettings(newSettings);
-  };
 
   const handleSettingChange = (path: string, value: string) => {
     const [provider, ...rest] = path.split('.');
@@ -160,6 +152,7 @@ export function SettingsDialog({ open, onOpenChange, error: externalError }: Set
 
       await window.chat.reloadSettings();
       setSettings(draftSettings);
+      onSuccess?.();
       onOpenChange(false);
     } catch (error) {
       console.error('Error saving settings:', error);
