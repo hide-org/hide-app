@@ -1,4 +1,4 @@
-import { AssistantMessage, Message, UserMessage } from '@/types/message';
+import { AssistantMessage, Message, ToolUseBlock, ToolResultBlock, UserMessage } from '@/types/message';
 import { UIMessage } from '@/types';
 
 
@@ -78,12 +78,67 @@ function convertAssistantMessage(message: AssistantMessage): UIMessage[] {
           content: block.text,
         };
       case 'tool_use':
-        const content = `Tool: \`${block.name}\`\n\nInput:\n\`\`\`json\n${JSON.stringify(block.args, null, 2)}\n\`\`\``;
-        return {
-          id: `${message.id}-${idx}`,
-          role: message.role,
-          content: content,
-        };
+        return messageFromToolUse(block);
     }
   });
+}
+
+function messageFromToolUse(block: ToolUseBlock): UIMessage {
+  switch (block.name) {
+    case 'str_replace_editor':
+      return messageFromTextEditor(block);
+    case 'bash':
+      return messageFromShell(block);
+    default:
+      return {
+        id: block.id,
+        role: 'tool_use',
+        content: `Tool: \`${block.name}\`\n\nInput:\n\`\`\`json\n${JSON.stringify(block.args, null, 2)}\n\`\`\``,
+      };
+  }
+}
+
+function messageFromTextEditor(block: ToolUseBlock): UIMessage {
+  const { command, ...args } = block.args;
+  switch (command) {
+    case 'view':
+      return {
+        id: block.id,
+        role: 'tool_use',
+        content: `Viewing file: ${args.path}`,
+      };
+    case 'create':
+      return {
+        id: block.id,
+        role: 'tool_use',
+        content: `Creating file: ${args.path}`,
+      };
+    case 'str_replace':
+      return {
+        id: block.id,
+        role: 'tool_use',
+        content: `Updating file: ${args.path}`,
+      };
+    case 'insert':
+      return {
+        id: block.id,
+        role: 'tool_use',
+        content: `Updating file: ${args.path}`,
+      };
+    case 'undo_edit':
+      return {
+        id: block.id,
+        role: 'tool_use',
+        content: `Undoing edits to file: ${args.path}`,
+      };
+  }
+}
+
+function messageFromShell(block: ToolUseBlock): UIMessage {
+  const { command } = block.args;
+  return {
+    id: block.id,
+    role: 'tool_use',
+    content: `Running shell command: ${command}`,
+  };
 }

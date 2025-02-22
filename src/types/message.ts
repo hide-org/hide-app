@@ -51,7 +51,7 @@ export type ToolUseBlock = {
     id: string;
     type: 'tool_use';
     name: string;
-    args: string;
+    args: Record<string, any>;
 };
 
 export type ToolResultBlock = {
