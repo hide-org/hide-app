@@ -22,36 +22,36 @@ function convertUserMessage(message: UserMessage): UIMessage[] {
     }];
   }
 
-  return message.content.flatMap((part, partIdx) => {
+  return message.content.flatMap((part, partIdx): UIMessage[] => {
     switch (part.type) {
       case 'text':
-        return {
+        return [{
           id: message.id,
           role: message.role,
           content: part.text,
-        };
+        }];
       case 'image':
-        return {
+        return [{
           id: message.id,
           role: message.role,
           content: 'Image Attachments are not supported yet',
-        };
+        }];
       case 'tool_result':
         return part.content.map((block, blockIdx) => {
           switch (block.type) {
             case 'text':
-              const content = `Tool Result:\n\`\`\`text\n${block.text}\n\`\`\``;
+              const content = block.text;
               return {
                 id: `${message.id}-${partIdx}-${blockIdx}`,
-                role: message.role,
+                role: 'tool_result',
                 content: content,
                 isError: part.isError,
               }
             case 'image':
               return {
                 id: `${message.id}-${partIdx}-${blockIdx}`,
-                role: message.role,
-                content: 'Tool Result: Image Attachments are not supported yet',
+                role: 'tool_result',
+                content: 'Image Attachments are not supported yet',
                 isError: part.isError,
               };
           }

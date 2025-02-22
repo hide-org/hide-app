@@ -180,7 +180,7 @@ function convertAssistantMessageFromAnthropic(message: MessageParam): AssistantM
                     type: 'tool_use',
                     id: block.id,
                     name: block.name,
-                    args: block.input as string, // because input is unknown
+                    args: block.input,
                 };
             }
 
