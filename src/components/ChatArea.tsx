@@ -10,6 +10,7 @@ import { H2 } from '@/components/ui/typography';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useMessageConversion } from '@/hooks/useMessageConversion';
+import { ActivityLog } from './ActivityLog';
 
 
 interface ChatAreaProps {
@@ -114,12 +115,18 @@ export const ChatArea = ({
         <>
           <ScrollArea className="mt-4" type="hover">
             <div className="w-full max-w-3xl mx-auto">
-              {currentMessages.map((message) => (
+              {currentMessages.map((message) => (message.role === 'tool_use' ? (
+                <ActivityLog
+                  key={message.id}
+                  message={message}
+                />
+              ) : (
                 <ChatMessage
                   key={message.id}
                   message={message}
                 />
-              ))}
+              )))}
+
               {isLoading && (
                 <div className="flex items-start space-x-4 p-4">
                   <Avatar className="w-8 h-8 border">
