@@ -161,12 +161,12 @@ export function WelcomeFlow({ open, onOpenChange, onComplete }: WelcomeFlowProps
           </DialogHeader>
 
           <div className="py-6">
+            {renderStep()}
             <Steps 
               steps={STEPS.length} 
               currentStep={currentStep} 
-              className="mb-8"
+              className="mt-8"
             />
-            {renderStep()}
           </div>
         </DialogContent>
       </Dialog>

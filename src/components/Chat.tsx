@@ -323,7 +323,8 @@ export function Chat() {
           onDeleteProject={onDeleteProject}
           onDeleteConversation={onDeleteConversation}
           onRenameChat={onRenameChat}
-          onSettingsClick={() => setShowSettings(true)}
+          // onSettingsClick={() => setShowSettings(true)}
+          onSettingsClick={() => setShowWelcome(true)}
           // onSettingsClick={() => setShowWelcome(true)} to test welcome flow
         />
         {selectedProject ? (
