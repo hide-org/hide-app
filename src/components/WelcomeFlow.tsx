@@ -6,6 +6,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogOverlay,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { SettingsDialog } from "./SettingsDialog"
@@ -49,15 +50,10 @@ export function WelcomeFlow({ open, onOpenChange, onComplete }: WelcomeFlowProps
   const [settingsError, setSettingsError] = React.useState<string | null>(null)
 
   useEffect(() => {
-    if (!window.electron?.onCredentialsRequired) return;
-    
-    const cleanup = window.electron.onCredentialsRequired((error: string) => {
-      setSettingsError(error);
-      setShowSettings(true);
-    });
-
-    return cleanup;
-  }, []);
+    if (currentStep === 1) {  // When on Connect AI step
+      setSettingsError(null);  // Reset any previous errors
+    }
+  }, [currentStep]);
 
   const handleSettingsSaved = () => {
     setShowSettings(false)
@@ -151,7 +147,11 @@ export function WelcomeFlow({ open, onOpenChange, onComplete }: WelcomeFlowProps
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog 
+        open={open} 
+        onOpenChange={onOpenChange}
+      >
+        <DialogOverlay className="bg-background/80 backdrop-blur-sm" />
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>{currentStepData.title}</DialogTitle>
@@ -176,6 +176,7 @@ export function WelcomeFlow({ open, onOpenChange, onComplete }: WelcomeFlowProps
         onOpenChange={setShowSettings}
         error={settingsError}
         onSuccess={handleSettingsSaved}
+        className="bg-background border-border"
       />
       <ProjectDialog
         project={{} as Project}

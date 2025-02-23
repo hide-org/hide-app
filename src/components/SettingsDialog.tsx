@@ -7,6 +7,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogOverlay,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,12 +20,14 @@ import {
 } from "@/components/ui/select"
 import { newUserSettings, Provider, UserSettings } from "@/types/settings"
 import { useToast } from "@/components/ui/use-toast"
+import { cn } from "@/lib/utils"
 
 interface SettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   error?: string | null;
   onSuccess?: () => void;
+  className?: string;
 }
 
 interface ProviderSettingsProps {
@@ -88,7 +91,13 @@ function AnthropicSettings({ settings, onChange }: ProviderSettingsProps) {
   );
 }
 
-export function SettingsDialog({ open, onOpenChange, error: externalError, onSuccess }: SettingsDialogProps) {
+export function SettingsDialog({ 
+  open, 
+  onOpenChange, 
+  error: externalError, 
+  onSuccess,
+  className 
+}: SettingsDialogProps) {
   const { toast } = useToast()
   const [settings, setSettings] = React.useState<UserSettings | null>(null);
   const [draftSettings, setDraftSettings] = React.useState<UserSettings | null>(null);
@@ -184,8 +193,12 @@ export function SettingsDialog({ open, onOpenChange, error: externalError, onSuc
   // if (!settings || !draftSettings) return null;
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+    <Dialog 
+      open={open} 
+      onOpenChange={handleOpenChange}
+    >
+      <DialogOverlay className="bg-background/80 backdrop-blur-sm" />
+      <DialogContent className={cn("sm:max-w-[600px]", className)}>
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>
