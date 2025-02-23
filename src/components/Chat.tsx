@@ -323,8 +323,7 @@ export function Chat() {
           onDeleteProject={onDeleteProject}
           onDeleteConversation={onDeleteConversation}
           onRenameChat={onRenameChat}
-          // onSettingsClick={() => setShowSettings(true)}
-          onSettingsClick={() => setShowWelcome(true)}
+          onSettingsClick={() => setShowSettings(true)}
           // onSettingsClick={() => setShowWelcome(true)} to test welcome flow
         />
         {selectedProject ? (
@@ -352,8 +351,9 @@ export function Chat() {
         onOpenChange={setShowWelcome}
         onComplete={() => {
           setShowWelcome(false);
-          loadProjects();  // Add this line to refresh projects
+          loadProjects();
         }}
+        onSelectProject={onSelectProject}
       />
       <SettingsDialog 
         open={showSettings}

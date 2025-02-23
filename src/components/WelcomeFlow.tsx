@@ -20,6 +20,7 @@ interface WelcomeFlowProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onComplete: () => void
+  onSelectProject?: (project: Project) => void
 }
 
 type Step = {
@@ -42,7 +43,7 @@ const STEPS: Step[] = [
   }
 ]
 
-export function WelcomeFlow({ open, onOpenChange, onComplete }: WelcomeFlowProps) {
+export function WelcomeFlow({ open, onOpenChange, onComplete, onSelectProject }: WelcomeFlowProps) {
   const { toast } = useToast()
   const [currentStep, setCurrentStep] = React.useState(0)
   const [showSettings, setShowSettings] = React.useState(false)
@@ -76,6 +77,7 @@ export function WelcomeFlow({ open, onOpenChange, onComplete }: WelcomeFlowProps
       });
       
       setShowProject(false);
+      onSelectProject?.(project);
       onComplete();
     } catch (error) {
       console.error('Error creating project:', error);
@@ -145,14 +147,24 @@ export function WelcomeFlow({ open, onOpenChange, onComplete }: WelcomeFlowProps
     }
   }
 
+  // Add this handler to prevent unwanted closes
+  const handleOpenChange = (open: boolean) => {
+    // Only allow closing if we're done with all steps
+    if (!open && currentStep < STEPS.length - 1) {
+      return; // Prevent closing
+    }
+    onOpenChange(open);
+  };
+
   return (
     <>
       <Dialog 
         open={open} 
-        onOpenChange={onOpenChange}
+        onOpenChange={handleOpenChange}  // Use our new handler
+        modal
       >
         <DialogOverlay className="bg-background/80 backdrop-blur-sm" />
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px]" hideClose>
           <DialogHeader>
             <DialogTitle>{currentStepData.title}</DialogTitle>
             <DialogDescription>
