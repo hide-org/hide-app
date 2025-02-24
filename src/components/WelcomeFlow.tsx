@@ -23,6 +23,12 @@ interface WelcomeFlowProps {
   onSelectProject?: (project: Project) => void
 }
 
+enum StepEnum {
+  WELCOME = 0,
+  CONNECT_AI = 1,
+  CREATE_PROJECT = 2,
+}
+
 type Step = {
   title: string
   description: string
@@ -45,20 +51,20 @@ const STEPS: Step[] = [
 
 export function WelcomeFlow({ open, onOpenChange, onComplete, onSelectProject }: WelcomeFlowProps) {
   const { toast } = useToast()
-  const [currentStep, setCurrentStep] = React.useState(0)
+  const [currentStep, setCurrentStep] = React.useState<StepEnum>(StepEnum.WELCOME);
   const [showSettings, setShowSettings] = React.useState(false)
   const [showProject, setShowProject] = React.useState(false)
   const [settingsError, setSettingsError] = React.useState<string | null>(null)
 
   useEffect(() => {
-    if (currentStep === 1) {  // When on Connect AI step
+    if (currentStep === StepEnum.CONNECT_AI) { 
       setSettingsError(null);  // Reset any previous errors
     }
   }, [currentStep]);
 
   const handleSettingsSaved = () => {
     setShowSettings(false)
-    setCurrentStep(2)
+    setCurrentStep(StepEnum.CREATE_PROJECT)
   }
 
   const handleProjectSaved = async (project: Project) => {
@@ -94,7 +100,7 @@ export function WelcomeFlow({ open, onOpenChange, onComplete, onSelectProject }:
 
   const renderStep = () => {
     switch (currentStep) {
-      case 0:
+      case StepEnum.WELCOME:
         return (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -102,7 +108,7 @@ export function WelcomeFlow({ open, onOpenChange, onComplete, onSelectProject }:
             exit={{ opacity: 0, y: -20 }}
           >
             <Button 
-              onClick={() => setCurrentStep(1)} 
+              onClick={() => setCurrentStep(StepEnum.CONNECT_AI)} 
               className="w-full"
               size="lg"
             >
@@ -110,7 +116,7 @@ export function WelcomeFlow({ open, onOpenChange, onComplete, onSelectProject }:
             </Button>
           </motion.div>
         )
-      case 1:
+      case StepEnum.CONNECT_AI:
         return (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -126,7 +132,7 @@ export function WelcomeFlow({ open, onOpenChange, onComplete, onSelectProject }:
             </Button>
           </motion.div>
         )
-      case 2:
+      case StepEnum.CREATE_PROJECT:
         return (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -150,8 +156,8 @@ export function WelcomeFlow({ open, onOpenChange, onComplete, onSelectProject }:
   // Add this handler to prevent unwanted closes
   const handleOpenChange = (open: boolean) => {
     // Only allow closing if we're done with all steps
-    if (!open && currentStep < STEPS.length - 1) {
-      return; // Prevent closing
+    if (!open && currentStep < StepEnum.CREATE_PROJECT) {
+      return;
     }
     onOpenChange(open);
   };
