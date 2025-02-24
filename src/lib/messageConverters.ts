@@ -99,7 +99,7 @@ function messageFromToolUse(block: ToolUseBlock): UIMessage {
       return {
         id: block.id,
         role: 'tool_use',
-        content: `Tool: \`${block.name}\`\n\nInput:\n\`\`\`json\n${JSON.stringify(block.args, null, 2)}\n\`\`\``,
+        content: `Tool: ${block.name}\n\nInput:\n\n${JSON.stringify(block.args, null, 2)}\n`,
       };
   }
 }
@@ -136,6 +136,12 @@ function messageFromTextEditor(block: ToolUseBlock): UIMessage {
         id: block.id,
         role: 'tool_use',
         content: `Undoing edits to file: ${args.path}`,
+      };
+    default:
+      return {
+        id: block.id,
+        role: 'tool_use',
+        content: `Tool: ${block.name}\n\nInput:\n\n${JSON.stringify(block.args, null, 2)}\n`,
       };
   }
 }
