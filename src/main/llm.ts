@@ -3,12 +3,12 @@ import type { CallToolResult as ToolResult } from '@modelcontextprotocol/sdk/typ
 import { callTool, listTools } from './mcp';
 import { mcpToAiSdkTool } from '../lib/mcp/adapters';
 import { AnthropicProvider, createAnthropic } from '@ai-sdk/anthropic';
-import { OpenAIProvider, createOpenAI } from '@ai-sdk/openai';
+// import { OpenAIProvider, createOpenAI } from '@ai-sdk/openai'; add this later
 import { getUserSettings } from './db';
 import { UserSettings } from '../types/settings';
 import { isAbortError } from '@/main/errors';
 
-type SupportedProvider = AnthropicProvider | OpenAIProvider;
+type SupportedProvider = AnthropicProvider
 
 export class LLMService {
     private tools: Record<string, CoreTool>;
@@ -54,9 +54,6 @@ export class LLMService {
             switch (this.settings.model_provider) {
                 case 'anthropic':
                     this.provider = createAnthropic({ apiKey: providerSettings.apiKey });
-                    break;
-                case 'openai':
-                    this.provider = createOpenAI({ apiKey: providerSettings.apiKey });
                     break;
                 default:
                     throw new Error(`Unsupported provider: ${this.settings.model_provider}`);

@@ -1,0 +1,207 @@
+import * as React from "react"
+import { motion } from "framer-motion"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogOverlay,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { SettingsDialog } from "./SettingsDialog"
+import { ProjectDialog } from "./ProjectDialog"
+import { Project } from "@/types"
+import { Steps } from "@/components/Steps"
+import { useEffect } from "react"
+import { useToast } from "@/components/ui/use-toast"
+
+interface WelcomeFlowProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onComplete: () => void
+  onSelectProject?: (project: Project) => void
+}
+
+enum StepEnum {
+  WELCOME = 0,
+  CONNECT_AI = 1,
+  CREATE_PROJECT = 2,
+}
+
+type Step = {
+  title: string
+  description: string
+}
+
+const STEPS: Step[] = [
+  {
+    title: "Welcome to Hide",
+    description: "Automate your coding tasks to ship faster and deliver higher quality software."
+  },
+  {
+    title: "Connect Your AI",
+    description: "Set up your AI provider to start automating your development workflow."
+  },
+  {
+    title: "Create Your First Project",
+    description: "Set up a project to start coding."
+  }
+]
+
+export function WelcomeFlow({ open, onOpenChange, onComplete, onSelectProject }: WelcomeFlowProps) {
+  const { toast } = useToast()
+  const [currentStep, setCurrentStep] = React.useState<StepEnum>(StepEnum.WELCOME);
+  const [showSettings, setShowSettings] = React.useState(false)
+  const [showProject, setShowProject] = React.useState(false)
+  const [settingsError, setSettingsError] = React.useState<string | null>(null)
+
+  useEffect(() => {
+    if (currentStep === StepEnum.CONNECT_AI) { 
+      setSettingsError(null);  // Reset any previous errors
+    }
+  }, [currentStep]);
+
+  const handleSettingsSaved = () => {
+    setShowSettings(false)
+    setCurrentStep(StepEnum.CREATE_PROJECT)
+  }
+
+  const handleProjectSaved = async (project: Project) => {
+    try {
+      if (!window.projects?.create) {
+        throw new Error('Projects API is not available');
+      }
+
+      await window.projects.create(project);
+      
+      toast({
+        title: "Project created",
+        description: "Your project has been created successfully.",
+        duration: 3000,
+        variant: "success"
+      });
+      
+      setShowProject(false);
+      onSelectProject?.(project);
+      onComplete();
+    } catch (error) {
+      console.error('Error creating project:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create project. Please try again.",
+        duration: 3000,
+        variant: "destructive"
+      });
+    }
+  }
+
+  const currentStepData = STEPS[currentStep] || STEPS[0];
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case StepEnum.WELCOME:
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+          >
+            <Button 
+              onClick={() => setCurrentStep(StepEnum.CONNECT_AI)} 
+              className="w-full"
+              size="lg"
+            >
+              Get Started
+            </Button>
+          </motion.div>
+        )
+      case StepEnum.CONNECT_AI:
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+          >
+            <Button 
+              onClick={() => setShowSettings(true)} 
+              className="w-full"
+              size="lg"
+            >
+              Connect AI Provider
+            </Button>
+          </motion.div>
+        )
+      case StepEnum.CREATE_PROJECT:
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+          >
+            <Button 
+              onClick={() => setShowProject(true)} 
+              className="w-full"
+              size="lg"
+            >
+              Create Your First Project
+            </Button>
+          </motion.div>
+        )
+      default:
+        return null
+    }
+  }
+
+  // Add this handler to prevent unwanted closes
+  const handleOpenChange = (open: boolean) => {
+    // Only allow closing if we're done with all steps
+    if (!open && currentStep < StepEnum.CREATE_PROJECT) {
+      return;
+    }
+    onOpenChange(open);
+  };
+
+  return (
+    <>
+      <Dialog 
+        open={open} 
+        onOpenChange={handleOpenChange}  // Use our new handler
+        modal
+      >
+        <DialogOverlay className="bg-background/80 backdrop-blur-sm" />
+        <DialogContent className="sm:max-w-[500px]" hideClose>
+          <DialogHeader>
+            <DialogTitle>{currentStepData.title}</DialogTitle>
+            <DialogDescription>
+              {currentStepData.description}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-6">
+            {renderStep()}
+            <Steps 
+              steps={STEPS.length} 
+              currentStep={currentStep} 
+              className="mt-8"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <SettingsDialog
+        open={showSettings}
+        onOpenChange={setShowSettings}
+        error={settingsError}
+        onSuccess={handleSettingsSaved}
+        className="bg-background border-border"
+      />
+      <ProjectDialog
+        project={{} as Project}
+        open={showProject}
+        onOpenChange={setShowProject}
+        onSave={handleProjectSaved}
+      />
+    </>
+  )
+} 

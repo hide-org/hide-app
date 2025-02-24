@@ -10,7 +10,7 @@ export interface ProviderSettings {
     [key: string]: string | ModelSettings;  // Allow string indexing
 }
 
-export type Provider = 'anthropic' | 'openai' | 'google';
+export type Provider = 'anthropic'; //later add openai and google
 
 export interface UserSettings {
     model_provider: Provider;
@@ -26,14 +26,6 @@ export const newUserSettings = (provider: Provider): UserSettings => {
         anthropic: {
             chat: 'claude-3-5-sonnet-20241022',
             title: 'claude-3-5-haiku-20241022'
-        },
-        openai: {
-            chat: 'gpt-4o',
-            title: 'gpt-4o-mini'
-        },
-        google: {
-            chat: '',
-            title: ''
         }
     };
 

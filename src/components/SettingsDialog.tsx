@@ -7,6 +7,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogOverlay,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,12 +19,15 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { newUserSettings, Provider, UserSettings } from "@/types/settings"
+import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
 
 interface SettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   error?: string | null;
+  onSuccess?: () => void;
+  className?: string;
 }
 
 interface ProviderSettingsProps {
@@ -87,7 +91,14 @@ function AnthropicSettings({ settings, onChange }: ProviderSettingsProps) {
   );
 }
 
-export function SettingsDialog({ open, onOpenChange, error: externalError }: SettingsDialogProps) {
+export function SettingsDialog({ 
+  open, 
+  onOpenChange, 
+  error: externalError, 
+  onSuccess,
+  className 
+}: SettingsDialogProps) {
+  const { toast } = useToast()
   const [settings, setSettings] = React.useState<UserSettings | null>(null);
   const [draftSettings, setDraftSettings] = React.useState<UserSettings | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
@@ -102,14 +113,6 @@ export function SettingsDialog({ open, onOpenChange, error: externalError }: Set
       });
     }
   }, [open]);
-
-  const handleProviderChange = (provider: string) => {
-    const newSettings = draftSettings ?
-      { ...draftSettings, model_provider: provider as UserSettings['model_provider'] } :
-      newUserSettings(provider as Provider);
-
-    setDraftSettings(newSettings);
-  };
 
   const handleSettingChange = (path: string, value: string) => {
     const [provider, ...rest] = path.split('.');
@@ -160,6 +163,15 @@ export function SettingsDialog({ open, onOpenChange, error: externalError }: Set
 
       await window.chat.reloadSettings();
       setSettings(draftSettings);
+      
+      toast({
+        title: "Settings saved",
+        description: "Your settings have been updated successfully.",
+        duration: 3000,
+        variant: "success"
+      })
+      
+      onSuccess?.();
       onOpenChange(false);
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -181,8 +193,12 @@ export function SettingsDialog({ open, onOpenChange, error: externalError }: Set
   // if (!settings || !draftSettings) return null;
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+    <Dialog 
+      open={open} 
+      onOpenChange={handleOpenChange}
+    >
+      <DialogOverlay className="bg-background/80 backdrop-blur-sm" />
+      <DialogContent className={cn("sm:max-w-[600px]", className)}>
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>
@@ -209,7 +225,10 @@ export function SettingsDialog({ open, onOpenChange, error: externalError }: Set
             </div>
           )}
           <DialogFooter className="mt-4">
-            <Button type="submit" disabled={isSaving}>
+            <Button 
+              type="submit" 
+              disabled={isSaving}
+            >
               {isSaving ? "Saving..." : "Save"}
             </Button>
           </DialogFooter>

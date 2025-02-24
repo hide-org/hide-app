@@ -1,6 +1,6 @@
-import * as React from "react"
-import { v4 as uuidv4 } from 'uuid'
-import { Button } from "@/components/ui/button"
+import * as React from "react";
+import { v4 as uuidv4 } from "uuid";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,12 +8,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
-import { Project } from '../types'
+import { Project } from "../types";
 
 interface ProjectDialogProps {
   project: Partial<Project> | null;
@@ -22,21 +22,26 @@ interface ProjectDialogProps {
   onSave?: (project: Project) => void;
 }
 
-export function ProjectDialog({ project, open, onOpenChange, onSave }: ProjectDialogProps) {
+export function ProjectDialog({
+  project,
+  open,
+  onOpenChange,
+  onSave,
+}: ProjectDialogProps) {
   const [formData, setFormData] = React.useState({
     id: project?.id || uuidv4(),
-    name: project?.name || '',
-    path: project?.path || '',
-    description: project?.description || ''
+    name: project?.name || "",
+    path: project?.path || "",
+    description: project?.description || "",
   });
 
   // Update form data when project changes
   React.useEffect(() => {
     setFormData({
       id: project?.id || uuidv4(), // Keep existing ID or generate new one
-      name: project?.name || '',
-      path: project?.path || '',
-      description: project?.description || ''
+      name: project?.name || "",
+      path: project?.path || "",
+      description: project?.description || "",
     });
   }, [project]);
 
@@ -50,11 +55,15 @@ export function ProjectDialog({ project, open, onOpenChange, onSave }: ProjectDi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{project?.name ? 'Edit Project' : 'Create Project'}</DialogTitle>
+          <DialogTitle>
+            {project?.name ? "Edit Project" : "Create Project"}
+          </DialogTitle>
           <DialogDescription>
-            {project?.name ? 'Edit your project details below.' : 'Enter details for your new project.'}
+            {project?.name
+              ? "Edit your project details below"
+              : "Enter details for your new project"}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -66,7 +75,9 @@ export function ProjectDialog({ project, open, onOpenChange, onSave }: ProjectDi
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, name: e.target.value }))
+                }
                 placeholder="project-name"
                 className="col-span-3"
                 pattern="^[^\s]+$"
@@ -82,7 +93,9 @@ export function ProjectDialog({ project, open, onOpenChange, onSave }: ProjectDi
                 <Input
                   id="path"
                   value={formData.path}
-                  onChange={(e) => setFormData(prev => ({ ...prev, path: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, path: e.target.value }))
+                  }
                   placeholder="/path/to/project"
                   className="flex-grow"
                   required
@@ -93,12 +106,16 @@ export function ProjectDialog({ project, open, onOpenChange, onSave }: ProjectDi
                   className="ml-2"
                   onClick={async () => {
                     try {
-                      const result = await window.electron.showDirectoryPicker();
+                      const result =
+                        await window.electron.showDirectoryPicker();
                       if (!result.canceled && result.filePaths.length > 0) {
-                        setFormData(prev => ({ ...prev, path: result.filePaths[0] }));
+                        setFormData((prev) => ({
+                          ...prev,
+                          path: result.filePaths[0],
+                        }));
                       }
                     } catch (error) {
-                      console.error('Error picking directory:', error);
+                      console.error("Error picking directory:", error);
                     }
                   }}
                 >
@@ -113,8 +130,17 @@ export function ProjectDialog({ project, open, onOpenChange, onSave }: ProjectDi
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Project description"
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
+                placeholder="Enter a brief description of your project:
+- What the app does
+- Tech best practice preferences ( How to set up tests, etc )
+- Naming style conventions ( Anything you consider useful )
+This context will be used by the AI to better assist you"
                 className="col-span-3 h-32 resize-none"
               />
             </div>
@@ -125,5 +151,5 @@ export function ProjectDialog({ project, open, onOpenChange, onSave }: ProjectDi
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
