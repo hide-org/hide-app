@@ -166,7 +166,7 @@ export function SettingsDialog({
       
       toast({
         title: "Settings saved",
-        description: "Your Anthropic settings have been updated successfully.",
+        description: "Your settings have been updated successfully.",
         duration: 3000,
         variant: "success"
       })
