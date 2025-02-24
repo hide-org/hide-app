@@ -24,19 +24,20 @@ export const ActivityLog = ({ toolMessage, toolResult }: ActivityLogProps) => {
       <div className="w-8" /> {/* Space for avatar alignment */}
       <div className="flex-1 space-y-1 w-full max-w-2xl ml-4">
         {/* Tool Message (Always Visible) */}
-        <CollapsibleTrigger className="flex w-full items-center justify-between">
-          <div className="text-sm text-muted-foreground font-mono py-1 leading-relaxed hover:text-foreground transition-colors">
-            {toolMessage.content}
+        <CollapsibleTrigger className="flex w-full items-start gap-2">
+          <div className="min-w-0 flex-1 text-sm text-muted-foreground font-mono py-1 leading-relaxed hover:text-foreground transition-colors text-left">
+            <div className={isOpen ? "whitespace-pre-wrap break-all" : "truncate"} title={!isOpen ? toolMessage.content : undefined}>
+              {toolMessage.content}
+            </div>
           </div>
-          <ChevronsUpDown className="h-4 w-4 text-muted-foreground/50 hover:text-muted-foreground transition-colors" />
+          <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground/50 hover:text-muted-foreground transition-colors mt-1.5" />
         </CollapsibleTrigger>
 
         {/* Tool Result (Collapsible) */}
         <CollapsibleContent>
           {toolResult ? (
-            <div className={`text-sm font-mono py-2 leading-relaxed ${
-              toolResult.isError ? 'text-destructive/80' : 'text-emerald-600 dark:text-emerald-400'
-            }`}>
+            <div className={`text-sm font-mono py-2 leading-relaxed ${toolResult.isError ? 'text-destructive/80' : 'text-emerald-600 dark:text-emerald-400'
+              }`}>
               {toolResult.content}
             </div>
           ) : (
