@@ -7,12 +7,12 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
-export interface ActivityLogProps {
+export interface ToolUseLogProps {
   toolMessage: UIMessage;
   toolResult?: UIMessage;
 }
 
-export const ActivityLog = ({ toolMessage, toolResult }: ActivityLogProps) => {
+export const ToolUseLog = ({ toolMessage, toolResult }: ToolUseLogProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (

@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from 'react';
 import { Conversation, Project } from '@/types';
 import { Bot } from 'lucide-react';
-import { ActivityLog } from '@/components/ActivityLog';
+import { ToolUseLog } from '@/components/ToolUseLog';
 import { ChatInput } from '@/components/ChatInput';
 import { ChatMessage } from '@/components/ChatMessage';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -122,7 +122,7 @@ export const ChatArea = ({
                     : undefined;
 
                   return (
-                    <ActivityLog
+                    <ToolUseLog
                       key={message.id}
                       toolMessage={message}
                       toolResult={toolResult}
