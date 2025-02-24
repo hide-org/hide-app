@@ -36,7 +36,7 @@ export const ActivityLog = ({ toolMessage, toolResult }: ActivityLogProps) => {
         {/* Tool Result (Collapsible) */}
         <CollapsibleContent>
           {toolResult ? (
-            <div className={`text-sm font-mono py-2 leading-relaxed ${toolResult.isError ? 'text-destructive/80' : 'text-emerald-600 dark:text-emerald-400'
+            <div className={`text-sm font-mono py-2 leading-relaxed whitespace-pre-wrap break-all ${toolResult.isError ? 'text-destructive/80' : 'text-emerald-600 dark:text-emerald-400'
               }`}>
               {toolResult.content}
             </div>
