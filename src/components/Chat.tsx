@@ -143,7 +143,7 @@ export function Chat() {
     const cleanup = window.electron.onCredentialsRequired((error: string) => {
       console.debug('Credentials required:', error);
       setSettingsError(error);
-      setShowWelcome(true);  // Show WelcomeFlow instead of SettingsDialog
+      setShowWelcome(true);
     });
 
     return cleanup;
@@ -324,7 +324,6 @@ export function Chat() {
           onDeleteConversation={onDeleteConversation}
           onRenameChat={onRenameChat}
           onSettingsClick={() => setShowSettings(true)}
-          // onSettingsClick={() => setShowWelcome(true)} to test welcome flow
         />
         {selectedProject ? (
           <ChatArea
