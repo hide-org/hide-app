@@ -1,4 +1,4 @@
-import { AssistantMessage, Message, ToolUseBlock, ToolResultBlock, UserMessage } from '@/types/message';
+import { AssistantMessage, Message, ToolUseBlock, UserMessage } from '@/types/message';
 import { UIMessage } from '@/types';
 
 
@@ -82,7 +82,13 @@ function convertAssistantMessage(message: AssistantMessage): UIMessage[] {
     }
   });
 }
-
+/**
+  * This function converts a ToolUseBlock to a UIMessage. It is very tightly and implicitly
+  * coupled with the tools that are currently supported, and will need to be updated if new
+  * tools are added. It will also break if the tools are renamed or their arguments are changed.
+  * To fix this, we need to rewrite the whole tools infrastructure which we can't afford to do right now.
+  * So we are deliberately taking a technical debt on this hoping that we can pay it back later.
+  */
 function messageFromToolUse(block: ToolUseBlock): UIMessage {
   switch (block.name) {
     case 'str_replace_editor':
