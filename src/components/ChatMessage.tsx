@@ -79,8 +79,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
             ol: ({ node, ...props }) => <ol className="list-decimal list-inside mb-4" {...props} />,
             li: ({ node, ...props }) => <li className="mb-1" {...props} />,
             // Code blocks
-            code: ({ node, inline, className, children, ...props }) => {
-              const isInline = inline || !className?.includes('language-');
+            code: ({ node, className, children, ...props }) => {
+              const isInline = !className?.includes('language-');
               return (
                 <code className={`font-mono ${isInline
                   ? 'text-sm bg-muted rounded px-1.5 py-0.5 max-w-3xl break-words'
