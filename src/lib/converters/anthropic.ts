@@ -102,6 +102,21 @@ function convertAssistantMessageToAnthropic(message: AssistantMessage): MessageP
                         input: block.args,
                     };
                 }
+
+                case 'thinking': {
+                    return {
+                        type: 'thinking',
+                        signature: block.signature,
+                        thinking: block.text,
+                    };
+                }
+
+                case 'redacted_thinking': {
+                    return {
+                        type: 'redacted_thinking',
+                        data: block.data,
+                    };
+                }
             }
         })
     };
@@ -181,6 +196,21 @@ function convertAssistantMessageFromAnthropic(message: MessageParam): AssistantM
                     id: block.id,
                     name: block.name,
                     args: block.input,
+                };
+            }
+
+            case 'thinking': {
+                return {
+                    type: 'thinking',
+                    signature: block.signature,
+                    text: block.thinking,
+                };
+            }
+
+            case 'redacted_thinking': {
+                return {
+                    type: 'redacted_thinking',
+                    data: block.data,
                 };
             }
 

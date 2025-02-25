@@ -6,7 +6,7 @@ export const DEFAULT_CONVERSATION_TITLE = 'Untitled Chat';
 // internal representation of a message for the UI
 export interface UIMessage {
   id: string;
-  role: 'system' | 'user' | 'assistant' | 'tool' | 'tool_use' | 'tool_result';
+  role: 'system' | 'user' | 'assistant' | 'tool' | 'tool_use' | 'tool_result' | 'thinking';
   content: string;
   isError?: boolean;
 }
