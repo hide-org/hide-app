@@ -144,7 +144,23 @@ export const ChatArea = ({
                   return null;
                 }
 
-                return <ChatMessage key={message.id} message={message} />;
+                // Render thinking block as a tool use log
+                if (message.role === 'thinking') {
+                  return (
+                    <ToolUseLog
+                      key={message.id}
+                      toolMessage={{ ...message, content: 'Thinking' }}
+                      toolResult={message}
+                    />
+                  );
+                }
+
+                return (
+                  <ChatMessage
+                    key={message.id}
+                    message={message}
+                  />
+                );
               })}
 
               {isLoading && (
