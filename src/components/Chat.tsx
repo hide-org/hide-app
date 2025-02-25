@@ -342,8 +342,8 @@ export function Chat() {
               error={error}
             />
           ) : (
-            <div className="flex-1 flex flex-col justify-center items-center text-center px-4">
-              <H2 className="mb-4">Welcome to Hide</H2>
+            <div className="flex-1 flex flex-col justify-center items-center text-center pb-6 px-4">
+              <H2 className="text-primary mb-4">Welcome to Hide</H2>
               <p className="text-muted-foreground max-w-md">
                 Select a project from the sidebar to start a conversation.
               </p>

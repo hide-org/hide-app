@@ -1,7 +1,6 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Conversation, Project } from "@/types"
-import { SidebarTrigger } from "@/components/ui/sidebar"
 
 interface TitleBarProps {
   className?: string
@@ -12,11 +11,7 @@ interface TitleBarProps {
 export function TitleBar({ className, selectedProject, currentConversation }: TitleBarProps) {
   return (
     <div className={cn("titlebar-region flex items-center px-4", className)}>  
-      <div className="flex items-center flex-1">
-        <div className="flex items-center pl-14">
-          <SidebarTrigger />
-        </div>
-        
+      <div className="flex items-center flex-1 h-full pl-12">
         {selectedProject && (
           <>
             <div className="mx-3 h-4 w-px bg-border" aria-hidden="true" />

@@ -102,13 +102,14 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 30px; /* Standard height for macOS title bar */
+  height: 36px; /* Keep the standard height for macOS title bar */
   z-index: 9999;
   background-color: hsl(var(--sidebar-background));
   color: hsl(var(--sidebar-foreground));
   border-bottom: 1px solid hsl(var(--sidebar-border));
   display: flex;
   align-items: center;
+  padding-top: 0; /* Reset any padding */
 }
 
 /* Make sure buttons and interactive elements in the title bar are not draggable */
