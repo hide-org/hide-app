@@ -9,6 +9,7 @@ import { systemPrompt } from '@/lib/prompts';
 import { WelcomeFlow } from '@/components/WelcomeFlow';
 import { SettingsDialog } from '@/components/SettingsDialog';
 import { Toaster } from '@/components/ui/toaster';
+import { TitleBar } from '@/components/TitleBar';
 
 export function Chat() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -310,8 +311,12 @@ export function Chat() {
   };
 
   return (
-    <div className="flex h-screen">
-      <SidebarProvider>
+    <SidebarProvider>
+      <TitleBar 
+        selectedProject={selectedProject}
+        currentConversation={currentConversation}
+      />
+      <div className="flex h-screen w-full">
         <AppSidebar
           conversations={conversations}
           selectedConversation={currentConversation}
@@ -325,41 +330,42 @@ export function Chat() {
           onRenameChat={onRenameChat}
           onSettingsClick={() => setShowSettings(true)}
         />
-        {selectedProject ? (
-          <ChatArea
-            conversation={currentConversation}
-            onNewConversation={handleNewConversation}
-            onNewMessage={handleNewMessage}
-            onStop={handleStop}
-            isLoading={currentConversation?.status === 'active'}
-            project={selectedProject}
-            error={error}
-          />
-        ) : (
-          <div className="flex-1 flex flex-col justify-center items-center text-center px-4">
-            <H2 className="mb-4">Welcome to Hide</H2>
-            <p className="text-muted-foreground max-w-md">
-              Select a project from the sidebar to start a conversation.
-            </p>
-          </div>
-        )}
-
-      </SidebarProvider>
-      <WelcomeFlow 
-        open={showWelcome}
-        onOpenChange={setShowWelcome}
-        onComplete={() => {
-          setShowWelcome(false);
-          loadProjects();
-        }}
-        onSelectProject={onSelectProject}
-      />
-      <SettingsDialog 
-        open={showSettings}
-        onOpenChange={setShowSettings}
-        error={settingsError}
-      />
-      <Toaster />
-    </div>
+        <div className="flex-1 flex">
+          {selectedProject ? (
+            <ChatArea
+              conversation={currentConversation}
+              onNewConversation={handleNewConversation}
+              onNewMessage={handleNewMessage}
+              onStop={handleStop}
+              isLoading={currentConversation?.status === 'active'}
+              project={selectedProject}
+              error={error}
+            />
+          ) : (
+            <div className="flex-1 flex flex-col justify-center items-center text-center px-4">
+              <H2 className="mb-4">Welcome to Hide</H2>
+              <p className="text-muted-foreground max-w-md">
+                Select a project from the sidebar to start a conversation.
+              </p>
+            </div>
+          )}
+        </div>
+        <WelcomeFlow 
+          open={showWelcome}
+          onOpenChange={setShowWelcome}
+          onComplete={() => {
+            setShowWelcome(false);
+            loadProjects();
+          }}
+          onSelectProject={onSelectProject}
+        />
+        <SettingsDialog 
+          open={showSettings}
+          onOpenChange={setShowSettings}
+          error={settingsError}
+        />
+        <Toaster />
+      </div>
+    </SidebarProvider>
   );
 }
