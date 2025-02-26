@@ -16,6 +16,8 @@ import {
   SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { formatTimestamp } from "../lib/utils"
 import { ProjectDialog } from "./ProjectDialog"
@@ -63,6 +65,7 @@ export function AppSidebar({
   onSettingsClick,
 }: AppSidebarProps) {
   const { theme = 'system' } = useTheme()
+  const { state: sidebarState } = useSidebar()
   const [projectToEdit, setProjectToEdit] = React.useState<Project | null>(null);
   const [projectToDelete, setProjectToDelete] = React.useState<Project | null>(null);
   const [chatToEdit, setChatToEdit] = React.useState<Conversation | null>(null);
@@ -115,14 +118,23 @@ export function AppSidebar({
         onDelete={onDeleteConversation}
       />
 
-      <SidebarHeader className="p-4">
-        <div className="flex justify-between items-center h-12 mt-6">
+      <SidebarHeader className={cn(
+        "pt-4 flex flex-col",
+        sidebarState === "collapsed" ? "px-2 justify-center h-fit" : "pl-4 pb-4"
+      )}>
+        <div className={cn(
+          "flex",
+          sidebarState === "collapsed" 
+            ? "flex-col items-center justify-center space-y-4 mt-6 mb-2"
+            : "flex-row items-center justify-between mt-6"
+        )}>
           <Logo 
             className={cn(
-              "h-10 w-auto transition-colors duration-200",
+              "h-10 w-auto transition-colors duration-200 pt-2",
               effectiveTheme === 'dark' ? "stroke-white" : "stroke-black"
             )}
           />
+          <SidebarTrigger className="sidebar-trigger" />
         </div>
       </SidebarHeader>
 

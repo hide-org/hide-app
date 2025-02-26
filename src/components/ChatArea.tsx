@@ -1,17 +1,22 @@
-import { useRef, useEffect, useState } from 'react';
-import { Conversation, Project } from '@/types';
-import { Bot } from 'lucide-react';
-import { ToolUseLog } from '@/components/ToolUseLog';
-import { ChatInput } from '@/components/ChatInput';
-import { ChatMessage } from '@/components/ChatMessage';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { SidebarTrigger } from "@/components/ui/sidebar"
-import { H2 } from '@/components/ui/typography';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { useMessageConversion } from '@/hooks/useMessageConversion';
-
+import { useRef, useEffect, useState } from "react";
+import { Conversation, Project } from "@/types";
+import { Bot } from "lucide-react";
+import { ToolUseLog } from "@/components/ToolUseLog";
+import { ChatInput } from "@/components/ChatInput";
+import { ChatMessage } from "@/components/ChatMessage";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { H2 } from "@/components/ui/typography";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useMessageConversion } from "@/hooks/useMessageConversion";
+import { SidebarTrigger } from "./ui/sidebar";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "./ui/breadcrumb";
+import { Separator } from "@radix-ui/react-separator";
 
 interface ChatAreaProps {
   conversation: Conversation | null;
@@ -38,8 +43,8 @@ export const ChatArea = ({
   // Scroll to the bottom of the chat when new messages are added
   useEffect(() => {
     if (messagesEndRef.current) {
-      const behavior = conversation?.messages.length <= 2 ? 'auto' : 'smooth';
-      messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
+      const behavior = conversation?.messages.length <= 2 ? "auto" : "smooth";
+      messagesEndRef.current.scrollIntoView({ behavior, block: "end" });
     }
   }, [conversation?.messages]);
 
@@ -53,11 +58,11 @@ export const ChatArea = ({
     let greeting;
 
     if (hour >= 5 && hour < 12) {
-      greeting = 'Good morning';
+      greeting = "Good morning";
     } else if (hour >= 12 && hour < 18) {
-      greeting = 'Good afternoon';
+      greeting = "Good afternoon";
     } else {
-      greeting = 'Good evening';
+      greeting = "Good evening";
     }
 
     if (project?.name) {
@@ -65,7 +70,7 @@ export const ChatArea = ({
     }
 
     return `${greeting}, how may I assist you?`;
-  }
+  };
 
   const currentMessages = useMessageConversion(conversation?.messages);
 
@@ -74,7 +79,7 @@ export const ChatArea = ({
     await onStop();
   };
 
-  const handleMessage = (async (input: string) => {
+  const handleMessage = async (input: string) => {
     if (!input.trim()) return;
 
     if (!conversation) {
@@ -83,25 +88,24 @@ export const ChatArea = ({
     }
 
     await onNewMessage(conversation.id, input);
-  })
+  };
 
   return (
-    <div className="flex-1 flex flex-col pt-6">
+    <div className="flex-1 flex flex-col w-full pt-6">
       {error && (
-        <div className="bg-destructive/15 border border-destructive text-destructive px-4 py-3 rounded relative" role="alert">
+        <div
+          className="bg-destructive/15 border border-destructive text-destructive px-4 py-3 rounded relative"
+          role="alert"
+        >
           <span className="block sm:inline">{error}</span>
         </div>
       )}
 
       {/* Breadcrumbs */}
       <div className="flex items-center gap-2 px-4 pt-6 pb-0">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="mr-2 h-4" />
         <Breadcrumb>
           <BreadcrumbList>
-            <BreadcrumbItem>
-              {project?.name}
-            </BreadcrumbItem>
+            <BreadcrumbItem>{project?.name}</BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbPage>{conversation?.title}</BreadcrumbPage>
@@ -113,13 +117,14 @@ export const ChatArea = ({
       {/* Messages Area */}
       {conversation?.messages.length > 0 ? (
         <>
-          <ScrollArea className="mt-4" type="hover">
+          <ScrollArea className="mt-4 flex-1 w-full" type="hover">
             <div className="w-full max-w-3xl mx-auto">
               {currentMessages.map((message, index) => {
-                if (message.role === 'tool_use') {
-                  const toolResult = currentMessages[index + 1]?.role === 'tool_result'
-                    ? currentMessages[index + 1]
-                    : undefined;
+                if (message.role === "tool_use") {
+                  const toolResult =
+                    currentMessages[index + 1]?.role === "tool_result"
+                      ? currentMessages[index + 1]
+                      : undefined;
 
                   return (
                     <ToolUseLog
@@ -131,18 +136,15 @@ export const ChatArea = ({
                 }
 
                 // Skip tool results as they're handled with their tool use message
-                if (message.role === 'tool_result' &&
+                if (
+                  message.role === "tool_result" &&
                   index > 0 &&
-                  currentMessages[index - 1].role === 'tool_use') {
+                  currentMessages[index - 1].role === "tool_use"
+                ) {
                   return null;
                 }
 
-                return (
-                  <ChatMessage
-                    key={message.id}
-                    message={message}
-                  />
-                );
+                return <ChatMessage key={message.id} message={message} />;
               })}
 
               {isLoading && (
@@ -155,25 +157,29 @@ export const ChatArea = ({
                   </Avatar>
                   <div className="flex items-center">
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-muted border-t-foreground mr-2" />
-                    <span className="text-muted-foreground">{isStopping ? "Stopping..." : "Thinking..."}</span>
+                    <span className="text-muted-foreground">
+                      {isStopping ? "Stopping..." : "Thinking..."}
+                    </span>
                   </div>
                 </div>
               )}
               <div ref={messagesEndRef} className="h-0" />
             </div>
           </ScrollArea>
-          <ChatInput
-            onSendMessage={handleMessage}
-            onStop={handleStop}
-            disabled={isLoading}
-            isLoading={isLoading}
-            isStopping={isStopping}
-            className="py-4 max-w-3xl mt-auto"
-          />
+          <div className="w-full">
+            <ChatInput
+              onSendMessage={handleMessage}
+              onStop={handleStop}
+              disabled={isLoading}
+              isLoading={isLoading}
+              isStopping={isStopping}
+              className="py-4 max-w-3xl mx-auto w-full px-4"
+            />
+          </div>
         </>
       ) : (
-        <div className="flex h-full flex-col justify-center">
-          <H2 className="w-full max-w-2xl mx-auto border-0 mb-6">
+        <div className="flex h-full flex-col justify-center items-center w-full px-4">
+          <H2 className="w-full max-w-2xl mx-auto text-center border-0 mb-6">
             {title()}
           </H2>
           <ChatInput
@@ -182,7 +188,7 @@ export const ChatArea = ({
             disabled={isLoading}
             isLoading={isLoading}
             isStopping={isStopping}
-            className="max-w-2xl mx-auto w-full px-4"
+            className="max-w-2xl mx-auto w-full"
           />
         </div>
       )}
