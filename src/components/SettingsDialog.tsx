@@ -18,26 +18,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { newUserSettings, Provider, UserSettings } from "@/types/settings"
+import { Switch } from "@/components/ui/switch"
+import { defaultProviderSettings, getCurrentProviderApiKey, newUserSettings, Provider, ProviderSettings, UserSettings } from "@/types/settings"
 import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
 
 interface SettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  error?: string | null;
   onSuccess?: () => void;
   className?: string;
 }
 
 interface ProviderSettingsProps {
-  provider: string;
-  settings: UserSettings;
-  onChange: (key: string, value: string) => void;
+  settings: ProviderSettings;
+  onChange: (settings: ProviderSettings) => void;
 }
 
 function AnthropicSettings({ settings, onChange }: ProviderSettingsProps) {
-  const providerSettings = settings?.provider_settings.anthropic
   return (
     <div className="space-y-4 py-2">
       <div className="grid grid-cols-4 items-center gap-4">
@@ -47,8 +45,8 @@ function AnthropicSettings({ settings, onChange }: ProviderSettingsProps) {
         <Input
           id="anthropic-api-key"
           type="password"
-          value={providerSettings?.apiKey || ''}
-          onChange={(e) => onChange("anthropic.apiKey", e.target.value)}
+          value={settings.apiKey}
+          onChange={(e) => onChange({ ...settings, apiKey: e.target.value })}
           placeholder="sk-ant-..."
           className="col-span-3"
         />
@@ -58,13 +56,26 @@ function AnthropicSettings({ settings, onChange }: ProviderSettingsProps) {
           Chat Model
         </Label>
         <Select
-          value={providerSettings?.models.chat || 'claude-3-5-sonnet-20241022'}
-          onValueChange={(value) => onChange("anthropic.models.chat", value)}
+          value={settings.models.chat}
+          onValueChange={(value) => {
+            // If switching to non-Claude 3.7 and title is also not Claude 3.7, disable thinking
+            const shouldDisableThinking = !value.includes('claude-3-7') && !settings.models.title.includes('claude-3-7');
+
+            onChange({
+              ...settings,
+              models: {
+                ...settings.models,
+                chat: value,
+                thinking: shouldDisableThinking ? false : settings.models.thinking
+              }
+            });
+          }}
         >
           <SelectTrigger id="anthropic-chat-model" className="col-span-3">
             <SelectValue placeholder="Select model" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet</SelectItem>
             <SelectItem value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</SelectItem>
             <SelectItem value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</SelectItem>
           </SelectContent>
@@ -75,32 +86,61 @@ function AnthropicSettings({ settings, onChange }: ProviderSettingsProps) {
           Title Model
         </Label>
         <Select
-          value={providerSettings?.models.title || 'claude-3-5-haiku-20241022'}
-          onValueChange={(value) => onChange("anthropic.models.title", value)}
+          value={settings.models.title}
+          onValueChange={(value) => {
+            // If chat is not Claude 3.7 and we're not selecting a Claude 3.7 model, disable thinking
+            const shouldDisableThinking = !settings.models.chat.includes('claude-3-7') && !value.includes('claude-3-7');
+
+            onChange({
+              ...settings,
+              models: {
+                ...settings.models,
+                title: value,
+                thinking: shouldDisableThinking ? false : settings.models.thinking
+              }
+            });
+          }}
         >
           <SelectTrigger id="anthropic-title-model" className="col-span-3">
             <SelectValue placeholder="Select model" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet</SelectItem>
             <SelectItem value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</SelectItem>
             <SelectItem value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</SelectItem>
           </SelectContent>
         </Select>
       </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="anthropic-thinking" className="text-right">
+          Enable thinking
+        </Label>
+        <div className="flex items-center gap-3 col-span-3">
+          <Switch
+            id="anthropic-thinking"
+            checked={settings.models.thinking}
+            onCheckedChange={(value) => onChange({ ...settings, models: { ...settings.models, thinking: value } })}
+            disabled={!(settings.models.chat.includes('claude-3-7') || settings.models.title.includes('claude-3-7'))}
+          />
+          {!(settings.models.chat.includes('claude-3-7') || settings.models.title.includes('claude-3-7')) && (
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              Only available with Claude 3.7 models
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
-export function SettingsDialog({ 
-  open, 
-  onOpenChange, 
-  error: externalError, 
+export function SettingsDialog({
+  open,
+  onOpenChange,
   onSuccess,
-  className 
+  className
 }: SettingsDialogProps) {
   const { toast } = useToast()
   const [settings, setSettings] = React.useState<UserSettings | null>(null);
-  const [draftSettings, setDraftSettings] = React.useState<UserSettings | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -109,68 +149,49 @@ export function SettingsDialog({
     if (open) {
       window.settings.get().then(settings => {
         setSettings(settings);
-        setDraftSettings(settings); // Initialize draft with current settings
       });
     }
   }, [open]);
 
-  const handleSettingChange = (path: string, value: string) => {
-    const [provider, ...rest] = path.split('.');
-    const newSettings = draftSettings ? { ...draftSettings } : newUserSettings(provider as Provider);
-
-    // Ensure provider settings exist
-    if (!newSettings.provider_settings[provider]) {
-      newSettings.provider_settings[provider] = {
-        apiKey: "",
-        models: { chat: "", title: "" }
+  const handleSettingChange = (provider: Provider, settings: ProviderSettings) => {
+    setSettings(s => {
+      if (!s) {
+        return newUserSettings(provider, settings);
+      }
+      return {
+        ...s,
+        provider_settings: {
+          ...s.provider_settings,
+          [provider]: settings
+        }
       };
-    }
-
-    // Update the specific setting
-    if (rest.length === 1 && rest[0] === 'apiKey') {
-      // Handle apiKey update
-      newSettings.provider_settings[provider].apiKey = value;
-    } else if (rest.length === 2 && rest[0] === 'models') {
-      // Handle models update
-      newSettings.provider_settings[provider].models[rest[1]] = value;
-    } else {
-      console.warn('Unexpected settings path:', path);
-      return;
-    }
-
-    setDraftSettings(newSettings);
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!draftSettings) return;
+    if (!settings) return;
 
     try {
       setError(null);
       setIsSaving(true);
 
       // Validate API key for selected provider
-      const provider = draftSettings.model_provider;
-      const apiKey = draftSettings.provider_settings[provider]?.apiKey;
+      const apiKey = getCurrentProviderApiKey(settings);
       if (!apiKey?.trim()) {
-        throw new Error(`Please enter an API key for ${provider}`);
+        throw new Error(`Please enter an API key for ${settings.model_provider}`);
       }
 
-      await window.settings.update({
-        model_provider: draftSettings.model_provider,
-        provider_settings: draftSettings.provider_settings
-      });
-
+      await window.settings.update(settings);
       await window.chat.reloadSettings();
-      setSettings(draftSettings);
-      
+
       toast({
         title: "Settings saved",
         description: "Your settings have been updated successfully.",
         duration: 3000,
         variant: "success"
       })
-      
+
       onSuccess?.();
       onOpenChange(false);
     } catch (error) {
@@ -184,17 +205,14 @@ export function SettingsDialog({
   // When dialog closes without saving, reset draft to current settings
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      setDraftSettings(settings);
       setError(null);
     }
     onOpenChange(open);
   };
 
-  // if (!settings || !draftSettings) return null;
-
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onOpenChange={handleOpenChange}
     >
       <DialogOverlay className="bg-background/80 backdrop-blur-sm" />
@@ -214,19 +232,18 @@ export function SettingsDialog({
               </span>
             </div>
             <AnthropicSettings
-              provider="anthropic"
-              settings={draftSettings}
-              onChange={handleSettingChange}
+              settings={settings ? settings.provider_settings.anthropic : defaultProviderSettings}
+              onChange={(settings) => handleSettingChange("anthropic", settings)}
             />
           </div>
-          {(error || externalError) && (
+          {(error) && (
             <div className="mt-4 text-sm text-red-500">
-              {error || externalError}
+              {error}
             </div>
           )}
           <DialogFooter className="mt-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isSaving}
             >
               {isSaving ? "Saving..." : "Save"}

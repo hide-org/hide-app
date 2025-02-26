@@ -13,7 +13,6 @@ import { SettingsDialog } from "./SettingsDialog"
 import { ProjectDialog } from "./ProjectDialog"
 import { Project } from "@/types"
 import { Steps } from "@/components/Steps"
-import { useEffect } from "react"
 import { useToast } from "@/components/ui/use-toast"
 
 interface WelcomeFlowProps {
@@ -54,13 +53,6 @@ export function WelcomeFlow({ open, onOpenChange, onComplete, onSelectProject }:
   const [currentStep, setCurrentStep] = React.useState<StepEnum>(StepEnum.WELCOME);
   const [showSettings, setShowSettings] = React.useState(false)
   const [showProject, setShowProject] = React.useState(false)
-  const [settingsError, setSettingsError] = React.useState<string | null>(null)
-
-  useEffect(() => {
-    if (currentStep === StepEnum.CONNECT_AI) { 
-      setSettingsError(null);  // Reset any previous errors
-    }
-  }, [currentStep]);
 
   const handleSettingsSaved = () => {
     setShowSettings(false)
@@ -74,14 +66,14 @@ export function WelcomeFlow({ open, onOpenChange, onComplete, onSelectProject }:
       }
 
       await window.projects.create(project);
-      
+
       toast({
         title: "Project created",
         description: "Your project has been created successfully.",
         duration: 3000,
         variant: "success"
       });
-      
+
       setShowProject(false);
       onSelectProject?.(project);
       onComplete();
@@ -107,8 +99,8 @@ export function WelcomeFlow({ open, onOpenChange, onComplete, onSelectProject }:
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
           >
-            <Button 
-              onClick={() => setCurrentStep(StepEnum.CONNECT_AI)} 
+            <Button
+              onClick={() => setCurrentStep(StepEnum.CONNECT_AI)}
               className="w-full"
               size="lg"
             >
@@ -123,8 +115,8 @@ export function WelcomeFlow({ open, onOpenChange, onComplete, onSelectProject }:
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
           >
-            <Button 
-              onClick={() => setShowSettings(true)} 
+            <Button
+              onClick={() => setShowSettings(true)}
               className="w-full"
               size="lg"
             >
@@ -139,8 +131,8 @@ export function WelcomeFlow({ open, onOpenChange, onComplete, onSelectProject }:
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
           >
-            <Button 
-              onClick={() => setShowProject(true)} 
+            <Button
+              onClick={() => setShowProject(true)}
               className="w-full"
               size="lg"
             >
@@ -164,8 +156,8 @@ export function WelcomeFlow({ open, onOpenChange, onComplete, onSelectProject }:
 
   return (
     <>
-      <Dialog 
-        open={open} 
+      <Dialog
+        open={open}
         onOpenChange={handleOpenChange}  // Use our new handler
         modal
       >
@@ -180,9 +172,9 @@ export function WelcomeFlow({ open, onOpenChange, onComplete, onSelectProject }:
 
           <div className="py-6">
             {renderStep()}
-            <Steps 
-              steps={STEPS.length} 
-              currentStep={currentStep} 
+            <Steps
+              steps={STEPS.length}
+              currentStep={currentStep}
               className="mt-8"
             />
           </div>
@@ -192,7 +184,6 @@ export function WelcomeFlow({ open, onOpenChange, onComplete, onSelectProject }:
       <SettingsDialog
         open={showSettings}
         onOpenChange={setShowSettings}
-        error={settingsError}
         onSuccess={handleSettingsSaved}
         className="bg-background border-border"
       />

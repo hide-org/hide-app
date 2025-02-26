@@ -20,7 +20,6 @@ export function Chat() {
   const [error, setError] = useState<string | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [settingsError, setSettingsError] = useState<string | null>(null);
 
   // Load projects from the database
   const loadProjects = async () => {
@@ -144,7 +143,6 @@ export function Chat() {
 
     const cleanup = window.electron.onCredentialsRequired((error: string) => {
       console.debug("Credentials required:", error);
-      setSettingsError(error);
       setShowWelcome(true);
     });
 
@@ -383,7 +381,6 @@ export function Chat() {
         <SettingsDialog
           open={showSettings}
           onOpenChange={setShowSettings}
-          error={settingsError}
         />
         <Toaster />
       </div>

@@ -32,7 +32,7 @@ export const newAssistantMessage = (content: string | AssistantContentBlock[]): 
 };
 
 export type UserContentBlock = TextBlock | ImageBlock | ToolResultBlock;
-export type AssistantContentBlock = TextBlock | ToolUseBlock;
+export type AssistantContentBlock = TextBlock | ToolUseBlock | ThinkingBlock | RedactedThinkingBlock;
 
 export type ToolResultContentBlock = TextBlock | ImageBlock;
 
@@ -59,4 +59,15 @@ export type ToolResultBlock = {
     toolUseId: string;
     isError: boolean;
     content: ToolResultContentBlock[];
+};
+
+export type ThinkingBlock = {
+    type: 'thinking';
+    signature: string;
+    text: string;
+};
+
+export type RedactedThinkingBlock = {
+    type: 'redacted_thinking';
+    data: string;
 };

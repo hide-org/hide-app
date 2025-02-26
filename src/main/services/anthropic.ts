@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ImageBlockParam, TextBlockParam, ToolUseBlockParam } from '@anthropic-ai/sdk/resources';
-import { MessageParam, Tool as AnthropicTool, ToolResultBlockParam } from '@anthropic-ai/sdk/resources/messages';
+import { MessageParam, RedactedThinkingBlockParam, ThinkingBlockParam, Tool as AnthropicTool, ToolResultBlockParam } from '@anthropic-ai/sdk/resources/messages';
 import type { CallToolResult as ToolResult, Tool } from '@modelcontextprotocol/sdk/types';
 import { callTool } from '@/main/mcp';
 import { mcpToAnthropicTool } from '@/lib/mcp/adapters';
@@ -16,12 +16,17 @@ export class AnthropicService {
   private client: Anthropic;
   private chatModel: string;
   private titleModel: string;
+  private thinkingEnabled: boolean;
   private tools: AnthropicTool[];
   private analytics: AnalyticsService;
+  private maxTokens: number;
+  private budgetTokens: number;
 
-  constructor(tools: Tool[], analytics: AnalyticsService) {
+  constructor(tools: Tool[], analytics: AnalyticsService, maxTokens: number = 4096, budgetTokens: number = 1024) {
     this.tools = tools.map(mcpToAnthropicTool);
     this.analytics = analytics;
+    this.maxTokens = maxTokens;
+    this.budgetTokens = budgetTokens;
   }
 
   // TODO: add abort signal
@@ -36,10 +41,11 @@ export class AnthropicService {
       while (true) {
         const response = await this.client.messages.create({
           model: this.chatModel,
-          max_tokens: 4096,
+          max_tokens: this.maxTokens,
           system: systemPrompt,
           messages: loopMessages,
           tools: this.tools,
+          thinking: this.thinkingEnabled ? { type: 'enabled', budget_tokens: this.budgetTokens } : undefined,
         }, { signal: abortSignal });
 
         const responseMessage = {
@@ -51,6 +57,14 @@ export class AnthropicService {
 
             if (block.type === 'tool_use') {
               return block as ToolUseBlockParam;
+            }
+
+            if (block.type === 'thinking') {
+              return block as ThinkingBlockParam;
+            }
+
+            if (block.type === 'redacted_thinking') {
+              return block as RedactedThinkingBlockParam;
             }
           }),
         };
@@ -129,6 +143,7 @@ export class AnthropicService {
         throw new Error('Title model is not set. Please select a model in Settings.');
       }
 
+      this.thinkingEnabled = settings.models.thinking;
       this.chatModel = settings.models.chat;
       this.titleModel = settings.models.title;
       this.client = new Anthropic({

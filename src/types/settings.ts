@@ -1,7 +1,8 @@
 export interface ModelSettings {
     chat: string;
     title: string;
-    [key: string]: string;  // Allow string indexing
+    thinking: boolean;
+    [key: string]: string | boolean;  // Allow string indexing
 }
 
 export interface ProviderSettings {
@@ -21,21 +22,20 @@ export interface UserSettings {
     updated_at: number;
 }
 
-export const newUserSettings = (provider: Provider): UserSettings => {
-    const defaultModels = {
-        anthropic: {
-            chat: 'claude-3-5-sonnet-20241022',
-            title: 'claude-3-5-haiku-20241022'
-        }
-    };
+export const defaultProviderSettings: ProviderSettings = {
+    apiKey: "",
+    models: {
+        chat: '',
+        title: '',
+        thinking: false
+    }
+};
 
+export const newUserSettings = (provider: Provider, settings: ProviderSettings): UserSettings => {
     return {
         model_provider: provider,
         provider_settings: {
-            [provider]: {
-                apiKey: "",
-                models: defaultModels[provider]
-            }
+            [provider]: settings
         },
         created_at: Date.now(),
         updated_at: Date.now()

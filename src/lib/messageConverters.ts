@@ -79,6 +79,18 @@ function convertAssistantMessage(message: AssistantMessage): UIMessage[] {
         };
       case 'tool_use':
         return messageFromToolUse(block);
+      case 'thinking':
+        return {
+          id: `${message.id}-${idx}`,
+          role: 'thinking',
+          content: block.text
+        };
+      case 'redacted_thinking':
+        return {
+          id: `${message.id}-${idx}`,
+          role: 'thinking',
+          content: 'Encrypted by Anthropic for safety reasons'
+        };
     }
   });
 }
