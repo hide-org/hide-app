@@ -108,8 +108,8 @@ const createWindow = (): BrowserWindow => {
     height: 900,
     width: 1440,
     titleBarStyle: 'hidden',
-    backgroundColor: 'rgb(2 6 23)', // This should match your sidebar dark background
-    trafficLightPosition: { x: 10, y: 10 }, // Position the traffic lights
+    backgroundColor: 'rgb(2 6 23)', 
+    trafficLightPosition: { x: 10, y: 10 },
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       webSecurity: true,

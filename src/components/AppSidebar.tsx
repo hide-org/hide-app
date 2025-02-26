@@ -125,12 +125,12 @@ export function AppSidebar({
         <div className={cn(
           "flex",
           sidebarState === "collapsed" 
-            ? "flex-col items-center justify-center space-y-4 mt-10 mb-2"
-            : "flex-row items-center justify-between mt-8"
+            ? "flex-col items-center justify-center space-y-4 mt-6 mb-2"
+            : "flex-row items-center justify-between mt-6"
         )}>
           <Logo 
             className={cn(
-              "h-10 w-auto transition-colors duration-200",
+              "h-10 w-auto transition-colors duration-200 pt-2",
               effectiveTheme === 'dark' ? "stroke-white" : "stroke-black"
             )}
           />
