@@ -217,14 +217,16 @@ ipcMain.handle('dialog:showDirectoryPicker', async () => {
 });
 
 app.whenReady().then(async () => {
-  // Initialize the database and set up IPC handlers
-  initializeDatabase();
-  setupDbHandlers();
-
-  const { cmd, args } = await getMCPConfig();
-  console.debug('Initializing MCP...', { cmd, args });
-
   try {
+    // Initialize the database with migrations and set up IPC handlers
+    console.debug('Initializing database...');
+    await initializeDatabase();
+    setupDbHandlers();
+    console.debug('Database initialized successfully');
+
+    const { cmd, args } = await getMCPConfig();
+    console.debug('Initializing MCP...', { cmd, args });
+
     // Initialize analytics
     const posthog = new PostHog(
       process.env.POSTHOG_API_KEY,

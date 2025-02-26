@@ -10,7 +10,10 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
-    "rebuild": "./node_modules/.bin/electron-rebuild"
+    "rebuild": "./node_modules/.bin/electron-rebuild",
+    "migrate:up": "ts-node src/main/cli/migrate.ts up",
+    "migrate:down": "ts-node src/main/cli/migrate.ts down",
+    "migrate:status": "ts-node src/main/cli/migrate.ts status"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.6.0",
@@ -87,6 +90,7 @@
     "rehype-raw": "^7.0.0",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
+    "umzug": "^3.8.2",
     "uuid": "^11.0.3",
     "zod": "^3.24.1"
   }

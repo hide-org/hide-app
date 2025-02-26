@@ -1,96 +1,33 @@
 import Database from 'better-sqlite3';
 import { app, ipcMain } from 'electron';
 import path from 'path';
-import { homedir } from 'os';
-import { v4 as uuidv4 } from 'uuid';
 import { Conversation, Project, Task, UserAccount } from '../types';
 import { UserSettings } from '../types/settings';
+import { initMigrations, runMigrations } from './migrations';
+import { insertDefaultProjectIfNeeded } from './migrations/core-migrations';
 
 let db: Database.Database;
+let migrator: any;
 
-export const initializeDatabase = () => {
+export const initializeDatabase = async () => {
   if (db) return;
 
   const dbPath = path.join(app.getPath('userData'), 'database.sqlite');
   db = new Database(dbPath);
 
-  // Create projects table if it doesn't exist
-  db.exec(`
-        CREATE TABLE IF NOT EXISTS projects (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            path TEXT NOT NULL,
-            description TEXT
-        )
-    `);
-
-  // Create conversations table if it doesn't exist
-  db.exec(`
-        CREATE TABLE IF NOT EXISTS conversations (
-            id TEXT PRIMARY KEY,
-            title TEXT NOT NULL,
-            messages TEXT NOT NULL,
-            projectId TEXT NOT NULL,
-            status TEXT NOT NULL DEFAULT 'inactive' CHECK (status IN ('active', 'inactive')),
-            createdAt INTEGER NOT NULL,
-            updatedAt INTEGER NOT NULL,
-            FOREIGN KEY (projectId) REFERENCES projects(id)
-        )
-    `);
-
-  // Create user_settings table if it doesn't exist
-  db.exec(`
-        CREATE TABLE IF NOT EXISTS user_settings (
-            id INTEGER PRIMARY KEY CHECK (id = 1),
-            model_provider TEXT NOT NULL,
-            provider_settings TEXT NOT NULL,
-            created_at INTEGER NOT NULL,
-            updated_at INTEGER NOT NULL
-        )
-    `);
-
-  // Create tasks table if it doesn't exist
-  db.exec(`
-        CREATE TABLE IF NOT EXISTS tasks (
-            id TEXT PRIMARY KEY,
-            title TEXT NOT NULL,
-            description TEXT,
-            status TEXT NOT NULL CHECK (status IN ('pending', 'running', 'completed', 'failed', 'cancelled')),
-            metadata TEXT NOT NULL,
-            projectId TEXT NOT NULL,
-            conversationId TEXT,
-            createdAt INTEGER NOT NULL,
-            updatedAt INTEGER NOT NULL,
-            FOREIGN KEY (projectId) REFERENCES projects(id),
-            FOREIGN KEY (conversationId) REFERENCES conversations(id)
-        )
-    `);
-
-  // Create user_account table if it doesn't exist
-  db.exec(`
-        CREATE TABLE IF NOT EXISTS user_account (
-             id INTEGER PRIMARY KEY CHECK (id = 1),
-             user_id TEXT NOT NULL
-        )
-    `);
-
-  // Insert default projects if table is empty
-  const projectCount = db.prepare('SELECT COUNT(*) as count FROM projects').get() as { count: number };
-  if (projectCount.count === 0) {
-    const defaultProjects = [
-      {
-        id: uuidv4(),
-        name: "general",
-        path: homedir(),
-        description: "Default project for general help on my machine",
-      },
-    ];
-
-    const insert = db.prepare('INSERT INTO projects (id, name, path, description) VALUES (?, ?, ?, ?)');
-    defaultProjects.forEach(project => {
-      insert.run(project.id, project.name, project.path, project.description);
-    });
-  }
+  // Initialize migration system with embedded migrations
+  console.debug('Initializing migration system...');
+  migrator = initMigrations(db);
+  
+  // Run migrations
+  console.debug('Running migrations...');
+  await runMigrations(migrator);
+  
+  // Insert default project if needed (after migrations have run)
+  console.debug('Checking if default project needs to be created...');
+  insertDefaultProjectIfNeeded(db);
+  
+  console.debug('Database initialization complete');
 };
 
 export const getAllProjects = (): Project[] => {
