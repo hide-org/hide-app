@@ -57,7 +57,19 @@ function AnthropicSettings({ settings, onChange }: ProviderSettingsProps) {
         </Label>
         <Select
           value={settings.models.chat}
-          onValueChange={(value) => onChange({ ...settings, models: { ...settings.models, chat: value } })}
+          onValueChange={(value) => {
+            // If switching to non-Claude 3.7 and title is also not Claude 3.7, disable thinking
+            const shouldDisableThinking = !value.includes('claude-3-7') && !settings.models.title.includes('claude-3-7');
+
+            onChange({
+              ...settings,
+              models: {
+                ...settings.models,
+                chat: value,
+                thinking: shouldDisableThinking ? false : settings.models.thinking
+              }
+            });
+          }}
         >
           <SelectTrigger id="anthropic-chat-model" className="col-span-3">
             <SelectValue placeholder="Select model" />
@@ -75,7 +87,19 @@ function AnthropicSettings({ settings, onChange }: ProviderSettingsProps) {
         </Label>
         <Select
           value={settings.models.title}
-          onValueChange={(value) => onChange({ ...settings, models: { ...settings.models, title: value } })}
+          onValueChange={(value) => {
+            // If chat is not Claude 3.7 and we're not selecting a Claude 3.7 model, disable thinking
+            const shouldDisableThinking = !settings.models.chat.includes('claude-3-7') && !value.includes('claude-3-7');
+
+            onChange({
+              ...settings,
+              models: {
+                ...settings.models,
+                title: value,
+                thinking: shouldDisableThinking ? false : settings.models.thinking
+              }
+            });
+          }}
         >
           <SelectTrigger id="anthropic-title-model" className="col-span-3">
             <SelectValue placeholder="Select model" />
@@ -91,11 +115,19 @@ function AnthropicSettings({ settings, onChange }: ProviderSettingsProps) {
         <Label htmlFor="anthropic-thinking" className="text-right">
           Enable thinking
         </Label>
-        <Switch
-          id="anthropic-thinking"
-          checked={settings.models.thinking}
-          onCheckedChange={(value) => onChange({ ...settings, models: { ...settings.models, thinking: value } })}
-        />
+        <div className="flex items-center gap-3 col-span-3">
+          <Switch
+            id="anthropic-thinking"
+            checked={settings.models.thinking}
+            onCheckedChange={(value) => onChange({ ...settings, models: { ...settings.models, thinking: value } })}
+            disabled={!(settings.models.chat.includes('claude-3-7') || settings.models.title.includes('claude-3-7'))}
+          />
+          {!(settings.models.chat.includes('claude-3-7') || settings.models.title.includes('claude-3-7')) && (
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              Only available with Claude 3.7 models
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
