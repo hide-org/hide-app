@@ -108,7 +108,7 @@ const createWindow = (): BrowserWindow => {
     height: 900,
     width: 1440,
     titleBarStyle: 'hidden',
-    backgroundColor: 'rgb(2 6 23)', 
+    backgroundColor: 'rgb(2 6 23)',
     trafficLightPosition: { x: 10, y: 10 },
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
@@ -193,8 +193,15 @@ const getMCPConfig = async () => {
   // In development, use system's uv
   if (!app.isPackaged) {
     return {
-      cmd: 'uv',
-      args: ['--directory', mcpPath, 'run', 'hide-mcp', 'server']
+      cmd: 'ssh',
+      args: [
+        '-i', '/Users/artemm/Code/cli/example-usage/tool-mcp-via-ssh/server/temp-ssh-key',
+        '-o', 'NoHostAuthenticationForLocalhost=yes',
+        '-o', 'UserKnownHostsFile=/dev/null',
+        '-o', 'GlobalKnownHostsFile=/dev/null',
+        '-p', '2222',
+        'vscode@localhost',
+        'exec', 'uv', '--directory', 'hide-mcp/', 'run', 'hide-mcp', 'server']
     };
   }
 

@@ -12,14 +12,14 @@ export async function initializeMCP(command: string, args: string[] = []) {
     mcpReadyPromise = (async () => {
         try {
             console.debug('Creating MCP StdioClientTransport...', { command, args });
-            console.debug(`Checking ${command} installation...`);
-            try {
-                const { stdout: usage } = await shellExec(`${escapeShellArg(command)} --help`);
-                console.debug(`${command} usage:`, usage.trim());
-            } catch (err) {
-                console.error(`Error checking ${command}:`, err);
-                throw new Error(`${command} check failed: ${err.message}`);
-            }
+            // console.debug(`Checking ${command} installation...`);
+            // try {
+            //     const { stdout: usage } = await shellExec(`${escapeShellArg(command)} --help`);
+            //     console.debug(`${command} usage:`, usage.trim());
+            // } catch (err) {
+            //     console.error(`Error checking ${command}:`, err);
+            //     throw new Error(`${command} check failed: ${err.message}`);
+            // }
 
             // Create transport with stdout/stderr capture
             const transport = new StdioClientTransport({
@@ -66,8 +66,6 @@ export async function initializeMCP(command: string, args: string[] = []) {
             console.debug('MCP tools list received:', tools);
         } catch (error) {
             console.error('Detailed MCP initialization error:', error);
-            if (error.cause) console.error('Error cause:', error.cause);
-            if (error.stack) console.error('Error stack:', error.stack);
             mcpClient = null;
             mcpReadyPromise = null;
             throw new Error(`MCP initialization failed: ${error.message}`);
