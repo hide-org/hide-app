@@ -259,16 +259,9 @@ export class AnthropicService implements LLMService {
       throw new Error("No settings found");
     }
 
-    if (settings.model_provider !== "anthropic") {
-      throw new Error(
-        `Provider ${settings.model_provider} is not supported.Use Anthropic instead.`,
-      );
-    }
-
-    const providerSettings =
-      settings.provider_settings[settings.model_provider];
+    const providerSettings = settings.provider_settings["anthropic"];
     if (!providerSettings?.apiKey) {
-      throw new Error(`No API key found for ${settings.model_provider}`);
+      throw new Error("No API key found for Anthropic");
     }
 
     return providerSettings;

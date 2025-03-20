@@ -5,7 +5,6 @@ export interface ProviderSettings {
 export type Provider = "anthropic" | "openai";
 
 export interface UserSettings {
-  model_provider: Provider;
   provider_settings: {
     [key: string]: ProviderSettings;
   };
@@ -22,7 +21,6 @@ export const newUserSettings = (
   settings: ProviderSettings,
 ): UserSettings => {
   return {
-    model_provider: provider,
     provider_settings: {
       [provider]: settings,
     },
@@ -31,21 +29,9 @@ export const newUserSettings = (
   };
 };
 
-export const getCurrentProviderSettings = (
+export const getProviderApiKey = (
   settings: UserSettings,
-): ProviderSettings | undefined => {
-  if (!settings.provider_settings[settings.model_provider]) {
-    return undefined;
-  }
-  return settings.provider_settings[settings.model_provider];
-};
-
-export const getCurrentProviderApiKey = (
-  settings: UserSettings,
+  provider: Provider
 ): string | undefined => {
-  const providerSettings = getCurrentProviderSettings(settings);
-  if (!providerSettings) {
-    return undefined;
-  }
-  return providerSettings.apiKey;
+  return settings.provider_settings[provider]?.apiKey;
 };

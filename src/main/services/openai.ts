@@ -212,19 +212,9 @@ export class OpenAIService implements LLMService {
       throw new Error("No settings found");
     }
 
-    if (
-      settings.model_provider !== "openai" &&
-      settings.model_provider !== "anthropic"
-    ) {
-      throw new Error(
-        `Provider ${settings.model_provider} is not supported. Use OpenAI or Anthropic instead.`,
-      );
-    }
-
-    const providerSettings =
-      settings.provider_settings[settings.model_provider];
+    const providerSettings = settings.provider_settings["openai"];
     if (!providerSettings?.apiKey) {
-      throw new Error(`No API key found for ${settings.model_provider}`);
+      throw new Error("No API key found for OpenAI");
     }
 
     return providerSettings;
