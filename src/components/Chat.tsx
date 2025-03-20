@@ -1,15 +1,15 @@
-import { useState, useEffect } from "react";
+import { AppSidebar } from "@/components/AppSidebar";
+import { ChatArea } from "@/components/ChatArea";
+import { SettingsDialog } from "@/components/SettingsDialog";
+import { TitleBar } from "@/components/TitleBar";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/toaster";
+import { H2 } from "@/components/ui/typography";
+import { WelcomeFlow } from "@/components/WelcomeFlow";
+import { systemPrompt } from "@/lib/prompts";
 import { Conversation, newConversation, Project } from "@/types";
 import { Message, newUserMessage } from "@/types/message";
-import { ChatArea } from "@/components/ChatArea";
-import { AppSidebar } from "@/components/AppSidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { H2 } from "@/components/ui/typography";
-import { systemPrompt } from "@/lib/prompts";
-import { WelcomeFlow } from "@/components/WelcomeFlow";
-import { SettingsDialog } from "@/components/SettingsDialog";
-import { Toaster } from "@/components/ui/toaster";
-import { TitleBar } from "@/components/TitleBar";
+import { useEffect, useState } from "react";
 
 export function Chat() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -52,7 +52,7 @@ export function Chat() {
       const loadConversationsForProject = async () => {
         try {
           const loadedConversations = await window.conversations.getAll(
-            selectedProject.id
+            selectedProject.id,
           );
           setConversations(loadedConversations);
         } catch (err) {
@@ -83,8 +83,8 @@ export function Chat() {
                 messages: [...conversation.messages, message],
                 updatedAt: Date.now(),
               }
-            : conversation
-        )
+            : conversation,
+        ),
       );
 
       // Update current conversation if it's the active one
@@ -122,7 +122,7 @@ export function Chat() {
       setConversations((prev) =>
         prev
           .map((c) => (c.id === conversation.id ? conversation : c))
-          .sort((a, b) => b.updatedAt - a.updatedAt)
+          .sort((a, b) => b.updatedAt - a.updatedAt),
       );
     };
 
@@ -149,7 +149,11 @@ export function Chat() {
     return cleanup;
   }, []);
 
-  const handleNewConversation = async (message: string): Promise<void> => {
+  const handleNewConversation = async (
+    message: string,
+    model: string,
+    thinking?: boolean,
+  ): Promise<void> => {
     if (
       !selectedProject ||
       !window.conversations?.create ||
@@ -166,23 +170,27 @@ export function Chat() {
     setCurrentConversation(newConv);
     setConversations(await window.conversations.getAll(selectedProject.id));
 
-    window.chat.generateTitle(newConv.id, message).catch((err) => {
+    window.chat.generateTitle(newConv.id, message, model).catch((err) => {
       console.error("Error generating title:", err);
       setError(
         err instanceof Error
           ? err.message
-          : "Title generation failed. See logs or console for details."
+          : "Title generation failed. See logs or console for details.",
       );
     });
 
     window.chat
-      .start(newConv.id, systemPrompt(selectedProject))
+      .start(newConv.id, {
+        model,
+        thinking,
+        systemPrompt: systemPrompt(selectedProject),
+      })
       .catch((err) => {
         console.error("Error starting chat:", err);
         setError(
           err instanceof Error
             ? err.message
-            : "Chat failed. See logs or console for details."
+            : "Chat failed. See logs or console for details.",
         );
       });
   };
@@ -205,7 +213,9 @@ export function Chat() {
 
   const handleNewMessage = async (
     conversationId: string,
-    message: string
+    message: string,
+    model: string,
+    thinking?: boolean,
   ): Promise<void> => {
     if (!window.conversations?.update || !window.chat?.start) {
       console.warn("Required APIs are not available");
@@ -225,7 +235,7 @@ export function Chat() {
         setError(
           err instanceof Error
             ? err.message
-            : "Error saving conversation. See logs or console for details."
+            : "Error saving conversation. See logs or console for details.",
         );
       });
       return updatedConversation;
@@ -235,13 +245,17 @@ export function Chat() {
 
     // Start chat processing
     window.chat
-      .start(conversationId, systemPrompt(selectedProject))
+      .start(conversationId, {
+        model,
+        thinking,
+        systemPrompt: systemPrompt(selectedProject),
+      })
       .catch((err) => {
         console.error("Error starting chat:", err);
         setError(
           err instanceof Error
             ? err.message
-            : "Chat failed. See logs or console for details."
+            : "Chat failed. See logs or console for details.",
         );
       });
   };
@@ -292,7 +306,7 @@ export function Chat() {
 
       if (selectedProject) {
         const conversations = await window.conversations.getAll(
-          selectedProject.id
+          selectedProject.id,
         );
         setConversations(conversations);
       }
@@ -316,7 +330,7 @@ export function Chat() {
 
       if (selectedProject) {
         const conversations = await window.conversations.getAll(
-          selectedProject.id
+          selectedProject.id,
         );
         setConversations(conversations);
       }
@@ -378,10 +392,7 @@ export function Chat() {
           }}
           onSelectProject={onSelectProject}
         />
-        <SettingsDialog
-          open={showSettings}
-          onOpenChange={setShowSettings}
-        />
+        <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />
         <Toaster />
       </div>
     </SidebarProvider>

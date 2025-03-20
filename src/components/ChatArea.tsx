@@ -8,7 +8,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { H2 } from "@/components/ui/typography";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useMessageConversion } from "@/hooks/useMessageConversion";
-import { SidebarTrigger } from "./ui/sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -16,12 +15,11 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "./ui/breadcrumb";
-import { Separator } from "@radix-ui/react-separator";
 
 interface ChatAreaProps {
   conversation: Conversation | null;
-  onNewConversation: (message: string) => Promise<void>;
-  onNewMessage: (conversationId: string, message: string) => Promise<void>;
+  onNewConversation: (message: string, model?: string, thinking?: boolean) => Promise<void>;
+  onNewMessage: (conversationId: string, message: string, model?: string, thinking?: boolean) => Promise<void>;
   onStop: () => Promise<void>;
   isLoading: boolean;
   project: Project | null;
@@ -39,6 +37,7 @@ export const ChatArea = ({
 }: ChatAreaProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isStopping, setIsStopping] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<string>("");
 
   // Scroll to the bottom of the chat when new messages are added
   useEffect(() => {
@@ -79,15 +78,15 @@ export const ChatArea = ({
     await onStop();
   };
 
-  const handleMessage = async (input: string) => {
+  const handleMessage = async (input: string, model?: string, thinking?: boolean) => {
     if (!input.trim()) return;
 
     if (!conversation) {
-      await onNewConversation(input);
+      await onNewConversation(input, model, thinking);
       return;
     }
 
-    await onNewMessage(conversation.id, input);
+    await onNewMessage(conversation.id, input, model, thinking);
   };
 
   return (
@@ -190,6 +189,8 @@ export const ChatArea = ({
               isLoading={isLoading}
               isStopping={isStopping}
               className="py-4 max-w-3xl mx-auto w-full px-4"
+              selectedModelId={selectedModel}
+              onModelChange={setSelectedModel}
             />
           </div>
         </>
@@ -205,6 +206,8 @@ export const ChatArea = ({
             isLoading={isLoading}
             isStopping={isStopping}
             className="max-w-2xl mx-auto w-full"
+            selectedModelId={selectedModel}
+            onModelChange={setSelectedModel}
           />
         </div>
       )}

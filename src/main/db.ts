@@ -127,7 +127,6 @@ export const deleteProjectConversations = (projectId: string): void => {
 
 interface UserSettingsRow {
   id: number;
-  model_provider: string;
   provider_settings: string;
   created_at: number;
   updated_at: number;
@@ -140,7 +139,6 @@ export const getUserSettings = (): UserSettings | null => {
   if (!row) return null;
 
   return {
-    model_provider: row.model_provider as UserSettings['model_provider'],
     provider_settings: JSON.parse(row.provider_settings),
     created_at: row.created_at,
     updated_at: row.updated_at
@@ -154,13 +152,11 @@ export const updateUserSettings = async (settings: Omit<UserSettings, 'created_a
     // Update existing settings
     const stmt = db.prepare(`
       UPDATE user_settings 
-      SET model_provider = ?,
-          provider_settings = ?,
+      SET provider_settings = ?,
           updated_at = ?
       WHERE id = 1
     `);
     stmt.run(
-      settings.model_provider,
       JSON.stringify(settings.provider_settings),
       Date.now()
     );
@@ -169,16 +165,14 @@ export const updateUserSettings = async (settings: Omit<UserSettings, 'created_a
     const stmt = db.prepare(`
       INSERT INTO user_settings (
         id,
-        model_provider,
         provider_settings,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?)
     `);
     const now = Date.now();
     stmt.run(
       1,
-      settings.model_provider,
       JSON.stringify(settings.provider_settings),
       now,
       now

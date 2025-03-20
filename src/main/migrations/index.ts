@@ -1,5 +1,6 @@
 import { Migration } from '../db/migration-manager';
 import { migration as migration001 } from './migration_001';
+import { migration as migration002 } from './migration_002';
 
 /**
  * Collection of all migrations in the system
@@ -11,6 +12,6 @@ import { migration as migration001 } from './migration_001';
  */
 export const migrations: Migration[] = [
   migration001,
+  migration002,
   // Add more migrations here as needed
-  // Example: migration002,
 ];

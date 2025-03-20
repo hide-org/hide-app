@@ -1,4 +1,5 @@
 import * as React from "react"
+import { Check, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -12,14 +13,12 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { defaultProviderSettings, getCurrentProviderApiKey, newUserSettings, Provider, ProviderSettings, UserSettings } from "@/types/settings"
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
+} from "@/components/ui/tabs"
+import { defaultProviderSettings, Provider, ProviderSettings, UserSettings, newUserSettings } from "@/types/settings"
 import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
 
@@ -37,98 +36,36 @@ interface ProviderSettingsProps {
 
 function AnthropicSettings({ settings, onChange }: ProviderSettingsProps) {
   return (
-    <div className="space-y-4 py-2">
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="anthropic-api-key" className="text-right">
-          API Key
-        </Label>
-        <Input
-          id="anthropic-api-key"
-          type="password"
-          value={settings.apiKey}
-          onChange={(e) => onChange({ ...settings, apiKey: e.target.value })}
-          placeholder="sk-ant-..."
-          className="col-span-3"
-        />
-      </div>
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="anthropic-chat-model" className="text-right">
-          Chat Model
-        </Label>
-        <Select
-          value={settings.models.chat}
-          onValueChange={(value) => {
-            // If switching to non-Claude 3.7 and title is also not Claude 3.7, disable thinking
-            const shouldDisableThinking = !value.includes('claude-3-7') && !settings.models.title.includes('claude-3-7');
+    <div className="space-y-2">
+      <Label htmlFor="anthropic-key">API Key</Label>
+      <Input
+        id="anthropic-key"
+        type="password"
+        placeholder="sk-ant-..."
+        value={settings.apiKey}
+        onChange={(e) => onChange({ ...settings, apiKey: e.target.value })}
+      />
+      <p className="text-[0.8rem] text-muted-foreground">
+        Enter your Anthropic API key. You can find this in your Anthropic console.
+      </p>
+    </div>
+  );
+}
 
-            onChange({
-              ...settings,
-              models: {
-                ...settings.models,
-                chat: value,
-                thinking: shouldDisableThinking ? false : settings.models.thinking
-              }
-            });
-          }}
-        >
-          <SelectTrigger id="anthropic-chat-model" className="col-span-3">
-            <SelectValue placeholder="Select model" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet</SelectItem>
-            <SelectItem value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</SelectItem>
-            <SelectItem value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="anthropic-title-model" className="text-right">
-          Title Model
-        </Label>
-        <Select
-          value={settings.models.title}
-          onValueChange={(value) => {
-            // If chat is not Claude 3.7 and we're not selecting a Claude 3.7 model, disable thinking
-            const shouldDisableThinking = !settings.models.chat.includes('claude-3-7') && !value.includes('claude-3-7');
-
-            onChange({
-              ...settings,
-              models: {
-                ...settings.models,
-                title: value,
-                thinking: shouldDisableThinking ? false : settings.models.thinking
-              }
-            });
-          }}
-        >
-          <SelectTrigger id="anthropic-title-model" className="col-span-3">
-            <SelectValue placeholder="Select model" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet</SelectItem>
-            <SelectItem value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</SelectItem>
-            <SelectItem value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="anthropic-thinking" className="text-right">
-          Enable thinking
-        </Label>
-        <div className="flex items-center gap-3 col-span-3">
-          <Switch
-            id="anthropic-thinking"
-            checked={settings.models.thinking}
-            onCheckedChange={(value) => onChange({ ...settings, models: { ...settings.models, thinking: value } })}
-            disabled={!(settings.models.chat.includes('claude-3-7') || settings.models.title.includes('claude-3-7'))}
-          />
-          {!(settings.models.chat.includes('claude-3-7') || settings.models.title.includes('claude-3-7')) && (
-            <span className="text-xs text-muted-foreground whitespace-nowrap">
-              Only available with Claude 3.7 models
-            </span>
-          )}
-        </div>
-      </div>
+function OpenAISettings({ settings, onChange }: ProviderSettingsProps) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="openai-key">API Key</Label>
+      <Input
+        id="openai-key"
+        type="password"
+        placeholder="sk-..."
+        value={settings.apiKey}
+        onChange={(e) => onChange({ ...settings, apiKey: e.target.value })}
+      />
+      <p className="text-[0.8rem] text-muted-foreground">
+        Enter your OpenAI API key. You can find this in your OpenAI dashboard.
+      </p>
     </div>
   );
 }
@@ -143,6 +80,7 @@ export function SettingsDialog({
   const [settings, setSettings] = React.useState<UserSettings | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [activeTab, setActiveTab] = React.useState<Provider>("anthropic");
 
   // Load settings when dialog opens
   React.useEffect(() => {
@@ -153,17 +91,18 @@ export function SettingsDialog({
     }
   }, [open]);
 
-  const handleSettingChange = (provider: Provider, settings: ProviderSettings) => {
+  const handleSettingChange = (provider: Provider, providerSettings: ProviderSettings) => {
     setSettings(s => {
       if (!s) {
-        return newUserSettings(provider, settings);
+        return newUserSettings(provider, providerSettings);
       }
       return {
         ...s,
         provider_settings: {
           ...s.provider_settings,
-          [provider]: settings
-        }
+          [provider]: providerSettings
+        },
+        updated_at: Date.now()
       };
     });
   };
@@ -176,18 +115,12 @@ export function SettingsDialog({
       setError(null);
       setIsSaving(true);
 
-      // Validate API key for selected provider
-      const apiKey = getCurrentProviderApiKey(settings);
-      if (!apiKey?.trim()) {
-        throw new Error(`Please enter an API key for ${settings.model_provider}`);
-      }
-
       await window.settings.update(settings);
       await window.chat.reloadSettings();
 
       toast({
         title: "Settings saved",
-        description: "Your settings have been updated successfully.",
+        description: "Your API keys have been updated successfully.",
         duration: 3000,
         variant: "success"
       })
@@ -218,24 +151,37 @@ export function SettingsDialog({
       <DialogOverlay className="bg-background/80 backdrop-blur-sm" />
       <DialogContent className={cn("sm:max-w-[600px]", className)}>
         <DialogHeader>
-          <DialogTitle>Settings</DialogTitle>
+          <DialogTitle>Provider Settings</DialogTitle>
           <DialogDescription>
-            Configure your AI model provider and preferences.
+            Configure your AI provider API keys. These keys are stored securely and used to make requests to the
+            respective providers.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Label>Model Provider</Label>
-              <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-accent text-accent-foreground">
-                Anthropic
-              </span>
-            </div>
-            <AnthropicSettings
-              settings={settings ? settings.provider_settings.anthropic : defaultProviderSettings}
-              onChange={(settings) => handleSettingChange("anthropic", settings)}
-            />
-          </div>
+          <Tabs 
+            defaultValue={activeTab} 
+            value={activeTab} 
+            onValueChange={(value) => setActiveTab(value as Provider)}
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="openai">OpenAI</TabsTrigger>
+              <TabsTrigger value="anthropic">Anthropic</TabsTrigger>
+            </TabsList>
+            <TabsContent value="openai" className="space-y-4 py-4">
+              <OpenAISettings
+                settings={settings?.provider_settings.openai || defaultProviderSettings}
+                onChange={(providerSettings) => handleSettingChange("openai", providerSettings)}
+              />
+            </TabsContent>
+            <TabsContent value="anthropic" className="space-y-4 py-4">
+              <AnthropicSettings
+                settings={settings?.provider_settings.anthropic || defaultProviderSettings}
+                onChange={(providerSettings) => handleSettingChange("anthropic", providerSettings)}
+              />
+            </TabsContent>
+          </Tabs>
+          
           {(error) && (
             <div className="mt-4 text-sm text-red-500">
               {error}
@@ -246,7 +192,17 @@ export function SettingsDialog({
               type="submit"
               disabled={isSaving}
             >
-              {isSaving ? "Saving..." : "Save"}
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Check className="mr-2 h-4 w-4" />
+                  Save Changes
+                </>
+              )}
             </Button>
           </DialogFooter>
         </form>

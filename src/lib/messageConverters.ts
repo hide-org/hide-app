@@ -1,16 +1,18 @@
-import { AssistantMessage, Message, ToolUseBlock, UserMessage } from '@/types/message';
+import { AssistantMessage, Message, ToolResultMessage, ToolUseBlock, UserMessage } from '@/types/message';
 import { UIMessage } from '@/types';
 
 
-export function convertClaudeMessages(messages: Message[]): UIMessage[] {
+export function convertMessages(messages: Message[]): UIMessage[] {
   return messages.flatMap(message => {
     switch (message.role) {
       case 'user':
         return convertUserMessage(message);
       case 'assistant':
         return convertAssistantMessage(message);
+      case 'tool':
+        return convertToolMessage(message);
     }
-  });
+  })
 }
 
 function convertUserMessage(message: UserMessage): UIMessage[] {
@@ -22,7 +24,7 @@ function convertUserMessage(message: UserMessage): UIMessage[] {
     }];
   }
 
-  return message.content.flatMap((part, partIdx): UIMessage[] => {
+  return message.content.flatMap(part => {
     switch (part.type) {
       case 'text':
         return [{
@@ -36,26 +38,6 @@ function convertUserMessage(message: UserMessage): UIMessage[] {
           role: message.role,
           content: 'Image Attachments are not supported yet',
         }];
-      case 'tool_result':
-        return part.content.map((block, blockIdx) => {
-          switch (block.type) {
-            case 'text':
-              const content = block.text;
-              return {
-                id: `${message.id}-${partIdx}-${blockIdx}`,
-                role: 'tool_result',
-                content: content,
-                isError: part.isError,
-              }
-            case 'image':
-              return {
-                id: `${message.id}-${partIdx}-${blockIdx}`,
-                role: 'tool_result',
-                content: 'Image Attachments are not supported yet',
-                isError: part.isError,
-              };
-          }
-        })
     }
   });
 }
@@ -94,6 +76,30 @@ function convertAssistantMessage(message: AssistantMessage): UIMessage[] {
     }
   });
 }
+
+function convertToolMessage(message: ToolResultMessage): UIMessage[] {
+  return message.content.flatMap((block, idx) => {
+    return block.content.map((c, cIdx) => {
+      switch (c.type) {
+        case 'text':
+          return {
+            id: `${message.id}-${idx}-${cIdx}`,
+            role: 'tool_result',
+            content: c.text,
+            isError: block.isError,
+          };
+        case 'image':
+          return {
+            id: `${message.id}-${idx}-${cIdx}`,
+            role: 'tool_result',
+            content: 'Image Attachments are not supported yet',
+            isError: block.isError,
+          };
+      }
+    });
+  });
+}
+
 /**
   * This function converts a ToolUseBlock to a UIMessage. It is very tightly and implicitly
   * coupled with the tools that are currently supported, and will need to be updated if new
