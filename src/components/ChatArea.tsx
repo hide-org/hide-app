@@ -37,6 +37,7 @@ export const ChatArea = ({
 }: ChatAreaProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isStopping, setIsStopping] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<string>("");
 
   // Scroll to the bottom of the chat when new messages are added
   useEffect(() => {
@@ -188,6 +189,8 @@ export const ChatArea = ({
               isLoading={isLoading}
               isStopping={isStopping}
               className="py-4 max-w-3xl mx-auto w-full px-4"
+              selectedModelId={selectedModel}
+              onModelChange={setSelectedModel}
             />
           </div>
         </>
@@ -203,6 +206,8 @@ export const ChatArea = ({
             isLoading={isLoading}
             isStopping={isStopping}
             className="max-w-2xl mx-auto w-full"
+            selectedModelId={selectedModel}
+            onModelChange={setSelectedModel}
           />
         </div>
       )}

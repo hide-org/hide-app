@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectLabel,
   SelectSeparator,
@@ -36,6 +37,8 @@ interface ChatInputProps {
   className?: string;
   isLoading?: boolean;
   isStopping?: boolean;
+  selectedModelId?: string;
+  onModelChange?: (modelId: string) => void;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
@@ -47,11 +50,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   className = "",
   isLoading = false,
   isStopping = false,
+  selectedModelId = "",
+  onModelChange = () => {},
 }) => {
   const [message, setMessage] = useState<string>("");
-  const [selectedModelId, setSelectedModelId] = useState<string>(
-    "claude-3-opus-20240229",
-  );
   const [models, setModels] = useState<Model[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState<boolean>(true);
   const [thinking, setThinking] = useState<boolean>(false);
@@ -67,18 +69,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       try {
         const availableModels = await window.models.getAll();
         setModels(availableModels);
-
-        // Set default model if current one is not available
-        if (availableModels.length > 0) {
-          // Try to find an available model
-          const availableModel = availableModels.find((m) => m.available);
-          if (
-            availableModel &&
-            !availableModels.some((m) => m.id === selectedModelId)
-          ) {
-            setSelectedModelId(availableModel.id);
-          }
-        }
       } catch (error) {
         console.error("Failed to fetch models:", error);
       } finally {
@@ -91,7 +81,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   // Disable thinking toggle if model doesn't support it
   useEffect(() => {
-    if (selectedModel && !selectedModel?.capabilities.thinking) {
+    if (selectedModel && !selectedModel?.capabilities?.thinking) {
       setThinking(false);
     }
   }, [selectedModelId, selectedModel]);
@@ -159,7 +149,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         <div className="absolute bottom-2 left-2 flex items-center gap-2">
           <Select
             value={selectedModelId}
-            onValueChange={setSelectedModelId}
+            onValueChange={onModelChange}
             disabled={disabled || isLoading || isLoadingModels}
           >
             <SelectTrigger
@@ -187,7 +177,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               {/* Group models by provider */}
               {Object.entries(groupedModels).map(
                 ([provider, providerModels], index) => (
-                  <div key={provider}>
+                  <SelectGroup key={provider}>
                     <SelectLabel className="px-2 py-1.5 text-xs font-semibold capitalize">
                       {provider}
                     </SelectLabel>
@@ -210,14 +200,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     {index < Object.keys(groupedModels).length - 1 && (
                       <SelectSeparator className="my-1" />
                     )}
-                  </div>
+                  </SelectGroup>
                 ),
               )}
             </SelectContent>
           </Select>
 
           {/* Only show thinking toggle for models that support it */}
-          {selectedModel && selectedModel.capabilities.thinking && (
+          {selectedModel && selectedModel.capabilities?.thinking && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
