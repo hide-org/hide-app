@@ -8,7 +8,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { H2 } from "@/components/ui/typography";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useMessageConversion } from "@/hooks/useMessageConversion";
-import { SidebarTrigger } from "./ui/sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -16,7 +15,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "./ui/breadcrumb";
-import { Separator } from "@radix-ui/react-separator";
 
 interface ChatAreaProps {
   conversation: Conversation | null;

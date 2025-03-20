@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 
-export type Message = UserMessage | AssistantMessage;
+export type Message = UserMessage | AssistantMessage | ToolResultMessage;
 
 export type UserMessage = {
     id: string;
@@ -31,7 +31,21 @@ export const newAssistantMessage = (content: string | AssistantContentBlock[]): 
     };
 };
 
-export type UserContentBlock = TextBlock | ImageBlock | ToolResultBlock;
+export type ToolResultMessage = {
+    id: string;
+    role: 'tool';
+    content: ToolResultBlock[];
+}
+
+export const newToolResultMessage = (content: ToolResultBlock[]): ToolResultMessage => {
+    return {
+        id: uuidv4(),
+        role: 'tool',
+        content
+    };
+};
+
+export type UserContentBlock = TextBlock | ImageBlock;
 export type AssistantContentBlock = TextBlock | ToolUseBlock | ThinkingBlock | RedactedThinkingBlock;
 
 export type ToolResultContentBlock = TextBlock | ImageBlock;
