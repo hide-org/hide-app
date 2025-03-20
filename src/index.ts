@@ -8,7 +8,7 @@ import { AnalyticsService } from "@/main/services/analytics";
 import { ChatService, setupChatHandlers } from "./main/services/chat";
 import { AnthropicService } from "./main/services/anthropic";
 import { OpenAIService } from "./main/services/openai";
-import { LLMServiceProvider } from "./main/services/llmprovider";
+import { LLMServiceProvider, setupLLMProviderHandlers } from "./main/services/llmprovider";
 import { PostHog } from "posthog-node";
 import { getOrCreateUserId } from "./lib/account";
 
@@ -262,6 +262,7 @@ app.whenReady().then(async () => {
     const llmServiceProvider = new LLMServiceProvider();
     llmServiceProvider.registerProvider(anthropicService);
     llmServiceProvider.registerProvider(openaiService);
+    setupLLMProviderHandlers(llmServiceProvider);
 
     // Create chat service
     chatService = new ChatService(llmServiceProvider, analytics);

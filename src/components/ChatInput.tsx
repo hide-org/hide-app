@@ -1,11 +1,31 @@
-import React, { useState, useRef, useEffect, KeyboardEvent, ChangeEvent, FormEvent } from 'react';
-import { Send, Square, Brain } from 'lucide-react';
-
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import { Model } from "@/types/model";
+import { Brain, Send, Square } from "lucide-react";
+import React, {
+  ChangeEvent,
+  FormEvent,
+  KeyboardEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 interface ChatInputProps {
   onSendMessage?: (message: string, model?: string, thinking?: boolean) => void;
@@ -19,25 +39,68 @@ interface ChatInputProps {
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
-  onSendMessage = (message: string) => console.log('Sending message:', message),
-  onStop = () => console.log('Stopping chat...'),
-  placeholder = 'Type a message...',
+  onSendMessage = (message: string) => console.log("Sending message:", message),
+  onStop = () => console.log("Stopping chat..."),
+  placeholder = "Type a message...",
   maxHeight = 200,
   disabled = false,
-  className = '',
+  className = "",
   isLoading = false,
   isStopping = false,
 }) => {
-  const [message, setMessage] = useState<string>('');
-  const [model, setModel] = useState<string>('claude');
+  const [message, setMessage] = useState<string>("");
+  const [selectedModelId, setSelectedModelId] = useState<string>(
+    "claude-3-opus-20240229",
+  );
+  const [models, setModels] = useState<Model[]>([]);
+  const [isLoadingModels, setIsLoadingModels] = useState<boolean>(true);
   const [thinking, setThinking] = useState<boolean>(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // Get current model object
+  const selectedModel = models.find((m) => m.id === selectedModelId);
+
+  // Fetch available models when component mounts
+  useEffect(() => {
+    const fetchModels = async () => {
+      setIsLoadingModels(true);
+      try {
+        const availableModels = await window.models.getAll();
+        setModels(availableModels);
+
+        // Set default model if current one is not available
+        if (availableModels.length > 0) {
+          // Try to find an available model
+          const availableModel = availableModels.find((m) => m.available);
+          if (
+            availableModel &&
+            !availableModels.some((m) => m.id === selectedModelId)
+          ) {
+            setSelectedModelId(availableModel.id);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch models:", error);
+      } finally {
+        setIsLoadingModels(false);
+      }
+    };
+
+    fetchModels();
+  }, []);
+
+  // Disable thinking toggle if model doesn't support it
+  useEffect(() => {
+    if (selectedModel && !selectedModel?.capabilities.thinking) {
+      setThinking(false);
+    }
+  }, [selectedModelId, selectedModel]);
 
   // Auto-resize textarea as content grows
   useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
-      textarea.style.height = 'auto';
+      textarea.style.height = "auto";
       textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
     }
   }, [message, maxHeight]);
@@ -45,17 +108,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (message.trim() && !disabled) {
-      onSendMessage(message.trim(), model, thinking);
-      setMessage('');
+      onSendMessage(message.trim(), selectedModelId, thinking);
+      setMessage("");
     }
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (message.trim() && !disabled) {
-        onSendMessage(message.trim(), model, thinking);
-        setMessage('');
+        onSendMessage(message.trim(), selectedModelId, thinking);
+        setMessage("");
       }
     }
   };
@@ -63,6 +126,18 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
   };
+
+  // Group models by provider
+  const groupedModels = models.reduce(
+    (acc, model) => {
+      if (!acc[model.provider]) {
+        acc[model.provider] = [];
+      }
+      acc[model.provider].push(model);
+      return acc;
+    },
+    {} as Record<string, Model[]>,
+  );
 
   return (
     <form
@@ -82,7 +157,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         />
 
         <div className="absolute bottom-2 left-2 flex items-center gap-2">
-          <Select value={model} onValueChange={setModel} disabled={disabled || isLoading}>
+          <Select
+            value={selectedModelId}
+            onValueChange={setSelectedModelId}
+            disabled={disabled || isLoading || isLoadingModels}
+          >
             <SelectTrigger
               className={cn(
                 "text-xs h-8 border-0 bg-transparent",
@@ -90,36 +169,84 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 "focus:ring-0 focus:ring-offset-0",
               )}
             >
-              <SelectValue placeholder="Select model" />
+              <SelectValue
+                placeholder={
+                  isLoadingModels ? "Loading models..." : "Select model"
+                }
+              />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="claude">Claude</SelectItem>
-              <SelectItem value="claude-3-opus">Claude 3 Opus</SelectItem>
-              <SelectItem value="claude-3-sonnet">Claude 3 Sonnet</SelectItem>
-              <SelectItem value="claude-3-haiku">Claude 3 Haiku</SelectItem>
+              {Object.keys(groupedModels).length === 0 && (
+                <div className="px-2 py-4 text-sm text-center text-muted-foreground">
+                  {isLoadingModels
+                    ? "Loading available models..."
+                    : "No models available"}
+                </div>
+              )}
+
+              {/* Group models by provider */}
+              {Object.entries(groupedModels).map(
+                ([provider, providerModels], index) => (
+                  <div key={provider}>
+                    <SelectLabel className="px-2 py-1.5 text-xs font-semibold capitalize">
+                      {provider}
+                    </SelectLabel>
+                    <SelectSeparator />
+                    {providerModels.map((model) => (
+                      <SelectItem
+                        key={model.id}
+                        value={model.id}
+                        disabled={!model.available}
+                        className={!model.available ? "opacity-50" : ""}
+                      >
+                        {model.name}
+                        {!model.available && (
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            (No API key)
+                          </span>
+                        )}
+                      </SelectItem>
+                    ))}
+                    {index < Object.keys(groupedModels).length - 1 && (
+                      <SelectSeparator className="my-1" />
+                    )}
+                  </div>
+                ),
+              )}
             </SelectContent>
           </Select>
 
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => setThinking(!thinking)}
-                  disabled={disabled || isLoading}
-                  className={cn("h-8 w-8 border-0", "transition-colors", thinking ? "bg-accent" : "hover:bg-muted")}
-                  aria-label={thinking ? "Disable thinking mode" : "Enable thinking mode"}
-                >
-                  <Brain className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{thinking ? "Disable thinking" : "Enable thinking"}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {/* Only show thinking toggle for models that support it */}
+          {selectedModel && selectedModel.capabilities.thinking && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => setThinking(!thinking)}
+                    disabled={disabled || isLoading}
+                    className={cn(
+                      "h-8 w-8 border-0",
+                      "transition-colors",
+                      thinking ? "bg-accent" : "hover:bg-muted",
+                    )}
+                    aria-label={
+                      thinking
+                        ? "Disable thinking mode"
+                        : "Enable thinking mode"
+                    }
+                  >
+                    <Brain className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{thinking ? "Disable thinking" : "Enable thinking"}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
 
         {isLoading ? (
@@ -134,16 +261,18 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           >
             <Square className="h-4 w-4" />
           </Button>
-        ) : message.trim() && (
-          <Button
-            type="submit"
-            disabled={!message.trim() || disabled}
-            size="icon"
-            className="h-8 w-8"
-            aria-label="Send message"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
+        ) : (
+          message.trim() && (
+            <Button
+              type="submit"
+              disabled={!message.trim() || disabled}
+              size="icon"
+              className="h-8 w-8"
+              aria-label="Send message"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          )
         )}
       </div>
     </form>

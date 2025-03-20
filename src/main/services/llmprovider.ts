@@ -1,4 +1,6 @@
 import { LLMService } from "@/main/services/llm";
+import { Model } from "@/types/model";
+import { ipcMain } from "electron";
 
 /**
  * Manages LLM providers and services, handling provider selection based on model
@@ -6,8 +8,7 @@ import { LLMService } from "@/main/services/llm";
 export class LLMServiceProvider {
   private providers: Map<string, LLMService> = new Map();
   private modelToProviderMap: Map<string, string> = new Map();
-
-  constructor() { }
+  private models: Model[] = [];
 
   /**
    * Registers an LLM service provider for use
@@ -17,9 +18,15 @@ export class LLMServiceProvider {
     const providerName = provider.getProviderName();
     this.providers.set(providerName, provider);
 
-    // Map each model to this provider
-    for (const model of provider.getSupportedModels()) {
-      this.modelToProviderMap.set(model, providerName);
+    // Get models from this provider
+    const providerModels = provider.getSupportedModels();
+
+    // Add models to the combined list
+    this.models = [...this.models, ...providerModels];
+
+    // Map each model ID to this provider
+    for (const model of providerModels) {
+      this.modelToProviderMap.set(model.id, providerName);
     }
 
     // Initialize settings for this provider
@@ -28,12 +35,12 @@ export class LLMServiceProvider {
 
   /**
    * Gets the appropriate LLM service for the specified model
-   * @param model The model identifier
+   * @param modelId The model identifier
    * @returns The LLM service that supports the specified model, or null if no provider is found
    */
-  public getServiceForModel(model: string): LLMService | null {
+  public getServiceForModel(modelId: string): LLMService | null {
     // Get the provider name for this model
-    const providerName = this.modelToProviderMap.get(model);
+    const providerName = this.modelToProviderMap.get(modelId);
 
     if (!providerName) {
       // No provider found
@@ -61,19 +68,38 @@ export class LLMServiceProvider {
   }
 
   /**
-   * Gets all supported models from all providers
-   * @returns Array of all supported model identifiers
+   * Gets all supported models from all providers with their metadata
+   * @returns Array of all supported models with metadata
    */
-  public getAllSupportedModels(): string[] {
-    return Array.from(this.modelToProviderMap.keys());
+  public getAllSupportedModels(): Model[] {
+    return this.models;
   }
 
   /**
    * Reloads settings for all registered providers
    */
   public reloadAllSettings(): void {
+    // Clear existing models
+    this.models = [];
+
+    // Reload all providers which will update their models
     for (const provider of this.providers.values()) {
       provider.loadSettings();
+
+      // Refresh models after settings update
+      const providerModels = provider.getSupportedModels();
+      this.models = [...this.models, ...providerModels];
     }
   }
 }
+
+export const setupLLMProviderHandlers = (llmServiceProvider: LLMServiceProvider) => {
+  ipcMain.handle("models:getAll", () => {
+    try {
+      return llmServiceProvider.getAllSupportedModels();
+    } catch (error) {
+      console.error("Error getting models:", error);
+      throw error;
+    }
+  });
+};

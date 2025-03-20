@@ -1,3 +1,25 @@
+import { getOrCreateUserId } from "@/lib/account";
+import {
+  convertAssistantMessageFromAnthropic,
+  convertToAnthropic,
+} from "@/lib/converters/anthropic";
+import { mcpToAnthropicTool } from "@/lib/mcp/adapters";
+import { getUserSettings } from "@/main/db";
+import { isAbortError } from "@/main/errors";
+import { callTool } from "@/main/mcp";
+import { AnalyticsService } from "@/main/services/analytics";
+import { LLMService } from "@/main/services/llm";
+import {
+  Message,
+  newToolResultMessage,
+  ToolResultBlock,
+} from "@/types/message";
+import { Model } from "@/types/model";
+import {
+  getProviderApiKey,
+  Provider,
+  ProviderSettings,
+} from "@/types/settings";
 import { Anthropic } from "@anthropic-ai/sdk";
 import { TextBlockParam, ToolUseBlockParam } from "@anthropic-ai/sdk/resources";
 import {
@@ -9,23 +31,6 @@ import type {
   CallToolResult as ToolResult,
   Tool,
 } from "@modelcontextprotocol/sdk/types";
-import { callTool } from "@/main/mcp";
-import { mcpToAnthropicTool } from "@/lib/mcp/adapters";
-import {
-  Message,
-  newToolResultMessage,
-  ToolResultBlock,
-} from "@/types/message";
-import { ProviderSettings } from "@/types/settings";
-import { getUserSettings } from "@/main/db";
-import {
-  convertToAnthropic,
-  convertAssistantMessageFromAnthropic,
-} from "@/lib/converters/anthropic";
-import { AnalyticsService } from "./analytics";
-import { getOrCreateUserId } from "@/lib/account";
-import { isAbortError } from "../errors";
-import { LLMService } from "./llm";
 
 export class AnthropicService implements LLMService {
   private client: Anthropic;
@@ -33,12 +38,14 @@ export class AnthropicService implements LLMService {
   private analytics: AnalyticsService;
   private maxTokens: number;
   private budgetTokens: number;
-  private supportedModels: string[] = [
-    "claude-3-opus-20240229", 
-    "claude-3-sonnet-20240229", 
-    "claude-3-haiku-20240307",
-    "claude-2.1", 
-    "claude-2.0"
+  private supportedModels: Omit<Model, "provider" | "available">[] = [
+    {
+      id: "claude-3-7-sonnet-20250219",
+      name: "Claude 3.7 Sonnet",
+      capabilities: { thinking: true },
+    },
+    { id: "claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet v2" },
+    { id: "claude-3-5-haiku-20241022", name: "Claude 3.5 Haiku" },
   ];
 
   constructor(
@@ -52,12 +59,23 @@ export class AnthropicService implements LLMService {
     this.maxTokens = maxTokens;
     this.budgetTokens = budgetTokens;
   }
-  
-  getSupportedModels(): string[] {
-    return this.supportedModels;
+
+  getSupportedModels(): Model[] {
+    const settings = getUserSettings();
+    const hasApiKey = getProviderApiKey(settings, this.getProviderName());
+
+    return this.supportedModels.map(({ id, name, capabilities }) => {
+      return {
+        id,
+        name,
+        provider: this.getProviderName(),
+        available: !!hasApiKey,
+        capabilities,
+      };
+    });
   }
-  
-  getProviderName(): string {
+
+  getProviderName(): Provider {
     return "anthropic";
   }
 

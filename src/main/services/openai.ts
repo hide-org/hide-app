@@ -1,38 +1,42 @@
-import { OpenAI } from "openai";
-import { ChatCompletionTool } from "openai/resources";
-import { LLMService } from "./llm";
+import { getOrCreateUserId } from "@/lib/account";
+import {
+  convertAssistantMessageFromOpenAI,
+  convertToOpenAI,
+} from "@/lib/converters/openai";
+import { mcpToOpenAIFunction } from "@/lib/mcp/adapters";
+import { getUserSettings } from "@/main/db";
+import { isAbortError } from "@/main/errors";
+import { callTool } from "@/main/mcp";
+import { AnalyticsService } from "@/main/services/analytics";
+import { LLMService } from "@/main/services/llm";
 import {
   Message,
   newToolResultMessage,
   ToolResultBlock,
 } from "@/types/message";
-import { ProviderSettings } from "@/types/settings";
-import { getUserSettings } from "@/main/db";
-import { callTool } from "@/main/mcp";
-import { AnalyticsService } from "./analytics";
-import { getOrCreateUserId } from "@/lib/account";
-import { isAbortError } from "../errors";
+import { Model } from "@/types/model";
+import {
+  getProviderApiKey,
+  Provider,
+  ProviderSettings,
+} from "@/types/settings";
 import type {
   CallToolResult as ToolResult,
   Tool,
 } from "@modelcontextprotocol/sdk/types";
-import { mcpToOpenAIFunction } from "@/lib/mcp/adapters";
-import {
-  convertToOpenAI,
-  convertAssistantMessageFromOpenAI,
-} from "@/lib/converters/openai";
+import { OpenAI } from "openai";
+import { ChatCompletionTool } from "openai/resources";
 
 export class OpenAIService implements LLMService {
   private client: OpenAI;
   private tools: ChatCompletionTool[];
   private analytics: AnalyticsService;
   private maxTokens: number;
-  private supportedModels: string[] = [
-    "gpt-4o",
-    "gpt-4-turbo",
-    "gpt-4",
-    "gpt-3.5-turbo",
-    "gpt-4-vision-preview"
+  private supportedModels: Omit<Model, "provider" | "available">[] = [
+    { id: "gpt-4.5-preview", name: "GPT-4.5 Preview" },
+    { id: "gpt-4o", name: "GPT-4o" },
+    { id: "o1", name: "o1" },
+    { id: "o3-mini", name: "o3-mini" },
   ];
 
   constructor(tools: Tool[], analytics: AnalyticsService, maxTokens = 4096) {
@@ -40,12 +44,23 @@ export class OpenAIService implements LLMService {
     this.analytics = analytics;
     this.maxTokens = maxTokens;
   }
-  
-  getSupportedModels(): string[] {
-    return this.supportedModels;
+
+  getSupportedModels(): Model[] {
+    const settings = getUserSettings();
+    const hasApiKey = getProviderApiKey(settings, this.getProviderName());
+
+    return this.supportedModels.map(({ id, name, capabilities }) => {
+      return {
+        id,
+        name,
+        provider: this.getProviderName(),
+        available: !!hasApiKey,
+        capabilities,
+      };
+    });
   }
-  
-  getProviderName(): string {
+
+  getProviderName(): Provider {
     return "openai";
   }
 
@@ -53,7 +68,7 @@ export class OpenAIService implements LLMService {
     messages: Message[],
     options: {
       model: string;
-      thinking?: boolean,
+      thinking?: boolean;
       systemPrompt?: string;
     },
     abortSignal?: AbortSignal,

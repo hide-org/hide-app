@@ -1,6 +1,7 @@
 import { Project, Conversation } from '@/types';
 import { Message } from '@/types/message';
 import { UserSettings } from '@/types/settings';
+import { Model } from '@/types/model';
 
 declare global {
   interface Window {
@@ -25,12 +26,15 @@ declare global {
       update: (settings: Omit<UserSettings, 'created_at' | 'updated_at'>) => Promise<UserSettings>;
     };
     chat: {
-      start: (conversationId: string, systemPrompt?: string) => Promise<void>;
+      start: (conversationId: string, options: { model: string, thinking?: boolean, systemPrompt?: string }) => Promise<void>;
       stop: (conversationId: string) => Promise<void>;
-      generateTitle: (conversationId: string, message: string) => Promise<void>;
+      generateTitle: (conversationId: string, message: string, model?: string) => Promise<void>;
       onMessage: (callback: (conversationId: string, message: Message) => void) => () => void;
       onUpdate: (callback: (conversation: Conversation) => void) => () => void;
       reloadSettings: () => Promise<void>;
+    };
+    models: {
+      getAll: () => Promise<Model[]>;
     };
   }
 }

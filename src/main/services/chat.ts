@@ -1,11 +1,11 @@
-import { BrowserWindow, ipcMain } from "electron";
-import { LLMServiceProvider } from "@/main/services/llmprovider";
-import { getConversationById, updateConversation } from "@/main/db";
-import { Conversation } from "@/types";
-import { isAbortError } from "@/main/errors";
-import { Message } from "@/types/message";
-import { AnalyticsService } from "./analytics";
 import { getOrCreateUserId } from "@/lib/account";
+import { getConversationById, updateConversation } from "@/main/db";
+import { isAbortError } from "@/main/errors";
+import { AnalyticsService } from "@/main/services/analytics";
+import { LLMServiceProvider } from "@/main/services/llmprovider";
+import { Conversation } from "@/types";
+import { Message } from "@/types/message";
+import { BrowserWindow, ipcMain } from "electron";
 
 export class ChatService {
   private activeChats: Map<
@@ -50,7 +50,7 @@ export class ChatService {
     if (!llmService) {
       throw new Error(`No provider available for model: ${options.model}`);
     }
-    
+
     const abortController = new AbortController();
     this.activeChats.set(conversationId, {
       abortController,
@@ -131,17 +131,19 @@ export class ChatService {
 
     const llmService = this.llmServiceProvider.getServiceForModel(model);
     if (!llmService) {
-      console.warn(`No provider available for model: ${model}, cannot generate title`);
+      console.warn(
+        `No provider available for model: ${model}, cannot generate title`,
+      );
       return;
     }
-    
+
     try {
       const title = await llmService.generateTitle(message, model);
       // fetching the conversation again in case it was updated by another process
       // TODO: use transactions
       const conversation = getConversationById(conversationId);
       if (!conversation) return;
-      
+
       const updatedConversation = {
         ...conversation,
         title,

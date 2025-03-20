@@ -39,14 +39,14 @@ contextBridge.exposeInMainWorld('settings', {
 
 // Expose chat API
 contextBridge.exposeInMainWorld('chat', {
-    start: (conversationId: string, systemPrompt?: string) =>
-        ipcRenderer.invoke('chat:start', { conversationId, systemPrompt }),
+    start: (conversationId: string, options: { model: string, thinking?: boolean, systemPrompt?: string }) =>
+        ipcRenderer.invoke('chat:start', { conversationId, options }),
 
     stop: (conversationId: string) =>
         ipcRenderer.invoke('chat:stop', { conversationId }),
 
-    generateTitle: (conversationId: string, message: string) =>
-        ipcRenderer.invoke('chat:generateTitle', { conversationId, message }),
+    generateTitle: (conversationId: string, message: string, model?: string) =>
+        ipcRenderer.invoke('chat:generateTitle', { conversationId, message, model }),
 
     onMessage: (callback: (conversationId: string, message: Message) => void) => {
         const handler = (_event: any, { conversationId, message }: { conversationId: string, message: Message }) => {
@@ -67,4 +67,9 @@ contextBridge.exposeInMainWorld('chat', {
     },
 
     reloadSettings: () => ipcRenderer.invoke('chat:reloadSettings'),
+});
+
+// Expose models API
+contextBridge.exposeInMainWorld('models', {
+    getAll: () => ipcRenderer.invoke('models:getAll')
 });

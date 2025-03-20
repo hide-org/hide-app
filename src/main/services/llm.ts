@@ -1,4 +1,5 @@
 import { Message } from "@/types/message";
+import { Model } from "@/types/model";
 
 /**
  * LLMService interface for language model providers.
@@ -39,10 +40,10 @@ export interface LLMService {
   loadSettings(): { success: boolean; error?: string };
   
   /**
-   * Gets the list of models supported by this provider.
-   * @returns Array of model identifiers supported by this provider
+   * Gets the models supported by this provider with their metadata.
+   * @returns Array of Model objects supported by this provider
    */
-  getSupportedModels(): string[];
+  getSupportedModels(): Model[];
   
   /**
    * Gets the provider name.
