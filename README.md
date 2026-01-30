@@ -4,6 +4,8 @@ AI-powered development tool for your projects.
 
 Hide is a desktop application that integrates Claude AI with the Model Context Protocol (MCP) to help developers automate coding tasks and accelerate their workflow.
 
+<img width="1552" height="1012" alt="result" src="https://github.com/user-attachments/assets/9f7c06fd-5869-4a56-862d-f1cd04100a5e" />
+
 ## Features
 
 - **Conversational AI Interface** - Multi-turn chat with Claude, streaming responses, and conversation history
